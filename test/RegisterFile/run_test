@@ -1,0 +1,7 @@
+#!/bin/csh
+
+alias openwv 'nWave -ssf RegisterFile.fsdb -sswr RegisterFile.rc'
+
+alias startvd 'verdi -sv Testbench.sv ../../rtl/RegisterFile.v -ssf RegisterFile.fsdb -sswr RegisterFile.rc' 
+
+vcs -full64 -sverilog -R -nc -debug_pp -LDFLAGS -rdynamic -P ${VERDI_HOME}/share/PLI/VCS/LINUX64/novas.tab ${VERDI_HOME}/share/PLI/VCS/LINUX64/pli.a +define+FSDB_DUMP Testbench.sv ../../rtl/RegisterFile.v
