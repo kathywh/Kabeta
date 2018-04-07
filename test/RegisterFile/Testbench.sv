@@ -18,16 +18,6 @@ logic [31:0] DataW;
 logic [31:0] DataX, DataY;
 
 // test data set
-// typedef struct
-// {
-//   bit [4:0] Addr;
-//   bit [31:0] Data;
-// }  TestDataRecord;
-
-// TestDataRecord TestDataSet1[0:30];      // for reg0~reg30
-// TestDataRecord TestDataSet2[0:30];      // for reg0~reg30
-// TestDataRecord TestDataSetZero[10];     // for reg31
-
 bit [31:0] TestDataSet1[0:30];      // for reg0~reg30
 bit [31:0] TestDataSet2[0:30];      // for reg0~reg30
 bit [31:0] TestDataSetZero[10];     // for reg31
