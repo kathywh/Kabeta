@@ -1,4 +1,4 @@
-@verdi rc file Version 1.0
+@nWave rc file Version 1.0
 [Library]
 work = ./work
 [Annotation]
@@ -219,14 +219,15 @@ Selection-LineWidth = 1
 Orientation = Landscape
 [Form]
 version = Verdi3_L-2016.06-1
-wave/saveSig.fm = 104,166,723,532
+wave/unknownSave.fm = 112,152,520,275
+wave/saveSig.fm = 118,251,723,532
 [General]
 autoSaveSession = FALSE
 TclAutoSource = 
 SyncBrowserDir = TRUE
-cmd_enter_form = FALSE
 version = Verdi3_L-2016.06-1
 SignalCaseInSensitive = FALSE
+cmd_enter_form = FALSE
 ShowWndCtntDuringResizing = FALSE
 [GlobalProp]
 ErrWindow_Font = Helvetica_M_R_12
@@ -346,16 +347,16 @@ FileName = test.ps
 PaperSize = A4 - 210x297 (mm)
 ColorPrint = FALSE
 [PropertyTools]
+saveFsdbStat = TRUE
+savePropStat = FALSE
+savePropDtl = TRUE
 Dnd_Sig_To_Wave = FALSE
 Dnd_Sig_To_Wave_With_Exp_Group = TRUE
 Mask_Non_Active_Time_on_Wave = FALSE
 Show_Cycle_Info = TRUE
-saveFsdbStat = TRUE
-savePropStat = FALSE
-savePropDtl = TRUE
 [QtDialog]
-qWaveSignalDialog = 562,317,800,479
-QwUserAskDlg = 794,521,324,130
+qWaveSignalDialog = 584,348,800,479
+QwUserAskDlg = 820,618,324,128
 [Relationship]
 hideRecursiceNode = FALSE
 [Session Cache]
@@ -635,8 +636,8 @@ waveform_vertical_scroll_bar = TRUE
 scope_to_save_with_macro
 open_file_dir
 open_rc_file_dir
-getSignalForm = 2 33 800 479 163 381 387 89
-viewPort = -2 31 1920 985 178 261
+getSignalForm = 584 348 800 479 163 381 387 89
+viewPort = 0 31 1916 981 221 261
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -665,8 +666,8 @@ region(NBA)Background = -c ID_RED1
 region(Re-Active)Background = -c ID_YELLOW3
 region(Re-NBA)Background = -c ID_RED3
 High_Light = -c ID_GRAY2
-Input_Signal = -c ID_RED5
-Output_Signal = -c ID_GREEN5
+Input_Signal = -c ID_ORANGE5
+Output_Signal = -c ID_BLUE5
 InOut_Signal = -c ID_BLUE5
 Net_Signal = -c ID_YELLOW5
 Register_Signal = -c ID_PURPLE5
@@ -814,7 +815,7 @@ DisplaySignalTypeAheadOfSignalName = TRUE ICON
 TipInCurveWin = FALSE
 MouseGesturesInCurveWin = TRUE
 DisplayLSBsFirst = FALSE
-PaintSpecificColorPattern = FALSE
+PaintSpecificColorPattern = TRUE
 ModuleName = TRUE
 form_all_memory_signal = FALSE
 formBusSignalFromPartSelects = FALSE

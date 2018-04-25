@@ -1,0 +1,47 @@
+1. Every source file must begin with the header as follows. Add revision info
+   everytime you modify the file.
+
+   每个源文件必须以如下格式的文件头开始。每次修改文件均要添加修订信息。
+
+/******************************************************************************/
+/*  Unit Name:  RegisterFile                                                  */
+/*  Created by: Kathy                                                         */
+/*  Created on: 04/06/2018                                                    */
+/*  Edited by:  Kathy                                                         */
+/*  Edited on:  04/12/2018                                                    */
+/*                                                                            */
+/*  Description:                                                              */
+/*      Register file with zero register.                                     */
+/*      Note: Zero Register will reads zero, and write to Zero Register will  */
+/*            be safely ignored.                                              */
+/*                                                                            */
+/*  Revisions:                                                                */
+/*      04/06/2018  Kathy       Unit created.                                 */
+/*      04/07/2018  Kathy       Add addr reg reset.                           */
+/*      04/12/2018  Kathy       1) Remove reset signal and functionality.     */
+/*                              2) Remove read addr reg, register read data.  */
+/******************************************************************************/
+
+2. Constant identifiers (including `define macros, parameters and localparams)
+   contain only capital letters and underscores.
+
+   常数标识符（包括`define宏、parameter参数和localparam参数）只包含大写字母和下划线。
+
+3. Variable identifiers (including signals, module names, ports, instance names,
+   function names and task names) contain only letters, numbers and underscores.
+   Each word in an identifier begins with a capital letter and the remaining are
+   small letters, with no intervening characters. All letters of abbreviation in
+   an identifier are capital. Underscores are used to make it clear when there
+   are successive capital letters except for abbreviation. (It's called CamelCase)
+
+   变量标识符（包括信号名、模块名、端口名、实例名、函数名和任务名）只包含字母、数字和下划线。
+   标识符中的每个单词以大写字母开头，其余字母小写，单词间没有分隔符。标识符中的缩写词全部
+   使用大写字母。下划线用于分隔连续的大写字母使得标识符看起来清晰，缩写词中的大写字母不用
+   下划线分隔。（这称为“骆驼风格”）
+
+4. Comments write in English for the sake of compatibility with various tools.
+   Comments can either be above or after the statement in the same line, and must
+   not be under the statement.
+
+   使用英文写注释，以便与各种工具保持兼容。注释可以在语句上面或同一行的后面，不允许写在
+   语句下面。

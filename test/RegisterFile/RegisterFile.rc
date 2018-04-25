@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi3_L-2016.06-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 31 1920 985 178 261
+viewPort 0 31 1916 981 221 261
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -15,9 +15,11 @@ openDirFile -d / "" "/home/kathy/Kabeta/test/RegisterFile/RegisterFile.fsdb"
 signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
+windowTimeUnit 1ps
+
 ; waveform viewport range
-zoom 9049091.815286 10250908.184714
-cursor 9650000.000000
+zoom 0.000000 1043175.074184 1p
+cursor 0.000000
 marker 0.000000
 
 ; user define markers
@@ -45,20 +47,22 @@ COMPLEX_EVENT_END
 curSTATUS ByChange
 
 
-addGroup "G1"
+addGroup "Instance"
 activeDirFile "" "/home/kathy/Kabeta/test/RegisterFile/RegisterFile.fsdb"
-addSignal -h 16 /Testbench/Reset
-addSignal -h 16 -holdScope Clock
-addSignal -h 16 -holdScope EnW
-addSignal -h 16 -UNSIGNED -UDEC -holdScope AddrW[4:0]
-addSignal -h 16 -UNSIGNED -HEX -holdScope DataW[31:0]
-addSignal -h 16 -holdScope EnX
-addSignal -h 16 -UNSIGNED -UDEC -holdScope AddrX[4:0]
-addSignal -h 16 -UNSIGNED -HEX -holdScope DataX[31:0]
-addSignal -h 16 -holdScope EnY
-addSignal -h 16 -UNSIGNED -UDEC -holdScope AddrY[4:0]
-addSignal -h 16 -UNSIGNED -HEX -holdScope DataY[31:0]
-addGroup "G2"
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -I /Testenv/Instance/Reset
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -I -holdScope Clock
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -I -holdScope EnW
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -UNSIGNED -UDEC -I -holdScope AddrW[4:0]
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -UNSIGNED -HEX -I -holdScope DataW[31:0]
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -I -holdScope EnX
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -UNSIGNED -UDEC -I -holdScope AddrX[4:0]
+addSignal -c ID_BLUE5 -ls solid -lw 1 -h 16 -UNSIGNED -HEX -I -holdScope DataX[31:0]
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -UNSIGNED -UDEC -I -holdScope AddrY[4:0]
+addSignal -c ID_ORANGE5 -ls solid -lw 1 -h 16 -I -holdScope EnY
+addSignal -c ID_BLUE5 -ls solid -lw 1 -h 16 -UNSIGNED -HEX -I -holdScope DataY[31:0]
+addSignal -h 16 -UNSIGNED -UDEC -holdScope LatchedAddrX[4:0]
+addSignal -h 16 -UNSIGNED -UDEC -holdScope LatchedAddrY[4:0]
+addGroup "----"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
@@ -68,11 +72,13 @@ GETSIGNALFORM_SCOPE_HIERARCHY_BEGIN
 getSignalForm close
 
 "/Testbench"
+"/Testenv"
 
 SCOPE_LIST_BEGIN
 "/Test"
 "/Testbench"
 "/Testbench/Instance"
+"/Testenv/Instance"
 SCOPE_LIST_END
 
 GETSIGNALFORM_SCOPE_HIERARCHY_END
