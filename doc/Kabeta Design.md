@@ -1,9 +1,9 @@
 # Kabeta Processor Design
 
-Date: April 25, 2018  
-Version: 1.1B  
-Author: Katherine White  
-Reviewer: (N/A)  
+**Date:** April 25, 2018  
+**Version:** 1.1B  
+**Author:** Katherine White  
+**Reviewer:** (N/A)  
 
 ## 1 Introduction
 
@@ -76,50 +76,90 @@ _Figure 3. Bypass Paths_
 
 ### 3.2 Control Signals
 
-- Port X
+#### 3.2.1 Port X
 
-  - ALU_OUT_SELX =  
-(IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})  
-&& (IR_EX.Ra != 31)  
-&& (IR_EX.Ra == IR_MA.Rc) && (IR_MA.Opcode in {OP, OPC})  
+- ALU_OUT_SELX
 
-  - NPC_MA_SELX =  
-(IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})  
-&& (IR_EX.Ra != 31)  
-&& (IR_EX.Ra == IR_MA.Rc) && (IR_MA.Opcode in {JMP, B})  
+```
+ALU_OUT_SELX =
+(IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+&& (IR_EX.Ra != 31) && (IR_EX.Ra == IR_MA.Rc)
+&& (IR_MA.Opcode in {OP, OPC})
+```
 
-  - RF_WDATA_SELX =  
-(IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})  
-&& (IR_EX.Ra != 31)  
-&& (!ALU_OUT_SELX && !NPC_MA_SELX)  
-&& (IR_EX.Ra == IR_WB.Rc)  
-&& (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR})  
+  - NPC_MA_SELX
 
-- Port Y
+```
+NPC_MA_SELX =
+(IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+&& (IR_EX.Ra != 31) && (IR_EX.Ra == IR_MA.Rc)
+&& (IR_MA.Opcode in {JMP, B})
+```
 
-  - ALU_OUT_SELY =  
-((IR_EX.Opcode in {OP}) && (IR_EX.Rb != 31)
-&& (IR_EX.Rb == IR_MA.Rc) && (IR_MA.OpCode in {OP, OPC}))  
-|| ((IR_EX.Opcode in {ST, IOW}) && (IR_EX.Rc != 31)  
-&& (IR_EX.Rc == IR_MA.Rc) && (IR_MA.OpCode in {OP, OPC}))  
+  - RF_WDATA_SELX
 
-  - NPC_MA_SELY =  
-((IR_EX.Opcode in {OP}) && (IR_EX.Rb != 31)  
-&& (IR_EX.Rb == IR_MA.Rc)  
-&& (IR_MA.Opcode in {JMP, B}))  
-|| ((IR_EX.Opcode in {ST, IOW}) && (IR_EX.Rc != 31)  
-&& (IR_EX.Rc == IR_MA.Rc)  
-&& (IR_MA.Opcode in {JMP, B}))  
+```
+RF_WDATA_SELX =
+(!ALU_OUT_SELX && !NPC_MA_SELX)
+&& (IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+&& (IR_EX.Ra != 31) && (IR_EX.Ra == IR_WB.Rc)
+&& (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR})
+```
 
-  - RF_WDATA_SELY =  
-((IR_EX.Opcode in {OP}) && (IR_EX.Rb != 31)  
-&& (!ALU_OUT_SELY && !NPC_MA_SELY)  
-&& (IR_EX.Rb == IR_WB.Rc)  
-&& (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR}))  
-|| ((IR_EX.Opcode in {ST, IOW}) && (IR_EX.Rc != 31)  
-&& (!ALU_OUT_SELY && !NPC_MA_SELY)  
-&& (IR_EX.Rc == IR_WB.Rc)  
-&& (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR}))  
+#### 3.2.2 Port Y
+
+- ALU_OUT_SELY
+
+```
+ALU_OUT_SELY =
+( /* Read Rb */
+  (IR_EX.Opcode in {OP}) && (IR_EX.Rb != 31)
+  && (IR_EX.Rb == IR_MA.Rc) && (IR_MA.OpCode in {OP, OPC})
+)
+||
+( /* Read Rc */
+  (IR_EX.Opcode in {ST, IOW}) && (IR_EX.Rc != 31)
+  && (IR_EX.Rc == IR_MA.Rc) && (IR_MA.OpCode in {OP, OPC})
+)
+```
+
+  - NPC_MA_SELY
+
+```
+NPC_MA_SELY =
+( /* Read Rb */
+  (IR_EX.Opcode in {OP}) && (IR_EX.Rb != 31)
+  && (IR_EX.Rb == IR_MA.Rc) && (IR_MA.Opcode in {JMP, B})
+)
+||
+( /* Read Rc */
+  (IR_EX.Opcode in {ST, IOW}) && (IR_EX.Rc != 31)
+  && (IR_EX.Rc == IR_MA.Rc) && (IR_MA.Opcode in {JMP, B})
+)
+```
+
+  - RF_WDATA_SELY
+
+```
+RF_WDATA_SELY =
+(
+  !ALU_OUT_SELY && !NPC_MA_SELY
+)
+&&
+(
+  ( /* Read Rb */
+    (IR_EX.Opcode in {OP})
+    && (IR_EX.Rb != 31) && (IR_EX.Rb == IR_WB.Rc)
+    && (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR})
+  )
+  ||
+  ( /* Read Rc */
+    (IR_EX.Opcode in {ST, IOW})
+    && (IR_EX.Rc != 31) && (IR_EX.Rc == IR_WB.Rc)
+    && (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR})
+  )
+)
+```
 
 ## 4 Pipeline Stall
 
@@ -127,16 +167,26 @@ Stall the pipeline when one of the source registers of the instruction at RR-Sta
 
 ### 4.1 Control Signals
 
+```
 Stall =
-((IR_RR.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})  // Read Ra
-&& (IR_RR.Ra != 31)
-&& (IR_RR.Ra == IR_EX.Rc) && (IR_EX.Opcode in {LD, LDR, IOR}))
-|| ((IR_RR.Opcode in {OP})  // Read Rb
-&& (IR_RR.Rb != 31)
-&& (IR_RR.Rb == IR_EX.Rc) && (IR_EX.OpCode in {LD, LDR, IOR}))
-|| ((IR_RR.Opcode in {ST, IOW})  // Read Rc
-&& (IR_RR.Rc != 31)
-&& (IR_RR.Rc == IR_EX.Rc) && (IR_EX.Opcode in {LD, LDR, IOR}))
+( /* Read Ra */
+  (IR_RR.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+  && (IR_RR.Ra != 31) && (IR_RR.Ra == IR_EX.Rc)
+  && (IR_EX.Opcode in {LD, LDR, IOR})
+)
+||
+( /* Read Rb */
+  (IR_RR.Opcode in {OP})
+  && (IR_RR.Rb != 31) && (IR_RR.Rb == IR_EX.Rc)
+  && (IR_EX.OpCode in {LD, LDR, IOR})
+)
+||
+( /* Read Rc */
+  (IR_RR.Opcode in {ST, IOW})
+  && (IR_RR.Rc != 31) && (IR_RR.Rc == IR_EX.Rc)
+  && (IR_EX.Opcode in {LD, LDR, IOR})
+)
+```
 
 **NOTE:** Stall the pipeline as early as possible to disable less components.
 
