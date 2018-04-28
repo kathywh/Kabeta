@@ -1,7 +1,7 @@
 # Kabeta Processor Design
 
-**Date:** April 25, 2018  
-**Version:** 1.1B  
+**Date:** April 28, 2018  
+**Version:** 1.1C  
 **Author:** Katherine White  
 **Reviewer:** (N/A)  
 
