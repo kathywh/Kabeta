@@ -385,3 +385,4 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | 1.1     | 4/15/2018 | Katherine White | (N/A)    | Add decoder signaling table.                                 |
 | 1.1A    | 4/17/2018 | Katherine White | (N/A)    | Add branch and exception signaling table.                    |
 | 1.1B    | 4/25/2018 | Katherine White | (N/A)    | Add interrupt request and acknowledge timing diagram.        |
+| 1.1C    | 4/28/2018 | Katherine White | (N/A)    | Reformat this document in Markdown format.                   |
