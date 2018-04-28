@@ -20,14 +20,14 @@ Kabeta is a RISC processor based on the β Processor of MIT. Its main features a
 
 ### 1.2	Components
 
-![](Design Diagrams - General Block Diagram.png)
+![](GeneralBlockDiagram.png)
 _Figure 1. General Block Diagram_
 
 Kabeta mainly consists of Register File, Arithmetic and Logic Unit, Instruction Registers and Decoders, Branch and Exception Control, Address Adders, Program Counter, on-chip Data Memory and Instruction Memory.
 
 ### 1.3	Block Diagram
 
-![](Design Diagrams - Detailed Block Diagram.png)
+![](DetailedBlockDiagram.png)
 _Figure 2. Detailed Block Diagram_
 
 **NOTES:**
@@ -74,7 +74,7 @@ IO[Reg[Ra] + Sext(Offset)] ← Reg[Rc]
 
 ### 3.1 Bypass Paths
 
-![](Design Diagrams - Bypass Paths.png)
+![](BypassPaths.png)
 _Figure 3. Bypass Paths_
 
 ### 3.2 Control Signals
@@ -333,8 +333,8 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 
 | Version | Date      | Editor   | Reviewer | Comment                                                      |
 | ------- | --------- | -------- | -------- | ------------------------------------------------------------ |
-| 1.0     | 4/11/2018 | K. White | (N/A)    | Initial version.                                             |
-| 1.0B    | 4/12/2018 | K. White | Dao Cat  | 1) Elaborate top level block diagram.  2) Replace NOP with BNE(R31,0,XP).   3) Put detailed block diagram into this document. |
-| 1.1     | 4/15/2018 | K. White | (N/A)    | Add decoder signaling table.                                 |
-| 1.1A    | 4/17/2018 | K. White | (N/A)    | Add branch and exception signaling table.                    |
-| 1.1B    | 4/25/2018 | K. White | (N/A)    | Add interrupt request and acknowledge timing diagram.        |
+| 1.0     | 4/11/2018 | Katherine White | (N/A)    | Initial version.                                             |
+| 1.0B    | 4/12/2018 | Katherine White | Dao Cat  | 1) Elaborate top level block diagram.  2) Replace NOP with BNE(R31,0,XP).   3) Put detailed block diagram into this document. |
+| 1.1     | 4/15/2018 | Katherine White | (N/A)    | Add decoder signaling table.                                 |
+| 1.1A    | 4/17/2018 | Katherine White | (N/A)    | Add branch and exception signaling table.                    |
+| 1.1B    | 4/25/2018 | Katherine White | (N/A)    | Add interrupt request and acknowledge timing diagram.        |
