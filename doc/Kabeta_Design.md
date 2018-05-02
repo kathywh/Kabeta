@@ -323,17 +323,17 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 **NOTES:**
 
 1. BrCond:
-  - NV – Do not take
-  - AL – Take unconditionally
-  - EQ – Take if equal
-  - NE – Take if inequal
+   - NV – Do not take
+   - AL – Take unconditionally
+   - EQ – Take if equal
+   - NE – Take if inequal
 
 2. RegDataWSel:
-  - PC – PC+4
-  - ALU – ALU Data Buffer
-  - MEM – Data Memory
-  - IO – IO Registers
-  - IM – Instruction Memory
+   - PC – PC+4
+   - ALU – ALU Data Buffer
+   - MEM – Data Memory
+   - IO – IO Registers
+   - IM – Instruction Memory
 
 ### 7.2 Branch and Exception Control Signaling
 
@@ -360,14 +360,14 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 **NOTES:**
 
 1. PC_Sel
-  - EXCA – Exception Address
-  - PCNX – PC+4
-  - PCLIT – PC+4+4*Sext(Literal)
-  - REGA – Register Ra
+   - EXCA – Exception Address
+   - PCNX – PC+4
+   - PCLIT – PC+4+4*Sext(Literal)
+   - REGA – Register Ra
 
 2. ExcAck*
-  - 0 – Select NOP
-  - 1 – Select BNE
+   - 0 – Select NOP
+   - 1 – Select BNE
 
 3. BrTaken =  
 (BrCond == AL)  
