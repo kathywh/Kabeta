@@ -204,7 +204,7 @@ When writing programs, put an instruction independent of the data following the 
 
 ### 5.1 Reference
 
-Refer to Section 6. Extensions for Exception Handling in [MIT β ProcessorSpecification](MIT6_004s09_lab_beta_doc.pdf).
+Refer to Section 6. Extensions for Exception Handling in [MIT β Processor Specification](MIT6_004s09_lab_beta_doc.pdf).
 
 ### 5.2 Supported Exceptions
 
@@ -250,13 +250,13 @@ _Figure 4. Interrupt Request and Acknowledge Timing Diagram_
 
 ### 5.5 Implementation
 
-When BNE(R31,0,XP) instruction arrives at WB-Stage, write register XP = PC_WB, which is the instruction address plus 4.
+When BNE(R31,0,XP) instruction arrives at WB-Stage, write register XP <= PC_WB, which is the instruction address plus 4.
 
 #### 5.5.1 Reset Processing
 
 - Reset all Instruction Registers (i.e. load NOPs).
 - Reset all Program Counters (i.e. load 32’h0000_0000 address).
-- Set ExcAddr = reset exception vector, and select ExcAddr as next PC value.
+- Set ExcAddr <= reset exception vector, and select ExcAddr as next PC value.
 
 **NOTE:** Synchronization of external RST signal is necessary.
 
