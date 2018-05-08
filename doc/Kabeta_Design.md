@@ -7,7 +7,7 @@
 
 ## 1 Introduction
 
-### 1.1	Description
+### 1.1 Description
 
 Kabeta is a RISC processor based on the β Processor of MIT. Its main features and limitations include:
 - Typical 5-stage Pipeline with Bypass
@@ -15,14 +15,14 @@ Kabeta is a RISC processor based on the β Processor of MIT. Its main features a
 - Separate Instruction, Data and I/O Address Spaces
 - Synchronous Single-cycle Access on-chip Instruction and Data RAMs (for the sake of implementation in FPGA)
 
-### 1.2	Components
+### 1.2 Components
 
 ![](General_Block_Diagram.png)
 _Figure 1. General Block Diagram_
 
 Kabeta mainly consists of Register File, Arithmetic and Logic Unit, Instruction Registers and Decoders, Branch and Exception Control, Address Adders, Program Counter, on-chip Data Memory and Instruction Memory.
 
-### 1.3	Block Diagram
+### 1.3 Block Diagram
 
 ![](Detailed_Block_Diagram.png)
 _Figure 2. Detailed Block Diagram_
@@ -31,7 +31,7 @@ _Figure 2. Detailed Block Diagram_
 - ALU in the diagram should contain an output register.
 - Read-while-write behavior of Register File should be write-through, i.e. the output data should be the data to be written.
 
-### 1.4	References
+### 1.4 References
 
 - [MIT β Processor Specification](MIT6_004s09_lab_beta_doc.pdf)
 - [MIT β Processor Summary](MIT6_004s09_lab_beta_summary.pdf)
