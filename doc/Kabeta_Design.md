@@ -337,7 +337,7 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 
 ### 7.2 Branch and Exception Control Signaling
 
-| Exc.  Req.  &&  Cond. | RST           | ExcReqMA       | ExcReqEX       | ExcReqRR  && !BrTaken  && !Stall [3] | ExcReqIF  && !BrTaken  && !Stall [3] | IRQ  && (~PC_IF.S) | BrCond [4]                                                    | Stall [4]   | (None Assert) |
+| Exc.  Req.  &&  Cond. | RST           | ExcReqMA       | ExcReqEX       | ExcReqRR  && !BrTaken  && !Stall [3] | ExcReqIF  && !BrTaken  && !Stall [3] | IRQ  && (~PC_IF.S) | BrTaken [4]                                                   | Stall [4]   | (None Assert) |
 | --------------------- | ------------- | -------------- | -------------- | -------------------------------- | -------------------------------- | ------------------ | ------------------------------------------------------------ | ---------- | ------------- |
 | Exc.  Code            | (N/A)         | ExcCodeMA      | ExcCodeEX      | ExcCodeRR                        | ExcCodeIF                        | (N/A)              | (N/A)                                                        | (N/A)      |               |
 | Priority              | 0 (Highest)   | 1              | 2              | 3                                | 4                                | 5                  | 6 (Lowest)                                                   | 6 (Lowest) |               |
