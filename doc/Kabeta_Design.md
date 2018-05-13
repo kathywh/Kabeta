@@ -1,9 +1,9 @@
 # Kabeta Processor Design
 
-**Date:** April 28, 2018  
-**Version:** 1.1C  
-**Author:** Katherine White  
-**Reviewer:** (N/A)  
+**Date:** May 13, 2018  
+**Version:** 1.1D  
+**Author:** Kathy  
+**Reviewer:** Dao  
 
 ## 1 Introduction
 
@@ -296,25 +296,25 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 
 ### 7.1 Instruction Decoder Signaling
 
-| Stage | Signal             | OP     | OPC    | LD   | IOR  | ST   | IOW  | JMP  | BEQ  | BNE  | LDR  | SVC  |
-| ----- | ------------------ | ------ | ------ | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
-| IF    | (N/A)              |        |        |      |      |      |      |      |      |      |      |      |
-| RR    | RegAddrYSel        | RB     | X      | X    | X    | RC   | RC   | X    | X    | X    | X    | X    |
-|       | RegRdEnX           | 1      | 1      | 1    | 1    | 1    | 1    | 1    | 1    | 1    | 0    | 0    |
-|       | RegRdEnY           | 1      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
-| EX    | BrCond [1]         | NV     | NV     | NV   | NV   | NV   | NV   | AL   | EQ   | NE   | NV   | NV   |
-|       | InstrnMemAddrBufEn | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    |
-|       | ALU_DataYSel       | REG    | LIT    | LIT  | LIT  | LIT  | LIT  | X    | X    | X    | X    | X    |
-|       | MemDataBufEn       | 0      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
-|       | ALU_Op             | ALU_Op | ALU_Op | ADD  | ADD  | ADD  | ADD  | X    | X    | X    | X    | X    |
-|       | ALU_En             | 1      | 1      | 1    | 1    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
-| MA    | InstrnMemRdEn      | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    |
-|       | MemIO_Sel          | X      | X      | MEM  | IO   | MEM  | IO   | X    | X    | X    | X    | X    |
-|       | MemIO_Ren          | 0      | 0      | 1    | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
-|       | MemIO_Wen          | 0      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
-|       | ALU_DataBufEn      | 1      | 1      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
-| WB    | RegDataWSel [2]    | ALU    | ALU    | ALU  | ALU  | X    | X    | PC   | PC   | PC   | IM   | X    |
-|       | RegWrEn            | 1      | 1      | 1    | 1    | 0    | 0    | 1    | 1    | 1    | 1    | 0    |
+| Stage | Signal            | OP     | OPC    | LD   | IOR  | ST   | IOW  | JMP  | BEQ  | BNE  | LDR  | SVC  |
+| ----- | ----------------- | ------ | ------ | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| IF    | (N/A)             |        |        |      |      |      |      |      |      |      |      |      |
+| RR    | RegAddrYSel       | RB     | X      | X    | X    | RC   | RC   | X    | X    | X    | X    | X    |
+|       | RegRdEnX          | 1      | 1      | 1    | 1    | 1    | 1    | 1    | 1    | 1    | 0    | 0    |
+|       | RegRdEnY          | 1      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
+| EX    | BrCond [1]        | NV     | NV     | NV   | NV   | NV   | NV   | AL   | EQ   | NE   | NV   | NV   |
+|       | InstrMemAddrBufEn | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    |
+|       | ALU_DataYSel [2]  | REG    | LIT    | LIT  | LIT  | LIT  | LIT  | X    | X    | X    | X    | X    |
+|       | MemDataBufEn      | 0      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
+|       | ALU_Op            | ALU_Op | ALU_Op | ADD  | ADD  | ADD  | ADD  | X    | X    | X    | X    | X    |
+|       | ALU_En            | 1      | 1      | 1    | 1    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
+| MA    | InstrMemRdEn      | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    |
+|       | MemIO_Sel         | X      | X      | MEM  | IO   | MEM  | IO   | X    | X    | X    | X    | X    |
+|       | MemIO_Ren         | 0      | 0      | 1    | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | MemIO_Wen         | 0      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
+|       | ALU_DataBufEn     | 1      | 1      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+| WB    | RegDataWSel [3]   | ALU    | ALU    | MEM  | IO   | X    | X    | PC   | PC   | PC   | IM   | X    |
+|       | RegWen            | 1      | 1      | 1    | 1    | 0    | 0    | 1    | 1    | 1    | 1    | 0    |
 
 **NOTES:**
 
@@ -327,8 +327,10 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
    - AL – Take unconditionally
    - EQ – Take if equal
    - NE – Take if inequal
-
-2. RegDataWSel:
+2. ALU_DataYSel
+   - REG - Register file
+   - LIT - Extended literal
+3. RegDataWSel:
    - PC – PC+4
    - ALU – ALU Data Buffer
    - MEM – Data Memory
@@ -378,11 +380,12 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 
 ## Appendix A: Document Version History
 
-| Version | Date      | Editor   | Reviewer | Comment                                                      |
-| ------- | --------- | -------- | -------- | ------------------------------------------------------------ |
-| 1.0     | 4/11/2018 | Katherine White | (N/A)    | Initial version.                                             |
-| 1.0B    | 4/12/2018 | Katherine White | Dao Cat  | 1) Elaborate top level block diagram.  2) Replace NOP with BNE(R31,0,XP).   3) Put detailed block diagram into this document. |
-| 1.1     | 4/15/2018 | Katherine White | (N/A)    | Add decoder signaling table.                                 |
-| 1.1A    | 4/17/2018 | Katherine White | (N/A)    | Add branch and exception signaling table.                    |
-| 1.1B    | 4/25/2018 | Katherine White | (N/A)    | Add interrupt request and acknowledge timing diagram.        |
-| 1.1C    | 4/28/2018 | Katherine White | (N/A)    | Reformat this document in Markdown format.                   |
+| Version | Date      | Editor | Reviewer | Comment                                                      |
+| ------- | --------- | ------ | -------- | ------------------------------------------------------------ |
+| 1.0     | 4/11/2018 | Kathy  | (N/A)    | Initial version.                                             |
+| 1.0B    | 4/12/2018 | Kathy  | Dao      | 1) Elaborate top level block diagram.  2) Replace NOP with BNE(R31,0,XP).   3) Put detailed block diagram into this document. |
+| 1.1     | 4/15/2018 | Kathy  | (N/A)    | Add decoder signaling table.                                 |
+| 1.1A    | 4/17/2018 | Kathy  | (N/A)    | Add branch and exception signaling table.                    |
+| 1.1B    | 4/25/2018 | Kathy  | (N/A)    | Add interrupt request and acknowledge timing diagram.        |
+| 1.1C    | 4/28/2018 | Kathy  | (N/A)    | Reformat this document in Markdown format.                   |
+| 1.1D    | 5/13/2018 | Kathy  | Dao      | Correct decoder signaling table.                             |
