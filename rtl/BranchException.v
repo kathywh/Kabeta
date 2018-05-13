@@ -3,40 +3,15 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/01/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/01/2018                                                    */
+/*  Edited on:  05/13/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Branch and exception controller                                       */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/01/2018  Kathy       Unit created.                                 */
+/*      05/13/2018  Kathy       Move some definitions into common unit.       */
 /******************************************************************************/
-
-// PC Selection
-`define PCS_EXCA  2'b00   // Exception Address
-`define PCS_PCNX  2'b01   // PC+4
-`define PCS_PCLIT 2'b10   // PC+4+4*Sext(Literal)
-`define PCS_REGA  2'b11   // Register Ra
-
-// Exception Vector
-`define EV_RST    32'h8000_0000   // Reset
-`define EV_SVC    32'h8000_0004   // System Service
-`define EV_ILL    32'h8000_0008   // Illegal Instruction
-`define EV_INV_OP 32'h8000_000C   // Invalid Operation
-`define EV_INV_DA 32'h8000_0010   // Invalid D-Address
-`define EV_INV_IA 32'h8000_0014   // Invalid I-Address
-`define EV_INT_0  32'h8000_0018   // Interrupt 0
-`define EV_INT_1  32'h8000_001C   // Interrupt 1
-
-// Branch Condition
-`define BRC_NV 2'b00   // Do not take
-`define BRC_AL 2'b01   // Take unconditionally
-`define BRC_EQ 2'b10   // Take if equal
-`define BRC_NE 2'b11   // Take if inequal
-
-// 1-bit Boolean Constant
-`define TRUE  1'b1
-`define FALSE 1'b0
 
 module BranchException
 (
