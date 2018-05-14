@@ -16,13 +16,17 @@
 `define TRUE  1'b1
 `define FALSE 1'b0
 
+// FPGA Device Family Selection
+`define ALT_EP4CE
+`undef  XIL_XC6SLX
+
 // Instruction Address Range
 // NOTE: This number must be UNSIGNED
-`define INSTR_ADDR_LIMIT  31'h0000_0400      /* 1K Bytes */
+`define INSTR_ADDR_LIMIT  31'h0000_0400      /* 1K Bytes (256 Words) */
 
 // Data Address Range
 // NOTE: This number must be UNSIGNED
-`define DATA_ADDR_LIMIT   32'h0000_1000      /* 4K Bytes */
+`define DATA_ADDR_LIMIT   32'h0000_1000      /* 4K Bytes (1K Words) */
 
 // Exception Vectors
 `define EV_RST    32'h8000_0000   // Reset
