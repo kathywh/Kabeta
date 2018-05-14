@@ -51,7 +51,7 @@ module InstrDecoder_IF
 
   // Exception Process
   assign ExcReq_IF = (InstrAddr_IF > `INSTR_ADDR_LIMIT);
-  assign ExcCode_IF = ExcReq_IF ? EC_INV_IA : 3'b000;
+  assign ExcCode_IF = ExcReq_IF ? `EC_INV_IA : 3'b000;
   
 endmodule
 
@@ -157,7 +157,7 @@ module InstrDecoder_EX
 );
 
   // Sign-extended Literal
-  assign ExtLiteral = {16{InstrWord_EX[15]}, InstrWord_EX[15:0]};
+  assign ExtLiteral = {{16{InstrWord_EX[15]}}, InstrWord_EX[15:0]};
 
   // Control Signals
   assign InstrMemAddrBufEn = `IS_INSTR_LDR(InstrWord_EX);
@@ -177,9 +177,9 @@ module InstrDecoder_EX
 
   always @(*)
     begin
-      if(`IS_INSTR_OP(InstrWord_EX))
+      if(`IS_ICLS_OP(InstrWord_EX))
         ALU_DataYSel <= `ALU_Y_SEL_REG;
-      else if(`IS_INSTR_OPC(InstrWord_EX)
+      else if(`IS_ICLS_OPC(InstrWord_EX)
               || `IS_INSTR_LD(InstrWord_EX) || `IS_INSTR_ST(InstrWord_EX)
               || `IS_INSTR_IOR(InstrWord_EX) || `IS_INSTR_IOW(InstrWord_EX))
         ALU_DataYSel <= `ALU_Y_SEL_LIT;
@@ -245,7 +245,7 @@ module InstrDecoder_MA
 
   // Control Signals
   assign InstrMemRdEn = `IS_INSTR_LDR(InstrWord_MA);
-  assign ALU_DataBufEn = `IS_INSTR_OP(InstrWord_MA) | `IS_INSTR_OPC(InstrWord_MA);
+  assign ALU_DataBufEn = `IS_ICLS_OP(InstrWord_MA) | `IS_ICLS_OPC(InstrWord_MA);
 
   always @(*)
     begin
@@ -261,7 +261,7 @@ module InstrDecoder_MA
           MemIO_Ren <= `FALSE;
           MemIO_Wen <= `TRUE;
         end
-      else if(`IS_INSTR_IOR(InstrWord_MA)
+      else if(`IS_INSTR_IOR(InstrWord_MA))
         begin
           MemIO_Sel <= `MIO_SEL_IO;
           MemIO_Ren <= `TRUE;
@@ -300,12 +300,12 @@ module InstrDecoder_WB
 );
 
   // Register Index
-  assign Rc = InstrWord_RR[25:21];
+  assign Rc = InstrWord_WB[25:21];
 
   // Control Signals
   always @(*)
     begin
-      if(`IS_INSTR_OP(InstrWord_WB) || `IS_INSTR_OPC(InstrWord_WB))
+      if(`IS_ICLS_OP(InstrWord_WB) || `IS_ICLS_OPC(InstrWord_WB))
         begin
           RegDataWSel <= `RF_W_SEL_ALU;
           RegWen <= `TRUE;
