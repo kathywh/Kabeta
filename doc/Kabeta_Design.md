@@ -18,14 +18,14 @@ Kabeta is a RISC processor based on the β Processor of MIT. Its main features a
 ### 1.2 Components
 
 ![](General_Block_Diagram.png)
-_Figure 1. General Block Diagram_
+_Figure 1. [General Block Diagram](General_Block_Diagram.png)_
 
 Kabeta mainly consists of Register File, Arithmetic and Logic Unit, Instruction Registers and Decoders, Branch and Exception Control, Address Adders, Program Counter, on-chip Data Memory and Instruction Memory.
 
 ### 1.3 Block Diagram
 
 ![](Detailed_Block_Diagram.png)
-_Figure 2. Detailed Block Diagram_
+_Figure 2. [Detailed Block Diagram](Detailed_Block_Diagram.png)_
 
 **NOTES:**
 - ALU in the diagram should contain an output register.
@@ -72,7 +72,7 @@ IO[Reg[Ra] + Sext(Offset)] ← Reg[Rc]
 ### 3.1 Bypass Paths
 
 ![](Bypass_Paths.png)
-_Figure 3. Bypass Paths_
+_Figure 3. [Bypass Paths](Bypass_Paths.png)_
 
 ### 3.2 Control Signals
 
@@ -246,7 +246,7 @@ Refer to Section 6. Extensions for Exception Handling in [MIT β Processor Speci
 **NOTE:** The above signals (IRQ, IID and IACK) cross clock domains.
 
 ![](Interrupt_Req_Ack_Timing_Diagram.png)
-_Figure 4. Interrupt Request and Acknowledge Timing Diagram_
+_Figure 4. [Interrupt Request and Acknowledge Timing Diagram](Interrupt_Req_Ack_Timing_Diagram.png)_
 
 ### 5.5 Implementation
 
