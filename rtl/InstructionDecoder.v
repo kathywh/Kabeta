@@ -41,7 +41,7 @@
 /******************************************************************************/
 /*                     Instruction Decoder of IF Stage                        */
 /******************************************************************************/
-module InstrDecoder_IF
+module InstructionDecoder_IF
 (
   input [31:0] InstrWord_IF,
   input [30:0] InstrAddr_IF,
@@ -59,7 +59,7 @@ endmodule
 /******************************************************************************/
 /*                     Instruction Decoder of RR Stage                        */
 /******************************************************************************/
-module InstrDecoder_RR
+module InstructionDecoder_RR
 (
   input [31:0] InstrWord_RR,
   input Supervisor,
@@ -142,7 +142,7 @@ endmodule
 /******************************************************************************/
 /*                     Instruction Decoder of EX Stage                        */
 /******************************************************************************/
-module InstrDecoder_EX
+module InstructionDecoder_EX
 (
   input [31:0] InstrWord_EX,
   output [31:0] ExtLiteral,
@@ -231,7 +231,7 @@ endmodule
 /******************************************************************************/
 /*                     Instruction Decoder of MA Stage                        */
 /******************************************************************************/
-module InstrDecoder_MA
+module InstructionDecoder_MA
 (
   input [31:0] InstrWord_MA,
   input [31:0] DataAddress,
@@ -291,7 +291,7 @@ endmodule
 /******************************************************************************/
 /*                     Instruction Decoder of WB Stage                        */
 /******************************************************************************/
-module InstrDecoder_WB
+module InstructionDecoder_WB
 (
   input [31:0] InstrWord_WB,
   output [4:0] Rc,

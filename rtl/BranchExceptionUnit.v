@@ -1,5 +1,5 @@
 /******************************************************************************/
-/*  Unit Name:  BranchException                                               */
+/*  Unit Name:  BranchExceptionUnit                                               */
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/01/2018                                                    */
 /*  Edited by:  Kathy                                                         */
@@ -13,7 +13,7 @@
 /*      05/13/2018  Kathy       Move some definitions into common unit.       */
 /******************************************************************************/
 
-module BranchException
+module BranchExceptionUnit
 (
   input SysReset, ExcReqIF, ExcReqRR, ExcReqEX, ExcReqMA,
   input [2:0] ExcCodeIF, ExcCodeRR, ExcCodeEX, ExcCodeMA,
