@@ -3,18 +3,20 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/13/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/13/2018                                                    */
+/*  Edited on:  05/15/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Common definitions of macros.                                         */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/13/2018  Kathy       Unit created.                                 */
+/*      05/15/2018  Kathy       Add more definitions.                         */
 /******************************************************************************/
 
-// 1-bit Boolean Constant
-`define TRUE  1'b1
-`define FALSE 1'b0
+
+/******************************************************************************/
+/*                            Configurations                                  */
+/******************************************************************************/
 
 // FPGA Device Family Selection
 `define ALT_EP4CE
@@ -27,6 +29,14 @@
 // Data Address Range
 // NOTE: This number must be UNSIGNED
 `define DATA_ADDR_LIMIT   32'h0000_1000      /* 4K Bytes (1K Words) */
+
+/******************************************************************************/
+/*                              Definitions                                   */
+/******************************************************************************/
+
+// 1-bit Boolean Constant
+`define TRUE  1'b1
+`define FALSE 1'b0
 
 // Exception Vectors
 `define EV_RST    32'h8000_0000   // Reset
@@ -60,6 +70,9 @@
 `define RF_W_SEL_MEM  3'b010     /* Data Memory */
 `define RF_W_SEL_IO   3'b011     /* IO Registers */
 `define RF_W_SEL_IM   3'b100     /* Instruction Memory */
+
+// Zero Register Index
+`define IDX_ZR  5'd31      /* R31 always reads zero and the writes are ignored  */
 
 // ALU Opcode
 `define ALU_X     4'bxxxx      /* Don't Care */
@@ -101,3 +114,9 @@
 `define PCS_PCNX  2'b01   // PC+4
 `define PCS_PCLIT 2'b10   // PC+4+4*Sext(Literal)
 `define PCS_REGA  2'b11   // Register Ra
+
+// Pipeline Bypass Selection
+`define BPS_RF    2'b00  // Registser File Data
+`define BPS_ALU   2'b01  // ALU Output
+`define BPS_PCMA  2'b10  // PC of MA-Stage
+`define BPS_RW    2'b11  // Data to be Written to Register File
