@@ -67,7 +67,7 @@ IO[Reg[Ra] + Sext(Offset)] ← Reg[Rc]
 
 **NOTE:** This is a privileged instruction.
 
-## 3 Bypass
+## 3 Pipeline Bypass
 
 ### 3.1 Bypass Paths
 
@@ -163,28 +163,28 @@ RF_WDATA_SELY =
 
 ## 4 Pipeline Stall
 
-Stall the pipeline when one of the source registers of the instruction at RR-Stage coincides with the target register of the load/read instruction at EX-Stage.
+Stall the pipeline when one of the source registers of the instruction at EX-Stage coincides with the target register of the load/read instruction at MA-Stage.
 
 ### 4.1 Control Signals
 
 ```
 Stall =
 ( /* Read Ra */
-  (IR_RR.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
-  && (IR_RR.Ra != 31) && (IR_RR.Ra == IR_EX.Rc)
-  && (IR_EX.Opcode in {LD, LDR, IOR})
+  (IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+  && (IR_EX.Ra != 31) && (IR_EX.Ra == IR_MA.Rc)
+  && (IR_MA.Opcode in {LD, LDR, IOR})
 )
 ||
 ( /* Read Rb */
-  (IR_RR.Opcode in {OP})
-  && (IR_RR.Rb != 31) && (IR_RR.Rb == IR_EX.Rc)
-  && (IR_EX.OpCode in {LD, LDR, IOR})
+  (IR_EX.Opcode in {OP})
+  && (IR_EX.Rb != 31) && (IR_EX.Rb == IR_MA.Rc)
+  && (IR_MA.OpCode in {LD, LDR, IOR})
 )
 ||
 ( /* Read Rc */
-  (IR_RR.Opcode in {ST, IOW})
-  && (IR_RR.Rc != 31) && (IR_RR.Rc == IR_EX.Rc)
-  && (IR_EX.Opcode in {LD, LDR, IOR})
+  (IR_EX.Opcode in {ST, IOW})
+  && (IR_EX.Rc != 31) && (IR_EX.Rc == IR_MA.Rc)
+  && (IR_MA.Opcode in {LD, LDR, IOR})
 )
 ```
 
@@ -192,7 +192,7 @@ Stall =
 
 ### 4.2 Implementation
 
-Inject NOP instruction into EX-stage and disable Register File read, PC_RR, IR_RR, PC_IF and Instruction Memory.
+Inject NOP instruction into MA-stage and disable Register File read, PC_RR, IR_RR, PC_IF, PC_EX, IR_EX and Instruction Memory.
 
 **NOTE:** This implementation is a bit different from MIT β Processor.
 
@@ -347,9 +347,9 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | **PC_Sel [1]**         | EXCA          | EXCA           | EXCA           | EXCA                             | EXCA                             | EXCA               | REGA (AL), PCLIT ((EQ and RaZero) or (NE and !RaZero)) | X          | PCNX          |
 | **FlushIF**           | 0             | 1              | 1              | 1                                | 1                                | 1                  | 1                                                            | 0          | 0             |
 | **ExcAckIF [2]**       | 0             | 0              | 0              | 0                                | 1                                | 0                  | 0                                                            | 0          | 0             |
-| **FlushRR**           | 0             | 1              | 1              | 1                                | 0                                | 1                  | 1                                                            | 1          | 0             |
+| **FlushRR**           | 0             | 1              | 1              | 1                                | 0                                | 1                  | 1                                                            | 0         | 0             |
 | **ExcAckRR [2]**       | 0             | 0              | 0              | 1                                | 0                                | 0                  | 0                                                            | 0          | 0             |
-| **FlushEX**           | 0             | 1              | 1              | 0                                | 0                                | 1                  | 0                                                            | 0          | 0             |
+| **FlushEX**           | 0             | 1              | 1              | 0                                | 0                                | 1                  | 0                                                            | 1         | 0             |
 | **ExcAckEX [2]**       | 0             | 0              | 1              | 0                                | 0                                | 1                  | 0                                                            | 0          | 0             |
 | **FlushMA**           | 0             | 1              | 0              | 0                                | 0                                | 0                  | 0                                                            | 0          | 0             |
 | **ExcAckMA [2]**       | 0             | 1              | 0              | 0                                | 0                                | 0                  | 0                                                            | 0          | 0             |

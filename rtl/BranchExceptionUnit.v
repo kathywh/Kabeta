@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/01/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/13/2018                                                    */
+/*  Edited on:  05/15/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Branch and exception controller                                       */
@@ -11,6 +11,7 @@
 /*  Revisions:                                                                */
 /*      05/01/2018  Kathy       Unit created.                                 */
 /*      05/13/2018  Kathy       Move some definitions into common unit.       */
+/*      05/15/2018  Kathy       Make pipeline stall one stage later.          */
 /******************************************************************************/
 
 module BranchExceptionUnit
@@ -143,9 +144,9 @@ module BranchExceptionUnit
           PC_Sel <= `PCS_PCNX;
           FlushIF  <= `FALSE;
           ExcAckIF <= `FALSE;
-          FlushRR  <= `TRUE;
+          FlushRR  <= `FALSE;
           ExcAckRR <= `FALSE;
-          FlushEX  <= `FALSE;
+          FlushEX  <= `TRUE;
           ExcAckEX <= `FALSE;
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
