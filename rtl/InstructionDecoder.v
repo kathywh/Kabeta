@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/13/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/15/2018                                                    */
+/*  Edited on:  05/16/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Instruction decoders for each stage.                                  */
@@ -11,7 +11,8 @@
 /*  Revisions:                                                                */
 /*      05/13/2018  Kathy       Unit created.                                 */
 /*      05/15/2018  Kathy       1) Merge into one module.                     */
-/*                              2) Add bypass and stall function.             */
+/*      05/16/2018  Kathy       1) Add bypass and stall function.             */
+/*                              2) Change Mem/IO control signals.             */
 /******************************************************************************/
 
 
@@ -47,7 +48,7 @@ module InstructionDecoder
   output ExcReq_IF,
 
   input [31:0] InstrWord_RR,
-  input Supervisor,
+  input S_Mode_RR,
   output [4:0] Ra_RR, Rb_RR, Rc_RR,
   output reg RegAddrYSel,
   output reg RegRdEnX, RegRdEnY,
@@ -69,8 +70,8 @@ module InstructionDecoder
   input [31:0] DataAddress,
   input [30:0] IMemAddress,
   output InstrMemRdEn,
-  output reg MemIO_Sel,
-  output reg MemIO_Ren, MemIO_Wen,
+  output reg Mem_Ren, Mem_Wen,
+  output reg IO_Ren, IO_Wen,
   output ALU_DataBufEn,
   output reg [2:0] ExcCode_MA,
   output reg ExcReq_MA,
@@ -142,7 +143,7 @@ module InstructionDecoder
   assign UndefPrivOpcode = (InstrWord_RR[31:29] == 3'b000) 
                            | ((InstrWord_RR[31:29] == 3'b001) & (InstrWord_RR[28:27] != 2'b00));
   /* privileged opcodes in User Mode */
-  assign PrivOpcodeInUserMode = ~Supervisor && `IS_ICLS_PRIV(InstrWord_RR);
+  assign PrivOpcodeInUserMode = ~S_Mode_RR && `IS_ICLS_PRIV(InstrWord_RR);
 
   always @(*)
     begin
@@ -276,33 +277,38 @@ module InstructionDecoder
     begin
       if(Is_LD_MA)
         begin
-          MemIO_Sel <= `MIO_SEL_MEM;
-          MemIO_Ren <= `TRUE;
-          MemIO_Wen <= `FALSE;
+          Mem_Ren <= `TRUE;
+          Mem_Wen <= `FALSE;
+          IO_Ren <= `FALSE;
+          IO_Wen <= `FALSE;
         end
       else if(Is_ST_MA)
         begin
-          MemIO_Sel <= `MIO_SEL_MEM;
-          MemIO_Ren <= `FALSE;
-          MemIO_Wen <= `TRUE;
+          Mem_Ren <= `FALSE;
+          Mem_Wen <= `TRUE;
+          IO_Ren <= `FALSE;
+          IO_Wen <= `FALSE;
         end
       else if(Is_IOR_MA)
         begin
-          MemIO_Sel <= `MIO_SEL_IO;
-          MemIO_Ren <= `TRUE;
-          MemIO_Wen <= `FALSE;
+          Mem_Ren <= `FALSE;
+          Mem_Wen <= `FALSE;
+          IO_Ren <= `TRUE;
+          IO_Wen <= `FALSE;
         end        
       else if(Is_IOW_MA)
         begin
-          MemIO_Sel <= `MIO_SEL_IO;
-          MemIO_Ren <= `FALSE;
-          MemIO_Wen <= `TRUE;
+          Mem_Ren <= `FALSE;
+          Mem_Wen <= `FALSE;
+          IO_Ren <= `FALSE;
+          IO_Wen <= `TRUE;
         end
       else
         begin
-          MemIO_Sel <= `MIO_SEL_X;
-          MemIO_Ren <= `FALSE;
-          MemIO_Wen <= `FALSE;
+          Mem_Ren <= `FALSE;
+          Mem_Wen <= `FALSE;
+          IO_Ren <= `FALSE;
+          IO_Wen <= `FALSE;
         end
     end
 

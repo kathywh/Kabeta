@@ -12,14 +12,16 @@
 /*      05/01/2018  Kathy       Unit created.                                 */
 /*      05/13/2018  Kathy       Move some definitions into common unit.       */
 /*      05/15/2018  Kathy       Make pipeline stall one stage later.          */
-/*      05/16/2018  Kathy       Make stall priority higher than branch.       */
+/*      05/16/2018  Kathy       1) Make stall priority higher than branch.    */
+/*                              2) Exc. in EX-Stage is suppressed by Stall.   */
+/*                              3) Add Invalid IA exception from MA-Stage.    */
 /******************************************************************************/
 
 module BranchExceptionUnit
 (
   input SysReset, ExcReqIF, ExcReqRR, ExcReqEX, ExcReqMA,
   input [2:0] ExcCodeIF, ExcCodeRR, ExcCodeEX, ExcCodeMA,
-  input Stall, IRQ_Int, IID_Sync, Supervisor,
+  input Stall, IRQ_Int, IID_Sync, S_Mode_EX,
   input [1:0] BrCond,
   input [31:0] Ra,
   output reg [31:0] ExcAddr,
@@ -54,7 +56,7 @@ module BranchExceptionUnit
         end
       else if(ExcReqMA)     // Exception from MA-Stage
         begin
-          ExcAddr <= `EV_INV_DA;
+          ExcAddr <= ExcCodeMA[0] ? `EV_INV_IA : `EV_INV_DA;
           PC_Sel <= `PCS_EXCA;
           FlushIF  <= `TRUE;
           ExcAckIF <= `FALSE;
@@ -66,7 +68,7 @@ module BranchExceptionUnit
           ExcAckMA <= `TRUE;
           ReplicatePC <= `FALSE;
         end
-      else if(ExcReqEX)     // Exception from EX-Stage
+      else if(ExcReqEX & ~Stall)     // Exception from EX-Stage
         begin
           ExcAddr <= `EV_INV_OP;
           PC_Sel <= `PCS_EXCA;
@@ -108,7 +110,7 @@ module BranchExceptionUnit
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
         end
-      else if(IRQ_Int & ~Supervisor)    // Interrupts
+      else if(IRQ_Int & ~S_Mode_EX)    // Interrupts
         begin
           ExcAddr <= IID_Sync ? `EV_INT_1 : `EV_INT_0;
           PC_Sel <= `PCS_EXCA;
