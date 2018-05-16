@@ -1,9 +1,9 @@
 # Kabeta Processor Design
 
-**Date:** May 13, 2018  
-**Version:** 1.1D  
+**Date:** May 16, 2018  
+**Version:** 1.1E  
 **Author:** Kathy  
-**Reviewer:** Dao  
+**Reviewer:** (N/A)  
 
 ## 1 Introduction
 
@@ -208,16 +208,16 @@ Refer to Section 6. Extensions for Exception Handling in [MIT β Processor Speci
 
 ### 5.2 Supported Exceptions
 
-| Name                | Code | Type      | Source   | Priority    | Exc. Vector |
-| ------------------- | ---- | --------- | -------- | ----------- | ----------- |
-| Reset               | 000  | Reset     | RST Pin  | 0 (highest) | 8000_0000   |
-| System Service      | 001  | Trap      | RR-Stage | 3           | 8000_0004   |
-| Illegal Instruction | 010  | Fault     | RR-Stage | 3           | 8000_0008   |
-| Invalid Operation   | 011  | Fault     | EX-Stage | 2           | 8000_000C   |
-| Invalid D-Address   | 100  | Fault     | MA-Stage | 1           | 8000_0010   |
-| Invalid I-Address   | 101  | Fault     | IF-Stage | 4           | 8000_0014   |
-| Interrupt 0         | 110  | Interrupt | IRQ Pin  | 5 (lowest)  | 8000_0018   |
-| Interrupt 1         | 111  | Interrupt | IRQ Pin  | 5 (lowest)  | 8000_001C   |
+| Name                | Code | Type      | Source             | Priority    | Exc. Vector |
+| ------------------- | ---- | --------- | ------------------ | ----------- | ----------- |
+| Reset               | 000  | Reset     | RST Pin            | 0 (highest) | 8000_0000   |
+| System Service      | 001  | Trap      | RR-Stage           | 3           | 8000_0004   |
+| Illegal Instruction | 010  | Fault     | RR-Stage           | 3           | 8000_0008   |
+| Invalid Operation   | 011  | Fault     | EX-Stage           | 2           | 8000_000C   |
+| Invalid D-Address   | 100  | Fault     | MA-Stage           | 1           | 8000_0010   |
+| Invalid I-Address   | 101  | Fault     | IF-Stage, MA-Stage | 4           | 8000_0014   |
+| Interrupt 0         | 110  | Interrupt | IRQ Pin            | 5 (lowest)  | 8000_0018   |
+| Interrupt 1         | 111  | Interrupt | IRQ Pin            | 5 (lowest)  | 8000_001C   |
 
 **NOTES:**
 
@@ -309,9 +309,10 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 |       | ALU_Op            | ALU_Op | ALU_Op | ADD  | ADD  | ADD  | ADD  | X    | X    | X    | X    | X    |
 |       | ALU_En            | 1      | 1      | 1    | 1    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
 | MA    | InstrMemRdEn      | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    |
-|       | MemIO_Sel         | X      | X      | MEM  | IO   | MEM  | IO   | X    | X    | X    | X    | X    |
-|       | MemIO_Ren         | 0      | 0      | 1    | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
-|       | MemIO_Wen         | 0      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
+|       | Mem_Ren           | 0      | 0      | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | Mem_Wen           | 0      | 0      | 0    | 0    | 1    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | IO_Ren            | 0      | 0      | 0    | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | IO_Wen            | 0      | 0      | 0    | 0    | 0    | 1    | 0    | 0    | 0    | 0    | 0    |
 |       | ALU_DataBufEn     | 1      | 1      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
 | WB    | RegDataWSel [3]   | ALU    | ALU    | MEM  | IO   | X    | X    | PC   | PC   | PC   | IM   | X    |
 |       | RegWen            | 1      | 1      | 1    | 1    | 0    | 0    | 1    | 1    | 1    | 1    | 0    |
@@ -339,21 +340,21 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 
 ### 7.2 Branch and Exception Control Signaling
 
-| Exc.  Req.  &&  Cond. | RST           | ExcReqMA       | ExcReqEX       | ExcReqRR  && !BrTaken  && !Stall [3] | ExcReqIF  && !BrTaken  && !Stall [3] | IRQ  && (~PC_IF.S) | BrTaken [4]                                                   | Stall [4]   | (None Assert) |
-| --------------------- | ------------- | -------------- | -------------- | -------------------------------- | -------------------------------- | ------------------ | ------------------------------------------------------------ | ---------- | ------------- |
-| Exc.  Code            | (N/A)         | ExcCodeMA      | ExcCodeEX      | ExcCodeRR                        | ExcCodeIF                        | (N/A)              | (N/A)                                                        | (N/A)      |               |
-| Priority              | 0 (Highest)   | 1              | 2              | 3                                | 4                                | 5                  | 6 (Lowest)                                                   | 6 (Lowest) |               |
-| **ExcAddr**           | 32’h8000_0000 | EVT[ExcCodeMA] | EVT[ExcCodeEX] | EVT[ExcCodeRR]                   | EVT[ExcCodeIF]                   | EVT[{2’b11,IID}]   | X                                                            | X          | X             |
-| **PC_Sel [1]**         | EXCA          | EXCA           | EXCA           | EXCA                             | EXCA                             | EXCA               | REGA (AL), PCLIT ((EQ and RaZero) or (NE and !RaZero)) | X          | PCNX          |
-| **FlushIF**           | 0             | 1              | 1              | 1                                | 1                                | 1                  | 1                                                            | 0          | 0             |
-| **ExcAckIF [2]**       | 0             | 0              | 0              | 0                                | 1                                | 0                  | 0                                                            | 0          | 0             |
-| **FlushRR**           | 0             | 1              | 1              | 1                                | 0                                | 1                  | 1                                                            | 0         | 0             |
-| **ExcAckRR [2]**       | 0             | 0              | 0              | 1                                | 0                                | 0                  | 0                                                            | 0          | 0             |
-| **FlushEX**           | 0             | 1              | 1              | 0                                | 0                                | 1                  | 0                                                            | 1         | 0             |
-| **ExcAckEX [2]**       | 0             | 0              | 1              | 0                                | 0                                | 1                  | 0                                                            | 0          | 0             |
-| **FlushMA**           | 0             | 1              | 0              | 0                                | 0                                | 0                  | 0                                                            | 0          | 0             |
-| **ExcAckMA [2]**       | 0             | 1              | 0              | 0                                | 0                                | 0                  | 0                                                            | 0          | 0             |
-| **ReplicatePC**       | 0             | 0              | 0              | 0                                | 0                                | 0                  | 1                                                            | 0          | 0             |
+| Exc.  Req.  &&  Cond. | RST           | ExcReqMA       | ExcReqEX && !Stall | ExcReqRR  && !BrTaken  && !Stall [3] | ExcReqIF  && !BrTaken  && !Stall [3] | IRQ  && (~PC_IF.S) | Stall   | BrTaken                                                   | (None Assert) |
+| --------------------- | ------------- | -------------- | -------------- | -------------------------------- | -------------------------------- | ------------------ | ---------- | ------------------------------------------------------------ | ------------- |
+| Exc.  Code            | (N/A)         | ExcCodeMA      | ExcCodeEX      | ExcCodeRR                        | ExcCodeIF                        | (N/A)              | (N/A)      | (N/A)                                                        |               |
+| Priority              | 0 (Highest)   | 1              | 2              | 3                                | 4                                | 5                  | 6 | 7  (Lowest)                                                |               |
+| **ExcAddr**           | 32’h8000_0000 | EVT[ExcCodeMA] | EVT[ExcCodeEX] | EVT[ExcCodeRR]                   | EVT[ExcCodeIF]                   | EVT[{2’b11,IID}]   | X          | X                                                            | X             |
+| **PC_Sel [1]**         | EXCA          | EXCA           | EXCA           | EXCA                             | EXCA                             | EXCA               | X          | REGA (AL), PCLIT ((EQ and RaZero) or (NE and !RaZero)) | PCNX          |
+| **FlushIF**           | 0             | 1              | 1              | 1                                | 1                                | 1                  | 0          | 1                                                            | 0             |
+| **ExcAckIF [2]**       | 0             | 0              | 0              | 0                                | 1                                | 0                  | 0          | 0                                                            | 0             |
+| **FlushRR**           | 0             | 1              | 1              | 1                                | 0                                | 1                  | 0         | 1                                                            | 0             |
+| **ExcAckRR [2]**       | 0             | 0              | 0              | 1                                | 0                                | 0                  | 0          | 0                                                            | 0             |
+| **FlushEX**           | 0             | 1              | 1              | 0                                | 0                                | 1                  | 1         | 0                                                            | 0             |
+| **ExcAckEX [2]**       | 0             | 0              | 1              | 0                                | 0                                | 1                  | 0          | 0                                                            | 0             |
+| **FlushMA**           | 0             | 1              | 0              | 0                                | 0                                | 0                  | 0          | 0                                                            | 0             |
+| **ExcAckMA [2]**       | 0             | 1              | 0              | 0                                | 0                                | 0                  | 0          | 0                                                            | 0             |
+| **ReplicatePC**       | 0             | 0              | 0              | 0                                | 0                                | 0                  | 0          | 1                                                            | 0             |
 
 **NOTES:**
 
@@ -372,11 +373,10 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
    - 1 – Select BNE
 
 3. BrTaken =  
-(BrCond == AL)  
-|| ((BrCond == EQ) && RaZero)  
-|| ((BrCond == NE) && !RaZero)  
+    (BrCond == AL)  
+    || ((BrCond == EQ) && RaZero)  
+    || ((BrCond == NE) && !RaZero)  
 
-4. BrCond and Stall will not assert simultaneously.
 
 ## Appendix A: Document Version History
 
@@ -389,3 +389,4 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | 1.1B    | 4/25/2018 | Kathy  | (N/A)    | Add interrupt request and acknowledge timing diagram.        |
 | 1.1C    | 4/28/2018 | Kathy  | (N/A)    | Reformat this document in Markdown format.                   |
 | 1.1D    | 5/13/2018 | Kathy  | Dao      | Correct decoder signaling table.                             |
+| 1.1E    | 5/16/2018 | Kathy  | (N/A)    | Change Mem/IO control signals.                               |
