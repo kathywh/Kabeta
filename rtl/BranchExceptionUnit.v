@@ -1,9 +1,9 @@
 /******************************************************************************/
-/*  Unit Name:  BranchExceptionUnit                                               */
+/*  Unit Name:  BranchExceptionUnit                                           */
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/01/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/15/2018                                                    */
+/*  Edited on:  05/16/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Branch and exception controller                                       */
@@ -12,6 +12,7 @@
 /*      05/01/2018  Kathy       Unit created.                                 */
 /*      05/13/2018  Kathy       Move some definitions into common unit.       */
 /*      05/15/2018  Kathy       Make pipeline stall one stage later.          */
+/*      05/16/2018  Kathy       Make stall priority higher than branch.       */
 /******************************************************************************/
 
 module BranchExceptionUnit
@@ -121,6 +122,20 @@ module BranchExceptionUnit
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
         end
+      else if(Stall)      // Pipeline Stall
+        begin
+          ExcAddr <= 32'hxxxx_xxxx;
+          PC_Sel <= `PCS_PCNX;
+          FlushIF  <= `FALSE;
+          ExcAckIF <= `FALSE;
+          FlushRR  <= `FALSE;
+          ExcAckRR <= `FALSE;
+          FlushEX  <= `TRUE;
+          ExcAckEX <= `FALSE;
+          FlushMA  <= `FALSE;
+          ExcAckMA <= `FALSE;
+          ReplicatePC <= `FALSE;
+        end
       else if(BrTaken)     // JMP/BEQ/BNE branch taken
         begin
           ExcAddr <= 32'hxxxx_xxxx;
@@ -137,20 +152,6 @@ module BranchExceptionUnit
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `TRUE;
-        end
-      else if(Stall)      // Pipeline Stall
-        begin
-          ExcAddr <= 32'hxxxx_xxxx;
-          PC_Sel <= `PCS_PCNX;
-          FlushIF  <= `FALSE;
-          ExcAckIF <= `FALSE;
-          FlushRR  <= `FALSE;
-          ExcAckRR <= `FALSE;
-          FlushEX  <= `TRUE;
-          ExcAckEX <= `FALSE;
-          FlushMA  <= `FALSE;
-          ExcAckMA <= `FALSE;
-          ReplicatePC <= `FALSE;
         end
       else                // No exceptions, interrupts, stall or branch taken
         begin
