@@ -15,10 +15,15 @@
 module InstructionMemory
 (
   input Clock,
+  input SysReset,
   input En_I, En_D,
   input [28:0] Addr_I, Addr_D,
   output [31:0] Data_I, Data_D
 );
+
+  wire [31:0] IntData_I;
+  
+  assign Data_I = (~SysReset) ? `I_NOP : IntData_I;
 
 `ifdef ALT_EP4CE
   // Port a - I
@@ -30,7 +35,7 @@ module InstructionMemory
     .clock(Clock),
     .rden_a(En_I),
     .rden_b(En_D),
-    .q_a(Data_I),
+    .q_a(IntData_I),
     .q_b(Data_D)
   );
 `elsif XIL_XC6SLX

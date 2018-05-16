@@ -12,12 +12,13 @@
 /*      05/15/2018  Kathy       Unit created.                                 */
 /******************************************************************************/
 
-`define I_NOP {6'b100_000, 5'd31, 5'd31, 5'd31, 11'd0}      /* ADD(R31,R31,R31) */
+
 `define I_BNE {6'b011_110, 5'd30, 5'd31, 16'd0}             /* BNE(R31,0,XP) */
 
 module InstructionRegister
 (
   input Clock,
+  input Reset,
   input Enable,
   input Flush, ExcAck,
   input [31:0] InstrIn,
@@ -29,23 +30,30 @@ module InstructionRegister
 
   assign InstrOut = IntInstrReg;
 
-  always @(posedge Clock)
+  always @(negedge Reset or posedge Clock)
     begin
-      if(Enable)
+      if(!Reset)
         begin
-          if(!Flush)
+          IntInstrReg <= `I_NOP;
+        end
+      else
+        begin
+          if(Enable)
             begin
-              IntInstrReg <= InstrIn;
-            end
-          else
-            begin
-              if(ExcAck)
+              if(!Flush)
                 begin
-                  IntInstrReg <= `I_BNE;
+                  IntInstrReg <= InstrIn;
                 end
-              else 
+              else
                 begin
-                  IntInstrReg <= `I_NOP;
+                  if(ExcAck)
+                    begin
+                      IntInstrReg <= `I_BNE;
+                    end
+                  else 
+                    begin
+                      IntInstrReg <= `I_NOP;
+                    end
                 end
             end
         end

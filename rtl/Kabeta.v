@@ -92,6 +92,7 @@ module Kabeta
   InstructionMemory I_Mem
   (
     .Clock(Sys_Clock),
+    .SysReset(Sys_Reset),
     .En_I(I_Mem_En_I),
     .En_D(I_Mem_En_D),
     .Addr_I(PC_IF_In[30:2]),
@@ -103,6 +104,7 @@ module Kabeta
   InstructionRegister IR_RR
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(StageEn_RR),
     .Flush(Sys_FlushIF),
     .ExcAck(Sys_ExcAckIF),
@@ -113,6 +115,7 @@ module Kabeta
   InstructionRegister IR_EX
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(StageEn_EX),
     .Flush(Sys_FlushRR),
     .ExcAck(Sys_ExcAckRR),
@@ -123,6 +126,7 @@ module Kabeta
   InstructionRegister IR_MA
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(`TRUE),
     .Flush(Sys_FlushEX),
     .ExcAck(Sys_ExcAckEX),
@@ -133,6 +137,7 @@ module Kabeta
   InstructionRegister IR_WB
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(`TRUE),
     .Flush(Sys_FlushMA),
     .ExcAck(Sys_ExcAckMA),
