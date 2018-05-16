@@ -38,6 +38,9 @@
 `define TRUE  1'b1
 `define FALSE 1'b0
 
+// NOP Instruction
+`define I_NOP {6'b100_000, 5'd31, 5'd31, 5'd31, 11'd0}      /* ADD(R31,R31,R31) */
+
 // Exception Vectors
 `define EV_RST    32'h8000_0000   // Reset
 `define EV_SVC    32'h8000_0004   // System Service
