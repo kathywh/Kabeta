@@ -20,9 +20,9 @@ module ResetSynchronizer
   output SysReset
 );
 
-  assign SysReset = SyncRst2;
-
   reg SyncRst1, SyncRst2;
+
+  assign SysReset = SyncRst2;  
 
   always @(negedge Reset or posedge Clock)
     begin

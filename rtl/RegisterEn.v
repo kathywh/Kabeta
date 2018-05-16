@@ -21,9 +21,9 @@ module RegisterEn
   output [WID_DATA-1:0] DataOut
 );
 
-  assign DataOut = DataReg;
-
   reg [WID_DATA-1:0] DataReg;
+
+  assign DataOut = DataReg;  
 
   always @(posedge Clock)
     begin
