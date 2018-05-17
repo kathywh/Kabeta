@@ -1,0 +1,55 @@
+.include ../../tools/kabeta.uasm
+
+| data variables
+. = 0
+var1:
+. = 4
+var2:
+. = 8
+array:
+
+| code
+
+. = 0
+rst_isr:
+	BR(start)
+svc_isr:
+	BR(.)
+ill_isr:
+	BR(.)
+inv_op_isr:
+	BR(.)
+inv_da_isr:
+	BR(.)
+inv_ia_isr:
+	BR(.)
+irq0_isr:
+	BR(.)
+irq1_isr:
+	BR(.)
+
+. = 0x20
+start:
+	CMOVE(0xFEA0, R0)
+	CMOVE(0x9501, R7)
+	SHLC(R0, 16, R1)
+	OR(R1, R7, R0)
+	CMOVE(0x713C, R1)
+	ADD(R0, R1, R2)
+    ST(R2, var1)
+    ST(R0, var2)
+    XOR(R0, R0, R0)
+loop:
+	NOP()
+    ADDC(R0, 1, R0)
+    ST(R1, array, R0)
+    LD(R1, array, R23)
+	OR(R0, R31, R9)
+	SUB(R1, R31, R10)
+    LD(var1, R12)
+    CMOVE(1, R20)
+    ADD(R12, R20, R12)
+    ST(R12, var1)
+	BR(loop)
+
+
