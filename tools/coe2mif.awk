@@ -6,7 +6,7 @@ BEGIN {
   print "WIDTH=32;"
   printf "DEPTH=%d;\n", size
   print
-  print "ADDRESS_RADIX=UNS;"
+  print "ADDRESS_RADIX=HEX;"
   print "DATA_RADIX=HEX;"
   print
   print "CONTENT BEGIN"
@@ -14,11 +14,11 @@ BEGIN {
 
 /^[0-9a-f]+,$/ {
   sub(/,/, ";")
-  printf "%6d : %s\n", addr, $0
+  printf "  %04x : %s\n", addr, $0
   addr++
 }
 
 END {
-  printf "  [%d..%d] : 00000000;\n", addr, size-1
+  printf "  [%04x..%04x] : 00000000;\n", addr, size-1
   print "END;\n"
 }
