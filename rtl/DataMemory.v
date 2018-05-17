@@ -3,13 +3,14 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/14/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/14/2018                                                    */
+/*  Edited on:  05/17/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Data memory wrapper for block RAM in different FPGAs.                 */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/14/2018  Kathy       Unit created.                                 */
+/*      05/17/2018  Kathy       Change to 16KB memory.                        */
 /******************************************************************************/
 
 module DataMemory
@@ -22,9 +23,9 @@ module DataMemory
 );
 
 `ifdef ALT_EP4CE
-  Alt_EP4CE_DataMem_4KB D_Mem
+  Alt_EP4CE_DataMem_16KB D_Mem
   (
-    .address(Addr[7:0]),
+    .address(Addr[11:0]),
     .clock(Clock),
     .data(Data_W),
     .rden(En_R),

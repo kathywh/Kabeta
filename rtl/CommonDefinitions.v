@@ -24,11 +24,11 @@
 
 // Instruction Address Range
 // NOTE: This number must be UNSIGNED
-`define INSTR_ADDR_LIMIT  31'h0000_0400      /* 1K Bytes (256 Words) */
+`define INSTR_ADDR_LIMIT  32'h0000_1000     /* 4K Bytes (1K Words) */
 
 // Data Address Range
 // NOTE: This number must be UNSIGNED
-`define DATA_ADDR_LIMIT   32'h0000_1000      /* 4K Bytes (1K Words) */
+`define DATA_ADDR_LIMIT   31'h0000_4000     /* 16K Bytes (4K Words) */
 
 /******************************************************************************/
 /*                              Definitions                                   */

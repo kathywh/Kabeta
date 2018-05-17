@@ -66,10 +66,10 @@ set_global_assignment -name CYCLONEIII_CONFIGURATION_DEVICE EPCS16
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VERILOG_FILE ../../rtl/CommonDefinitions.v
 set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_SysPLL.qip
-set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_InstrMem_1KB.qip
-set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_DataMem_4KB.qip
+set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_DataMem_16KB.qip
+set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_InstrMem_4KB.qip
+set_global_assignment -name VERILOG_FILE ../../rtl/CommonDefinitions.v
 set_global_assignment -name VERILOG_FILE ../../rtl/SystemPLL.v
 set_global_assignment -name VERILOG_FILE ../../rtl/Synchronizer.v
 set_global_assignment -name VERILOG_FILE ../../rtl/ResetSynchronizer.v

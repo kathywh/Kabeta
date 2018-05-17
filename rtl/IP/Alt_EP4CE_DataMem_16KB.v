@@ -4,7 +4,7 @@
 // MODULE: altsyncram 
 
 // ============================================================
-// File Name: Alt_EP4CE_DataMem_4KB.v
+// File Name: Alt_EP4CE_DataMem_16KB.v
 // Megafunction Name(s):
 // 			altsyncram
 //
@@ -37,7 +37,7 @@
 // synopsys translate_off
 `timescale 1 ps / 1 ps
 // synopsys translate_on
-module Alt_EP4CE_DataMem_4KB (
+module Alt_EP4CE_DataMem_16KB (
 	address,
 	clock,
 	data,
@@ -45,7 +45,7 @@ module Alt_EP4CE_DataMem_4KB (
 	wren,
 	q);
 
-	input	[7:0]  address;
+	input	[11:0]  address;
 	input	  clock;
 	input	[31:0]  data;
 	input	  rden;
@@ -93,13 +93,13 @@ module Alt_EP4CE_DataMem_4KB (
 		altsyncram_component.intended_device_family = "Cyclone IV E",
 		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
 		altsyncram_component.lpm_type = "altsyncram",
-		altsyncram_component.numwords_a = 256,
+		altsyncram_component.numwords_a = 4096,
 		altsyncram_component.operation_mode = "SINGLE_PORT",
 		altsyncram_component.outdata_aclr_a = "NONE",
 		altsyncram_component.outdata_reg_a = "UNREGISTERED",
 		altsyncram_component.power_up_uninitialized = "FALSE",
 		altsyncram_component.read_during_write_mode_port_a = "DONT_CARE",
-		altsyncram_component.widthad_a = 8,
+		altsyncram_component.widthad_a = 12,
 		altsyncram_component.width_a = 32,
 		altsyncram_component.width_byteena_a = 1;
 
@@ -129,7 +129,7 @@ endmodule
 // Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
 // Retrieval info: PRIVATE: MIFfilename STRING ""
-// Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "256"
+// Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "4096"
 // Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
 // Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "2"
 // Retrieval info: PRIVATE: RegAddr NUMERIC "1"
@@ -139,7 +139,7 @@ endmodule
 // Retrieval info: PRIVATE: SingleClock NUMERIC "1"
 // Retrieval info: PRIVATE: UseDQRAM NUMERIC "1"
 // Retrieval info: PRIVATE: WRCONTROL_ACLR_A NUMERIC "0"
-// Retrieval info: PRIVATE: WidthAddr NUMERIC "8"
+// Retrieval info: PRIVATE: WidthAddr NUMERIC "12"
 // Retrieval info: PRIVATE: WidthData NUMERIC "32"
 // Retrieval info: PRIVATE: rden NUMERIC "1"
 // Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
@@ -148,31 +148,31 @@ endmodule
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
 // Retrieval info: CONSTANT: LPM_HINT STRING "ENABLE_RUNTIME_MOD=NO"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
-// Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "256"
+// Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "4096"
 // Retrieval info: CONSTANT: OPERATION_MODE STRING "SINGLE_PORT"
 // Retrieval info: CONSTANT: OUTDATA_ACLR_A STRING "NONE"
 // Retrieval info: CONSTANT: OUTDATA_REG_A STRING "UNREGISTERED"
 // Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
 // Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_A STRING "DONT_CARE"
-// Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "8"
+// Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "12"
 // Retrieval info: CONSTANT: WIDTH_A NUMERIC "32"
 // Retrieval info: CONSTANT: WIDTH_BYTEENA_A NUMERIC "1"
-// Retrieval info: USED_PORT: address 0 0 8 0 INPUT NODEFVAL "address[7..0]"
+// Retrieval info: USED_PORT: address 0 0 12 0 INPUT NODEFVAL "address[11..0]"
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT VCC "clock"
 // Retrieval info: USED_PORT: data 0 0 32 0 INPUT NODEFVAL "data[31..0]"
 // Retrieval info: USED_PORT: q 0 0 32 0 OUTPUT NODEFVAL "q[31..0]"
 // Retrieval info: USED_PORT: rden 0 0 0 0 INPUT VCC "rden"
 // Retrieval info: USED_PORT: wren 0 0 0 0 INPUT NODEFVAL "wren"
-// Retrieval info: CONNECT: @address_a 0 0 8 0 address 0 0 8 0
+// Retrieval info: CONNECT: @address_a 0 0 12 0 address 0 0 12 0
 // Retrieval info: CONNECT: @clock0 0 0 0 0 clock 0 0 0 0
 // Retrieval info: CONNECT: @data_a 0 0 32 0 data 0 0 32 0
 // Retrieval info: CONNECT: @rden_a 0 0 0 0 rden 0 0 0 0
 // Retrieval info: CONNECT: @wren_a 0 0 0 0 wren 0 0 0 0
 // Retrieval info: CONNECT: q 0 0 32 0 @q_a 0 0 32 0
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_4KB.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_4KB.inc FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_4KB.cmp FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_4KB.bsf FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_4KB_inst.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_4KB_bb.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_16KB.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_16KB.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_16KB.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_16KB.bsf FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_16KB_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_DataMem_16KB_bb.v FALSE
 // Retrieval info: LIB_FILE: altera_mf

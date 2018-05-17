@@ -3,13 +3,14 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/14/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/14/2018                                                    */
+/*  Edited on:  05/17/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Instruction memory wrapper for block RAM in different FPGAs.          */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/14/2018  Kathy       Unit created.                                 */
+/*      05/17/2018  Kathy       Change to 4KB memory.                         */
 /******************************************************************************/
 
 module InstructionMemory
@@ -28,10 +29,10 @@ module InstructionMemory
 `ifdef ALT_EP4CE
   // Port a - I
   // Port b - D
-  Alt_EP4CE_InstrMem_1KB I_Mem
+  Alt_EP4CE_InstrMem_4KB I_Mem
   (
-    .address_a(Addr_I[7:0]),
-    .address_b(Addr_D[7:0]),
+    .address_a(Addr_I[9:0]),
+    .address_b(Addr_D[9:0]),
     .clock(Clock),
     .rden_a(En_I),
     .rden_b(En_D),
