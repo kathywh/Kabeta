@@ -3,13 +3,14 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/16/2018                                                    */
+/*  Edited on:  05/18/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      An implementation of pipelined MIT Beta processor.                    */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/16/2018  Kathy       Integrate all components.                     */
+/*      05/18/2018  Kathy       Rename signals & components.                  */
 /******************************************************************************/
 
 module Kabeta
@@ -22,6 +23,7 @@ module Kabeta
   input EIC_I_Req, EIC_I_Id
 );
 
+  // System wide signals
   wire Sys_Stall;
   wire Sys_FlushIF, Sys_ExcAckIF;
   wire Sys_FlushRR, Sys_ExcAckRR;
@@ -31,65 +33,80 @@ module Kabeta
 
   wire [1:0] PC_Sel;
   wire [31:0] ExcAddress, NextPC, OffsetPC, RegForPC;
-  wire [31:0] ExtLiteral;
+  wire [31:0] ExtLiteral;       /* Sign-extended literal */
+  wire [31:0] IM_Offset;        /* Sign-extended literal times 4, i.e. offset from PC+4 */
 
+  // Signals from ID
   wire [1:0] BypassXSel, BypassYSel;
   wire [2:0] ExcCode_IF, ExcCode_RR, ExcCode_EX, ExcCode_MA;
   wire ExcReq_IF, ExcReq_RR, ExcReq_EX, ExcReq_MA;
   wire [4:0] Ra_RR, Rb_RR, Rc_RR;
-  wire RegAddrYSel, RegRdEnX, RegRdEnY;
+  wire RegAddrYSel, ID_RegRdEnX, ID_RegRdEnY;
   wire [1:0] BrCond;
-  wire InstrMemAddrBufEn;
-  wire MemDataBufEn;
+  wire ID_IMAB_En;
+  wire ID_MDB_En;
   wire ALU_DataYSel;
   wire [3:0] ALU_Opcode;
-  wire ALU_En;
-  wire InstrMemRdEn;
-  wire MemIO_Sel;
+  wire ID_ALU_En;
+  wire ID_InstrMemRdEn;
   wire ID_Mem_Ren, ID_Mem_Wen;
   wire ID_IO_Ren, ID_IO_Wen;
-  wire ALU_DataBufEn;
+  wire ID_ADB_En;
   wire [4:0] Rc_WB;
   wire [2:0] RegDataWSel;
   wire RegWen;
 
+  // Signals from/to IM
   wire I_Mem_En_I, I_Mem_En_D;
   wire [30:0] /*I_Mem_Addr_I,*/ I_Mem_Addr_D;
   wire [31:0] I_Mem_Data_I, I_Mem_Data_D;
 
+  // Signals from/to IRs & PCs
   wire [31:0] IR_RR_Out, IR_EX_Out, IR_MA_Out, IR_WB_Out;
   reg [31:0] PC_IF_In;
   wire [31:0] PC_IF_Out;
   wire [31:0] PC_RR_Out, PC_EX_Out, PC_MA_Out, PC_WB_Out;
   wire [31:0] PC_RR_In, PC_EX_In;
 
+  // Signals from/to IMAB
   wire IMAB_En;
   wire [30:0] IMAB_Address;
 
+  // Signals from/to RF
   wire RF_EnX, RF_EnY;
   wire [4:0] RF_AddrY;
   wire [31:0] RF_DataX_Out, RF_DataY_Out;
   reg [31:0] RF_DataW_In;
   reg [31:0] RF_ChX_Data, RF_ChY_Data;
 
+  // Signals from/to ALU
+  wire [31:0] ALU_DataY_In;
+  wire ALU_En;
   wire [31:0] ALU_Out;
 
+  // Signals from/to MDB
   wire MDB_En;
   wire [31:0] MDB_Out;
 
+  // Signals from/to DM
+  wire D_Mem_R_En;
+  wire D_Mem_W_En;
   wire [31:0] D_Mem_DataOut;
 
+  // Signals from/to ADB
+  wire ADB_En;
   wire [31:0] ADB_Out;
 
+  // Signals common for stage
   wire StageEn_RR = ~Sys_Stall | Sys_FlushIF;
   wire StageEn_EX = ~Sys_Stall | Sys_FlushRR;
 
-  wire [30:0] IM_Offset = ExtLiteral << 2;       // Offset to be added to PC+4
+  assign IM_Offset = ExtLiteral << 2;
 
   assign I_Mem_En_I = StageEn_RR;
-  assign I_Mem_En_D = InstrMemRdEn & ~Sys_FlushMA;
+  assign I_Mem_En_D = ID_InstrMemRdEn & ~Sys_FlushMA;
 
-  InstructionMemory I_Mem
+  InstructionMemory IM
   (
     .Clock(Sys_Clock),
     .SysReset(Sys_Reset),
@@ -168,7 +185,7 @@ module Kabeta
   );
 
   // Bits [30:0] of NextPC is calculated
-  AddressInc A_Inc
+  AddressInc AI
   (
     .AddressIn(PC_IF_Out[30:0]),
     .AddressOut(NextPC[30:0])
@@ -198,10 +215,10 @@ module Kabeta
   );
 
   // Bits [30:0] of OffsetPC is calculated
-  AddressAdder A_Adder
+  AddressAdder AA
   (
     .AddressIn(PC_EX_Out[30:0]),
-    .Addend(IM_Offset),
+    .Addend(IM_Offset[30:0]),
     .AddressOut(OffsetPC[30:0])
   );
 
@@ -225,7 +242,7 @@ module Kabeta
   );
 
   // Instruction Memory Address Buffer
-  assign IMAB_En = InstrMemAddrBufEn & ~Sys_FlushEX;
+  assign IMAB_En = ID_IMAB_En & ~Sys_FlushEX;
 
   RegisterEn#(31) IMAB
   (
@@ -235,7 +252,7 @@ module Kabeta
     .DataOut(IMAB_Address)
   );
 
-  InstructionDecoder I_Dec
+  InstructionDecoder ID
   (
     .InstrWord_IF(I_Mem_Data_I),
     .InstrAddr_IF(PC_IF_Out[30:0]),
@@ -248,31 +265,31 @@ module Kabeta
     .Rb_RR(Rb_RR),
     .Rc_RR(Rc_RR),
     .RegAddrYSel(RegAddrYSel),
-    .RegRdEnX(RegRdEnX),
-    .RegRdEnY(RegRdEnY),
+    .RegRdEnX(ID_RegRdEnX),
+    .RegRdEnY(ID_RegRdEnY),
     .ExcCode_RR(ExcCode_RR),
     .ExcReq_RR(ExcReq_RR),
 
     .InstrWord_EX(IR_EX_Out),
     .ExtLiteral(ExtLiteral),
     .BrCond(BrCond),
-    .InstrMemAddrBufEn(InstrMemAddrBufEn),
-    .MemDataBufEn(MemDataBufEn),
+    .InstrMemAddrBufEn(ID_IMAB_En),
+    .MemDataBufEn(ID_MDB_En),
     .ALU_DataYSel(ALU_DataYSel),
     .ALU_Opcode(ALU_Opcode),
-    .ALU_En(ALU_En),
+    .ALU_En(ID_ALU_En),
     .ExcCode_EX(ExcCode_EX),
     .ExcReq_EX(ExcReq_EX),
 
     .InstrWord_MA(IR_MA_Out),
     .DataAddress(ALU_Out),
     .IMemAddress(IMAB_Address),
-    .InstrMemRdEn(InstrMemRdEn),
+    .InstrMemRdEn(ID_InstrMemRdEn),
     .Mem_Ren(ID_Mem_Ren),
     .Mem_Wen(ID_Mem_Wen),    
     .IO_Ren(ID_IO_Ren),
     .IO_Wen(ID_IO_Wen),
-    .ALU_DataBufEn(ALU_DataBufEn),
+    .ALU_DataBufEn(ID_ADB_En),
     .ExcCode_MA(ExcCode_MA),
     .ExcReq_MA(ExcReq_MA),
 
@@ -286,8 +303,8 @@ module Kabeta
     .Stall(Sys_Stall)
   );
 
-  assign RF_EnX = RegRdEnX & ~Sys_FlushRR;
-  assign RF_EnY = RegRdEnY & ~Sys_FlushRR;
+  assign RF_EnX = ID_RegRdEnX & ~Sys_FlushRR;
+  assign RF_EnY = ID_RegRdEnY & ~Sys_FlushRR;
   assign RF_AddrY = (RegAddrYSel == `RF_Y_SEL_RB) ? Rb_RR : Rc_RR;
 
   always @(*)
@@ -338,13 +355,13 @@ module Kabeta
       endcase
     end
   
-  wire [31:0] ALU_DataY_In = (ALU_DataYSel == `ALU_Y_SEL_REG) ? RF_ChY_Data : ExtLiteral;
-  wire ALU_Enable = ALU_En & ~Sys_FlushEX;
+  assign ALU_DataY_In = (ALU_DataYSel == `ALU_Y_SEL_REG) ? RF_ChY_Data : ExtLiteral;
+  assign ALU_En = ID_ALU_En & ~Sys_FlushEX;
 
   ArithmeticLogicUnit ALU
   (
     .Clock(Sys_Clock),
-    .Enable(ALU_Enable),
+    .Enable(ALU_En),
     .OpCode(ALU_Opcode),
     .X(RF_ChX_Data),
     .Y(ALU_DataY_In),
@@ -352,7 +369,7 @@ module Kabeta
   );
 
   // Memory Data Buffer
-  assign MDB_En = MemDataBufEn & ~Sys_FlushEX;
+  assign MDB_En = ID_MDB_En & ~Sys_FlushEX;
 
   RegisterEn MDB
   (
@@ -366,10 +383,10 @@ module Kabeta
   assign IO_EnW = ID_IO_Wen & ~Sys_FlushMA;
   assign IO_DataW = MDB_Out;
 
-  wire D_Mem_R_En = ID_Mem_Ren & ~Sys_FlushMA;
-  wire D_Mem_W_En = ID_Mem_Wen & ~Sys_FlushMA;
+  assign D_Mem_R_En = ID_Mem_Ren & ~Sys_FlushMA;
+  assign D_Mem_W_En = ID_Mem_Wen & ~Sys_FlushMA;
 
-  DataMemory D_Mem
+  DataMemory DM
   (
     .Clock(Sys_Clock),
     .Addr(ALU_Out[31:2]),
@@ -380,7 +397,7 @@ module Kabeta
   );
 
   // ALU Data Buffer
-  wire ADB_En = ALU_DataBufEn & ~Sys_FlushMA;
+  assign ADB_En = ID_ADB_En & ~Sys_FlushMA;
 
   RegisterEn ADB
   (
