@@ -13,6 +13,7 @@
 /*      05/15/2018  Kathy       1) Merge into one module.                     */
 /*      05/16/2018  Kathy       1) Add bypass and stall function.             */
 /*                              2) Change Mem/IO control signals.             */
+/*      05/17/2018  Kathy       Correct I/D addr limit check error.           */
 /******************************************************************************/
 
 
@@ -91,7 +92,7 @@ module InstructionDecoder
   /******************************************************************************/
 
   // Exception Process
-  assign ExcReq_IF = (InstrAddr_IF > `INSTR_ADDR_LIMIT);
+  assign ExcReq_IF = (InstrAddr_IF >= `INSTR_ADDR_LIMIT);
   assign ExcCode_IF = ExcReq_IF ? `EC_INV_IA : 3'b000;
   
   /******************************************************************************/
@@ -315,12 +316,12 @@ module InstructionDecoder
   // Exception Process
   always @(*)
     begin
-      if((Is_LD_MA | Is_ST_MA) & (DataAddress > `DATA_ADDR_LIMIT))
+      if((Is_LD_MA | Is_ST_MA) & (DataAddress >= `DATA_ADDR_LIMIT))
         begin
           ExcReq_MA <= `TRUE;
           ExcCode_MA <= `EC_INV_DA;
         end
-      else if(Is_LDR_MA & (IMemAddress > `INSTR_ADDR_LIMIT))
+      else if(Is_LDR_MA & (IMemAddress >= `INSTR_ADDR_LIMIT))
         begin
           ExcReq_MA <= `TRUE;
           ExcCode_MA <= `EC_INV_IA;
