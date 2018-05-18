@@ -52,8 +52,12 @@ loop1:
 	ADDC(R0, 4, R0)
 	ADDC(R3, 1, R3)
 	CMPEQC(R0, 32, R13)
-	BNE(R13, loop1)
+	BF(R13, loop1)
 
 	CMOVE(4, R0)
 	LD(R0, array, R21)
 	LD(array, R22)
+
+	CMOVE(user_mode, R10)
+	JMP(R10)
+user_mode:
