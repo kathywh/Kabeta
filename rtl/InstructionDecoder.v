@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/13/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/16/2018                                                    */
+/*  Edited on:  05/18/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Instruction decoders for each stage.                                  */
@@ -14,6 +14,7 @@
 /*      05/16/2018  Kathy       1) Add bypass and stall function.             */
 /*                              2) Change Mem/IO control signals.             */
 /*      05/17/2018  Kathy       Correct I/D addr limit check error.           */
+/*      05/18/2018  Kathy       Correct ExcReq_EX drive error.                */
 /******************************************************************************/
 
 
@@ -240,10 +241,15 @@ module InstructionDecoder
   // Exception Process
   always @(*)
     begin
-      if((Is_OP_OPC_EX)
-         && (ALU_Code_EX == `ALU_RES1)
-            || (ALU_Code_EX == `ALU_RES2)
-            || (ALU_Code_EX == `ALU_RES3))
+      if( 
+          Is_OP_OPC_EX
+          && 
+          (
+             (ALU_Code_EX == `ALU_RES1)
+             || (ALU_Code_EX == `ALU_RES2)
+             || (ALU_Code_EX == `ALU_RES3)
+          )
+        )
         begin
           ExcReq_EX <= `TRUE;
           ExcCode_EX <= `EC_INV_OP;
