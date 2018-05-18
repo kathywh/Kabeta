@@ -1,16 +1,24 @@
 .include ../../tools/kabeta.uasm
 
-| data variables
-. = 0
+|--------------------------------------
+| data segment
+|--------------------------------------
+__DATA(0)
+
 var1:
-. = 4
+	LONG()
 var2:
-. = 8
+	LONG()
 array:
+	ARRAY(8)
+array2:
+	ARRAY(8)
 
-| code
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
 
-. = 0
 rst_isr:
 	BR(start)
 svc_isr:
@@ -28,28 +36,25 @@ irq0_isr:
 irq1_isr:
 	BR(.)
 
-. = 0x20
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+
 start:
-	CMOVE(0xFEA0, R0)
-	CMOVE(0x9501, R7)
-	SHLC(R0, 16, R1)
-	OR(R1, R7, R0)
-	CMOVE(0x713C, R1)
-	ADD(R0, R1, R2)
-    ST(R2, var1)
-    ST(R0, var2)
-    XOR(R0, R0, R0)
-loop:
-	NOP()
-    ADDC(R0, 1, R0)
-    ST(R1, array, R0)
-    LD(R1, array, R23)
-	OR(R0, R31, R9)
-	SUB(R1, R31, R10)
-    LD(var1, R12)
-    CMOVE(1, R20)
-    ADD(R12, R20, R12)
-    ST(R12, var1)
-	BR(loop)
+	CMOVE(1, R3)
+	CMOVE(0, R0)
 
+loop1:
+	ST(R3, R0, array)
+	ADDC(R0, 4, R0)
+	ADDC(R3, 1, R3)
+	CMPEQC(R0, 32, R13)
+	BF(R13, loop1)
 
+	CMOVE(4, R0)
+	LD(R0, array, R21)
+	LD(array, R22)
+
+end:
+	BR(.)

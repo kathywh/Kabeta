@@ -33,7 +33,7 @@ program Tester
       #(TCLK/4) Reset = 1'b1;
 
       // Wait for run
-      repeat(20)  @(posedge Clock);
+      repeat(100)  @(posedge Clock);
 
       // Print bye message
       $display("Kabeta: bye, normal end.");
