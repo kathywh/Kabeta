@@ -197,10 +197,10 @@ StickSet-LineWidth = 1
 StickSet-FillColor = purple6
 StickSet-TextColor = black
 [FSM_Dlg-Print]
-Orientation = Landscape  
+Orientation = Landscape
 [Form]
 version = Verdi3_L-2016.06-1
-wave/saveSig.fm = 106,205,723,532
+wave/saveSig.fm = 108,240,723,532
 [General]
 autoSaveSession = FALSE
 TclAutoSource = 
@@ -307,8 +307,8 @@ Mask_Non_Active_Time_on_Wave = FALSE
 Show_Cycle_Info = TRUE
 [QtDialog]
 QwWarnMsgDlg = 660,415,600,250
-qWaveSignalDialog = 660,232,1036,616
-QwUserAskDlg = 802,660,324,128
+QwUserAskDlg = 806,730,324,128
+qWaveSignalDialog = 444,249,1036,616
 [Session Cache]
 1 = string (session file name)
 2 = string (session file name)
@@ -977,7 +977,7 @@ AddImportArgument = TRUE
 LineBreakWithScope = TRUE
 StopAfterCompileOption = -tcl
 [turboSchema_Printer_Options]
-Orientation = Landscape  
+Orientation = Landscape
 [turbo_library]
 bdb_load_scope = 
 [verisity]

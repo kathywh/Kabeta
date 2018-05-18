@@ -18,7 +18,7 @@ signalSpacing 5
 windowTimeUnit 1ns
 
 ; waveform viewport range
-zoom 1024.229826 1649.229826 1n
+zoom 7798.571110 8423.571110 1n
 cursor 1300.000000
 marker 0.000000
 
@@ -27,7 +27,7 @@ marker 0.000000
 ; visible top row signal index
 top 0
 ; marker line index
-markerPos 5
+markerPos 14
 
 ; event list
 ; addEvent event_name event_expression
@@ -51,21 +51,25 @@ addGroup "System"
 activeDirFile "" "/home/kathy/kabeta/test/SystemChip/SystemChip.fsdb"
 addSignal -h 16 /Testbench/DesignTop/KabCore/Sys_Clock
 addSignal -h 16 -holdScope Sys_Reset
-addSignal -h 15 -holdScope Sys_Stall
+addSignal -h 16 -holdScope Sys_Stall
 addSignal -h 16 -holdScope I_Mem_En_I
-addSignal -h 15 -UNSIGNED -HEX -holdScope PC_Sel[1:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope PC_Sel[1:0]
 addSignal -h 16 -UNSIGNED -HEX -holdScope PC_IF_In[31:0]
 addSignal -h 16 -UNSIGNED -HEX -holdScope PC_IF_Out[31:0]
 addSignal -h 16 -UNSIGNED -HEX -holdScope I_Mem_Data_I[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope PC_RR_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope IR_RR_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope PC_EX_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope IR_EX_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope BrCond[1:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope PC_MA_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope IR_MA_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope PC_WB_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope IR_WB_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope PC_RR_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope IR_RR_Out[31:0]
+addSignal -h 15 -holdScope ExcReq_RR
+addSignal -h 15 -UNSIGNED -HEX -holdScope ExcCode_RR[2:0]
+addSignal -h 15 -holdScope Sys_ExcAckRR
+addSignal -h 15 /Testbench/DesignTop/KabCore/BEU/BrTaken
+addSignal -h 16 -UNSIGNED -HEX /Testbench/DesignTop/KabCore/PC_EX_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope IR_EX_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope BrCond[1:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope PC_MA_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope IR_MA_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope PC_WB_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope IR_WB_Out[31:0]
 addGroup "Data Mem"
 addSignal -h 16 -UNSIGNED -HEX /Testbench/DesignTop/KabCore/ALU_Out[31:0]
 addSignal -h 16 -UNSIGNED -HEX -holdScope MDB_Out[31:0]
@@ -73,18 +77,18 @@ addSignal -h 16 -holdScope D_Mem_R_En
 addSignal -h 16 -holdScope D_Mem_W_En
 addSignal -h 16 -UNSIGNED -HEX -holdScope D_Mem_DataOut[31:0]
 addGroup "Reg File (W)"
-addSignal -h 15 /Testbench/DesignTop/KabCore/RegWen
-addSignal -h 15 -UNSIGNED -HEX -holdScope RF_DataW_In[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope Rc_WB[4:0]
+addSignal -h 16 /Testbench/DesignTop/KabCore/RegWen
+addSignal -h 16 -UNSIGNED -HEX -holdScope RF_DataW_In[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope Rc_WB[4:0]
 addGroup "Reg File (R)"
-addSignal -h 15 /Testbench/DesignTop/KabCore/RF_EnX
-addSignal -h 15 -UNSIGNED -HEX -holdScope Ra_RR[4:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope RF_DataX_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope RF_ChX_Data[31:0]
-addSignal -h 15 -holdScope RF_EnY
-addSignal -h 15 -UNSIGNED -HEX -holdScope RF_AddrY[4:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope RF_DataY_Out[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope RF_ChY_Data[31:0]
+addSignal -h 16 /Testbench/DesignTop/KabCore/RF_EnX
+addSignal -h 16 -UNSIGNED -HEX -holdScope Ra_RR[4:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope RF_DataX_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope RF_ChX_Data[31:0]
+addSignal -h 16 -holdScope RF_EnY
+addSignal -h 16 -UNSIGNED -HEX -holdScope RF_AddrY[4:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope RF_DataY_Out[31:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope RF_ChY_Data[31:0]
 addGroup "G5"
 
 ; getSignalForm Scope Hierarchy Status
@@ -105,6 +109,7 @@ SCOPE_LIST_BEGIN
 "/Testbench/DesignTop/KabCore"
 "/Testbench/DesignTop"
 "/Testbench"
+"/Testbench/DesignTop/KabCore/BEU"
 SCOPE_LIST_END
 
 GETSIGNALFORM_SCOPE_HIERARCHY_END
