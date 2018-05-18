@@ -15,10 +15,12 @@
 `timescale 1ns/1ps
 
 module ClockGenerator
-#(parameter TCLK,
+#(
+  parameter TCLK,
   parameter [0:0] INIT_STATE = 1'b1
 )
-( output bit Clock
+( 
+  output bit Clock
 );
 
   // generate clock
