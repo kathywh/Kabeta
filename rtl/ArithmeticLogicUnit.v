@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/14/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/14/2018                                                    */
+/*  Edited on:  05/19/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Arithmetic logic unit.                                                */
@@ -11,6 +11,7 @@
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/14/2018  Kathy       Unit created.                                 */
+/*      05/19/2018  Kathy       Change CMPLT/LE to signed comparison.         */
 /******************************************************************************/
 
 module ArithmeticLogicUnit
@@ -31,8 +32,8 @@ module ArithmeticLogicUnit
               `ALU_ADD:  Z <= X + Y;
               `ALU_SUB:  Z <= X - Y;
               `ALU_CEQ:  Z <= (X == Y) ? 32'd1 : 32'd0;
-              `ALU_CLT:  Z <= (X < Y) ? 32'd1 : 32'd0;      // Unsigned Less Than
-              `ALU_CLE:  Z <= (X <= Y) ? 32'd1 : 32'd0;     // Unsigned Less or Equal
+              `ALU_CLT:  Z <= ($signed(X) < $signed(Y)) ? 32'd1 : 32'd0;      // Signed Less Than
+              `ALU_CLE:  Z <= ($signed(X) <= $signed(Y)) ? 32'd1 : 32'd0;     // Signed Less or Equal
               `ALU_AND:  Z <= X & Y;
               `ALU_ORR:  Z <= X | Y;
               `ALU_XOR:  Z <= X ^ Y;
