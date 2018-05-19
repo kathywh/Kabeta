@@ -1,0 +1,77 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| data segment
+|--------------------------------------
+__DATA(0)
+
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_isr:
+	BR(start)
+svc_isr:
+	BR(.)
+ill_isr:
+	BR(.)
+inv_op_isr:
+	BR(.)
+inv_da_isr:
+	BR(.)
+inv_ia_isr:
+	BR(.)
+irq0_isr:
+	BR(.)
+irq1_isr:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+start:
+
+	| Switch to User Mode
+	CMOVE(user_mode%PC_MASK, R0)
+	JMP(R0)
+user_mode:
+
+	| Set init values of registers
+	CMOVE(0x59C1, R0)
+	CMOVE(0x59C2, R1)
+	CMOVE(0x59C3, R2)
+	CMOVE(0x59C4, R3)
+	CMOVE(0x59C5, R4)
+	CMOVE(0x59C6, R5)
+	CMOVE(0x59C7, R6)
+	CMOVE(0x59C8, R7)
+	CMOVE(0x59C9, R8)
+	CMOVE(0x8010, R9)
+	CMOVE(0x9011, R10)
+	CMOVE(0xA212, R11)
+	CMOVE(0xB713, R12)
+	CMOVE(0xCA14, R13)
+	CMOVE(0xFE15, R14)
+
+	| Run OP instructions
+	ADD(R0, R1, R15)
+	SUB(R2, R14, R16)
+	AND(R3, R13, R17)
+	OR(R4, R12, R18)
+	XOR(R5, R11, R19)
+	SHL(R10, R6, R20)
+	SHR(R9, R7, R21)
+	SRA(R11, R4, R22)
+	CMPEQ(R8, R13, R23)
+	CMPEQ(R10, R10, R24)
+	CMPLT(R13, R4, R25)
+	CMPLT(R14, R11, R26)
+	CMPLE(R13, R4, R27)
+	CMPLE(R14, R11, R28)
+	CMPLE(R12, R12, R29)
+
+end:
+	BR(.)

@@ -1,0 +1,77 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| data segment
+|--------------------------------------
+__DATA(0)
+
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_isr:
+	BR(start)
+svc_isr:
+	BR(.)
+ill_isr:
+	BR(.)
+inv_op_isr:
+	BR(.)
+inv_da_isr:
+	BR(.)
+inv_ia_isr:
+	BR(.)
+irq0_isr:
+	BR(.)
+irq1_isr:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+start:
+
+	| Switch to User Mode
+	CMOVE(user_mode%PC_MASK, R0)
+	JMP(R0)
+user_mode:
+
+	| Set init values of registers
+	CMOVE(0x59C1, R0)
+	CMOVE(0x59C2, R1)
+	CMOVE(0x59C3, R2)
+	CMOVE(0x59C4, R3)
+	CMOVE(0x59C5, R4)
+	CMOVE(0x59C6, R5)
+	CMOVE(0x59C7, R6)
+	CMOVE(0x59C8, R7)
+	CMOVE(0x59C9, R8)
+	CMOVE(0x8010, R9)
+	CMOVE(0x9011, R10)
+	CMOVE(0xA212, R11)
+	CMOVE(0xB713, R12)
+	CMOVE(0xCA14, R13)
+	CMOVE(0xFE15, R14)
+
+	| Run OP instructions
+	ADDC(R0, 0x59C2, R15)
+	SUBC(R2, 0xFFFFFE15, R16)
+	ANDC(R3, 0xFFFFCA14, R17)
+	ORC(R4, 0xFFFFB713, R18)
+	XORC(R5, 0xFFFFA212, R19)
+	SHLC(R10, 0x59C7, R20)
+	SHRC(R9, 0x59C8, R21)
+	SRAC(R11, 0x59C5, R22)
+	CMPEQC(R8, 0xFFFFCA14, R23)
+	CMPEQC(R10, 0xFFFF9011, R24)
+	CMPLTC(R13, 0x59C5, R25)
+	CMPLTC(R14, 0xFFFFA212, R26)
+	CMPLEC(R13, 0x59C5, R27)
+	CMPLEC(R14, 0xFFFFA212, R28)
+	CMPLEC(R12, 0xFFFFB713, R29)
+
+end:
+	BR(.)
