@@ -62,8 +62,8 @@
 | MOVE(RA, RC)		| RC <- <RA>
 | CMOVE(CC, RC)		| RC <- CC
 
-| PUSH(RA)		| (2) <SP> <- <RA>; SP <- <SP> - 4
-| POP(RA)		| (2) RA <- <<SP>+4>; SP <- <SP> + 4
+| PUSH(RA)		| (2)  SP <- <SP> + 4; <<SP>-4> <- <RA>
+| POP(RA)		| (2) RA <- <<SP>-4>; SP <- <SP> - 4
 | ALLOCATE(N)		| Allocate N longwords from stack
 | DEALLOCATE(N)		| Release N longwords
 
@@ -273,7 +273,7 @@ SP = sp
 .macro MOVC(CC, RC)		CMOVE(CC, RC)
 .macro NOP()		ADD(R31,R31,R31)
 
-.macro PUSH(RA)		ADDC(SP,4,SP)  ST(RA,-4,SP)
+.macro PUSH(RA)		ADDC(SP,4,SP)  ST(RA,SP,-4)
 .macro POP(RA)		LD(SP,-4,RA)   ADDC(SP,-4,SP)
 
 .macro CALL(label)	BR(label, LP)
@@ -311,7 +311,7 @@ SP = sp
 
 
 .macro GETFRAME(OFFSET, REG) LD(bp, OFFSET, REG)
-.macro PUTFRAME(REG, OFFSET) ST(REG, OFFSET, bp)
+.macro PUTFRAME(REG, OFFSET) ST(REG, bp, OFFSET)
 .macro CALL(S,N) BR(S,lp) SUBC(sp, 4*N, sp)
 
 .macro ALLOCATE(N) ADDC(sp, N*4, sp)
