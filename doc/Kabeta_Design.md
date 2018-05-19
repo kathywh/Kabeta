@@ -42,8 +42,10 @@ _Figure 2. [Detailed Block Diagram](Detailed_Block_Diagram.png)_
 ### 2.1 System Service – SVC (1C)
 
 |    31 : 26 | 25 : 21 | 20 : 16 | 15 : 0 |
-|-----------:|--------:|--------:|-------:|
-| **01**1100 |   00000 |   00000 | SVC_ID |
+| ---------: | ------: | ------: | -----: |
+| **01**1100 |   00000 |   00000 |  0...0 |
+
+Parameters can be put in registers.
 
 **NOTE:** This instruction will cause System Service Trap.
 
