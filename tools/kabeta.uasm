@@ -333,14 +333,12 @@ PC_MASK            = 0x7fffffff		| a mask for the rest of the PC
 | Define data segment at ADDR
 .macro __DATA(ADDR) {
 	. = ADDR
-	.align 4
-	__data = . }
+	.align 4 }
 
 | Define code segment at ADDR
 .macro __CODE(ADDR) {
 	. = ADDR
-	.align 4 
-	__code = . }
+	.align 4 }
 
 | Define exception segment (always at 0)
 .macro __EXC {
