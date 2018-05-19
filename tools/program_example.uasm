@@ -58,6 +58,7 @@ loop1:
 	LD(R0, array, R21)
 	LD(array, R22)
 
-	CMOVE(user_mode, R10)
-	JMP(R10)
+	| Switch to User Mode
+	CMOVE(user_mode%PC_MASK, R0)
+	JMP(R0)
 user_mode:
