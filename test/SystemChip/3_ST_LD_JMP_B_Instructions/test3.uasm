@@ -1,0 +1,83 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| constants
+|--------------------------------------
+
+ARR_SIZE = 10
+
+|--------------------------------------
+| data segment
+|--------------------------------------
+__DATA(0)
+
+array:
+	ARRAY(ARR_SIZE)
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_isr:
+	BR(start)
+svc_isr:
+	BR(.)
+ill_isr:
+	BR(.)
+inv_op_isr:
+	BR(.)
+inv_da_isr:
+	BR(.)
+inv_ia_isr:
+	BR(.)
+irq0_isr:
+	BR(.)
+irq1_isr:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+start:
+
+	| Switch to User Mode
+	CMOVE(user_mode%PC_MASK, R0)
+	JMP(R0)
+user_mode:
+
+	| Store data
+	|   R0 - offset
+	|   R1 - data to write, array[i] <= 0x55AA3700+i
+	|   R4 - counter
+	CMOVE(0, R0)
+	CMOVE(ARR_SIZE, R4)
+	CMOVE(0x55AA, R1)
+	SHLC(R1, 16, R1)
+	ORC(R1, 0x3700, R1)
+loop_st:
+	ST(R1, R0, array)
+	ADDC(R0, 4, R0)
+	ADDC(R1, 1, R1)
+	SUBC(R4, 1, R4)
+	BNE(R4, loop_st)		| branch if r4 != 0
+
+	| Load data
+	|   R0 - offset
+	|   R4 - counter
+	CMOVE(0, R0)
+	CMOVE(ARR_SIZE, R4)
+loop_ld:
+	BEQ(R4, ld_end)			| branch if r4 == 0
+	LD(R0, array, R1)
+	ADDC(R0, 4, R0)
+	SUBC(R4, 1, R4)	
+	BR(loop_ld)
+ld_end:
+
+	NOP()
+	NOP()
+
+end:
+	BR(.)
