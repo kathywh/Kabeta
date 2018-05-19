@@ -323,7 +323,7 @@ SP = sp
 
 | SVC calls; used for OS extensions
 
-.macro SVC(ID)		betaopc(0x1c,0,ID,0)
+.macro SVC()		betaopc(0x1c,0,0,0)
 
 | constant for the supervisor bit in the PC
 PC_SUPERVISOR	   = 0x80000000		| the bit itself
