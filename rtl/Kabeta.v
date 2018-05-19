@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/18/2018                                                    */
+/*  Edited on:  05/19/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      An implementation of pipelined MIT Beta processor.                    */
@@ -11,6 +11,8 @@
 /*  Revisions:                                                                */
 /*      05/16/2018  Kathy       Integrate all components.                     */
 /*      05/18/2018  Kathy       Rename signals & components.                  */
+/*      05/19/2018  Kathy       Add missing connection.                       */
+/*                              Add missing port.                             */
 /******************************************************************************/
 
 module Kabeta
@@ -19,6 +21,7 @@ module Kabeta
   input Sys_Clock,
   output IO_EnR, IO_EnW,
   input [31:0] IO_DataR,
+  output [29:0] IO_Address,
   output [31:0] IO_DataW,
   input EIC_I_Req, EIC_I_Id
 );
@@ -58,7 +61,6 @@ module Kabeta
 
   // Signals from/to IM
   wire I_Mem_En_I, I_Mem_En_D;
-  wire [30:0] /*I_Mem_Addr_I,*/ I_Mem_Addr_D;
   wire [31:0] I_Mem_Data_I, I_Mem_Data_D;
 
   // Signals from/to IRs & PCs
@@ -106,6 +108,8 @@ module Kabeta
   assign I_Mem_En_I = StageEn_RR;
   assign I_Mem_En_D = ID_InstrMemRdEn & ~Sys_FlushMA;
 
+  assign IO_Address = ALU_Out[31:2];
+
   InstructionMemory IM
   (
     .Clock(Sys_Clock),
@@ -113,7 +117,7 @@ module Kabeta
     .En_I(I_Mem_En_I),
     .En_D(I_Mem_En_D),
     .Addr_I(PC_IF_In[30:2]),
-    .Addr_D(I_Mem_Addr_D[30:2]),
+    .Addr_D(IMAB_Address[30:2]),
     .Data_I(I_Mem_Data_I),
     .Data_D(I_Mem_Data_D)
   );
@@ -163,7 +167,7 @@ module Kabeta
   );
 
   // JMP target, can only clear S bit, can not set S bit.
-  assign RegForPC = {(RF_ChX_Data[31] & PC_EX_Out[31]), RF_ChX_Data[30:0]};
+  assign RegForPC = {(RF_ChX_Data[31] & PC_EX_Out[31]), RF_ChX_Data[30:2], 2'b00};
 
   // PC MUX
   always @(*)
