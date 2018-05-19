@@ -1,0 +1,84 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| I/O segment
+|--------------------------------------
+__DATA(0x100)
+
+ioport:
+	ARRAY(4)
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_isr:
+	BR(start)
+svc_isr:
+	BR(.)
+ill_isr:
+	BR(.)
+inv_op_isr:
+	BR(.)
+inv_da_isr:
+	BR(.)
+inv_ia_isr:
+	BR(.)
+irq0_isr:
+	BR(.)
+irq1_isr:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+start:
+
+	| Load literal (in I-Mem)
+	LDR(const1, R1)
+	LDR(const2, R2)
+	LDR(const3, R3)
+	LDR(const4, R4)
+
+	| I/O read
+	MOVC(0, R0)
+	IOR(R0, ioport, R10)
+	ADDC(R0, 4, R0)
+	IOR(R0, ioport, R11)
+	ADDC(R0, 4, R0)
+	IOR(R0, ioport, R12)
+	ADDC(R0, 4, R0)
+	IOR(R0, ioport, R13)
+
+	| I/O write
+	MOVC(0, R0)
+	IOW(R1, R0, ioport)
+	ADDC(R0, 4, R0)
+	IOW(R2, R0, ioport)
+	ADDC(R0, 4, R0)
+	IOW(R3, R0, ioport)
+	ADDC(R0, 4, R0)
+	IOW(R4, R0, ioport)
+
+end:
+	BR(.)
+
+|--------------------------------------
+| literal segment
+|--------------------------------------
+__LITERAL()
+
+const1:
+	LONG(0x12345678)
+space1:
+	ARRAY(2)
+const2:
+	LONG(0xABCDEF89)
+const3:
+	LONG(0x3C9A172E)
+space2:
+	ARRAY(5)
+const4:
+	LONG(0xE219C43B)
