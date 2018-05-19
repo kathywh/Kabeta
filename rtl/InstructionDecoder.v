@@ -154,7 +154,7 @@ module InstructionDecoder
           ExcReq_RR <= `TRUE;
           ExcCode_RR <= `EC_SVC;
         end
-      if(UndefUserOpcode | UndefPrivOpcode | PrivOpcodeInUserMode)
+      else if(UndefUserOpcode | UndefPrivOpcode | PrivOpcodeInUserMode)
         begin     
           ExcReq_RR <= `TRUE;
           ExcCode_RR <= `EC_ILL;
