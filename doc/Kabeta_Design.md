@@ -1,7 +1,7 @@
 # Kabeta Processor Design
 
 **Date:** May 16, 2018  
-**Version:** 1.1E  
+**Version:** 1.1F  
 **Author:** Kathy  
 **Reviewer:** (N/A)  
 
@@ -41,9 +41,9 @@ _Figure 2. [Detailed Block Diagram](Detailed_Block_Diagram.png)_
 
 ### 2.1 System Service – SVC (1C)
 
-|    31 : 26 | 25 : 21 | 20 : 16 | 15 : 0 |
-| ---------: | ------: | ------: | -----: |
-| **01**1100 |   00000 |   00000 |  0...0 |
+|    31 : 26 | 25 : 21 | 20 : 16 |      15 : 0 |
+| ---------: | ------: | ------: | ----------: |
+| **01**1100 |   00000 |   00000 | 0000...0000 |
 
 Parameters can be put in registers.
 
@@ -392,3 +392,4 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | 1.1C    | 4/28/2018 | Kathy  | (N/A)    | Reformat this document in Markdown format.                   |
 | 1.1D    | 5/13/2018 | Kathy  | Dao      | Correct decoder signaling table.                             |
 | 1.1E    | 5/16/2018 | Kathy  | (N/A)    | Change Mem/IO control signals.                               |
+| 1.1F    | 5/20/2018 | Kathy  | (N/A)    | Remove SVC_ID from SVC format.                               |
