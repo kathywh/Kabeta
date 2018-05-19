@@ -267,7 +267,10 @@ SP = sp
 .macro LDR(CC, RC)		BETABR(0x1F, R31, RC, CC)
 
 .macro MOVE(RA, RC)		ADD(RA, R31, RC)
+.macro MOV(RA, RC)		MOVE(RA, RC)
 .macro CMOVE(CC, RC)		ADDC(R31, CC, RC)
+.macro MOVEC(CC, RC)		CMOVE(CC, RC)
+.macro MOVC(CC, RC)		CMOVE(CC, RC)
 .macro NOP()		ADD(R31,R31,R31)
 
 .macro PUSH(RA)		ADDC(SP,4,SP)  ST(RA,-4,SP)
@@ -341,7 +344,15 @@ PC_MASK            = 0x7fffffff		| a mask for the rest of the PC
 	.align 4 }
 
 | Define exception segment (always at 0)
-.macro __EXC {
+.macro __EXC() {
 	. = 0
 	.align 4 }
 
+| Define literal segment at ADDR
+.macro __LITERAL(ADDR) {
+	. = ADDR
+	.align 4 }
+
+| Define literal segment at next aligned address
+.macro __LITERAL() {
+	.align 4 }
