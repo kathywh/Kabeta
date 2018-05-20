@@ -1,0 +1,12 @@
+#!/bin/csh
+
+# Run all tests in subdirectories
+# e.g.  ./run_all_tests | tee all_tests.log
+#       grep -E '\---- [0-9]+_|Kabeta' all_tests.log
+
+foreach dir ([1-9]*)
+  cd $dir
+  echo "---------------- $dir ----------------"
+  source run_test
+  cd ..
+end

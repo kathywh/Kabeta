@@ -1,0 +1,91 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| data segment
+|--------------------------------------
+__DATA(0)
+
+| stack
+stack:
+	STORAGE(256)
+
+|--------------------------------------
+| data segment out of address range
+|--------------------------------------
+__DATA(0x5000)		| @addr, addr<0x8000
+
+inva_data:
+	LONG()
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_vec:
+	BR(start)
+svc_vec:
+	BR(.)
+ill_vec:
+	BR(.)
+inv_op_vec:
+	BR(.)
+inv_da_vec:
+	BR(inv_da_esr)
+inv_ia_vec:
+	BR(.)
+irq0_vec:
+	BR(.)
+irq1_vec:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+
+	| Invalid Data Address Handler
+	|   Return to next instruction for test
+inv_da_esr:
+	PUSH(XP)
+	PUSH(R0)
+	PUSH(R1)
+	| Process illegal in fault here,
+	| assuming R0 & R1 will be used.
+	POP(R1)
+	POP(R0)
+	POP(XP)
+	JMP(XP)	
+
+	| Reset vector jump here
+start:
+
+	| Set SP
+	MOVC(stack, SP)
+
+	| Switch to User Mode
+	MOVC(user_mode%PC_MASK, R0)
+	JMP(R0)
+user_mode:
+
+	MOVC(0x59C1, R0)
+	MOVC(0x59C2, R1)
+	MOVC(0x59C3, R2)
+
+	| Invalid data address
+	LD(inva_data, R0)
+	ST(R1, inva_data)
+
+	| Invalid instruction address
+	LDR(inva_instr, R0)		| data in i-mem
+
+end:
+	BR(.)
+
+|--------------------------------------
+| code segment out of address range
+|--------------------------------------
+__CODE(0x6000)		| @addr, addr<0x8000
+
+inva_instr:
+	LONG()

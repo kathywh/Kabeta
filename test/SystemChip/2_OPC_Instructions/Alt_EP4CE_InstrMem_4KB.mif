@@ -1,0 +1,51 @@
+WIDTH=32;
+DEPTH=1024;
+
+ADDRESS_RADIX=HEX;
+DATA_RADIX=HEX;
+
+CONTENT BEGIN
+  0000 : 77ff0007;
+  0001 : 77ffffff;
+  0002 : 77ffffff;
+  0003 : 77ffffff;
+  0004 : 77ffffff;
+  0005 : 77ffffff;
+  0006 : 77ffffff;
+  0007 : 77ffffff;
+  0008 : c01f0028;
+  0009 : 6fe00000;
+  000a : c01f59c1;
+  000b : c03f59c2;
+  000c : c05f59c3;
+  000d : c07f59c4;
+  000e : c09f59c5;
+  000f : c0bf59c6;
+  0010 : c0df59c7;
+  0011 : c0ff59c8;
+  0012 : c11f59c9;
+  0013 : c13f8010;
+  0014 : c15f9011;
+  0015 : c17fa212;
+  0016 : c19fb713;
+  0017 : c1bfca14;
+  0018 : c1dffe15;
+  0019 : c1e059c2;
+  001a : c602fe15;
+  001b : e223ca14;
+  001c : e644b713;
+  001d : ea65a212;
+  001e : f28a59c7;
+  001f : f6a959c8;
+  0020 : facb59c5;
+  0021 : d2e8ca14;
+  0022 : d30a9011;
+  0023 : d72d59c5;
+  0024 : d74ea212;
+  0025 : db6d59c5;
+  0026 : db8ea212;
+  0027 : dbacb713;
+  0028 : 77ffffff;
+  [0029..03ff] : 00000000;
+END;
+

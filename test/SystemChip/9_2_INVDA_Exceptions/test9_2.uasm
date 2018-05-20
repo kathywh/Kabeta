@@ -1,0 +1,82 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| data segment
+|--------------------------------------
+__DATA(0)
+
+| stack
+stack:
+	STORAGE(256)
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_vec:
+	BR(start)
+svc_vec:
+	BR(.)
+ill_vec:
+	BR(.)
+inv_op_vec:
+	BR(.)
+inv_da_vec:
+	BR(.)
+inv_ia_vec:
+	BR(inv_ia_esr)
+irq0_vec:
+	BR(.)
+irq1_vec:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+
+	| Invalid Instruction Address Handler
+	|   Halt for test, impossible to return
+	|   since XP contains invalid address
+inv_ia_esr:
+	PUSH(XP)
+	PUSH(R0)
+	PUSH(R1)
+	| Process illegal in fault here,
+	| assuming R0 & R1 will be used.
+	BR(.)
+	POP(R1)
+	POP(R0)
+	POP(XP)
+	JMP(XP)	
+
+	| Reset vector jump here
+start:
+
+	| Set SP
+	MOVC(stack, SP)
+
+	| Switch to User Mode
+	MOVC(user_mode%PC_MASK, R0)
+	JMP(R0)
+user_mode:
+
+	MOVC(0x59C1, R0)
+	MOVC(0x59C2, R1)
+	MOVC(0x59C3, R2)
+
+	| Invalid instruction address
+	MOVC(inva_instr, R0)
+	JMP(R0)					| jmp to invalid address
+
+end:
+	BR(.)
+
+|--------------------------------------
+| code segment out of address range
+|--------------------------------------
+__CODE(0x6000)		| @addr, addr<0x8000
+
+inva_instr:
+	LONG()
