@@ -248,6 +248,8 @@ module InstructionDecoder
              (ALU_Code_EX == `ALU_RES1)
              || (ALU_Code_EX == `ALU_RES2)
              || (ALU_Code_EX == `ALU_RES3)
+             || (ALU_Code_EX == `ALU_MUL)     /* do not implement MUL/MULC */
+             || (ALU_Code_EX == `ALU_DIV)     /* do not implement DIV/DIVC */
           )
         )
         begin
