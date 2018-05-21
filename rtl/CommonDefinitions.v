@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/13/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/15/2018                                                    */
+/*  Edited on:  05/21/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Common definitions of macros.                                         */
@@ -11,6 +11,7 @@
 /*  Revisions:                                                                */
 /*      05/13/2018  Kathy       Unit created.                                 */
 /*      05/15/2018  Kathy       Add more definitions.                         */
+/*      05/21/2018  Kathy       Make some comments more clear.                */
 /******************************************************************************/
 
 
@@ -61,12 +62,12 @@
 `define EC_INT_0    3'b110      /* Interrupt 0         */
 `define EC_INT_1    3'b111      /* Interrupt 1         */
 
-// Register File Y Channel Selection
+// Register File Y Channel Address Selection
 `define RF_Y_SEL_X    1'bx       /* Don't Care */
 `define RF_Y_SEL_RB   1'b0       /* Rb */
 `define RF_Y_SEL_RC   1'b1       /* Rc */
 
-// Register File W Channel Selection
+// Register File W Channel Data Selection
 `define RF_W_SEL_X    3'bxxx     /* Don't Care */
 `define RF_W_SEL_PC   3'b000     /* PC+4 */
 `define RF_W_SEL_ALU  3'b001     /* ALU Data Buffer */
