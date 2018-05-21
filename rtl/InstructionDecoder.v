@@ -93,7 +93,7 @@ module InstructionDecoder
   /******************************************************************************/
 
   // Exception Process
-  assign ExcReq_IF = (InstrAddr_IF[30:2] >= `INSTR_ADDR_LIMIT/4);
+  assign ExcReq_IF = (InstrAddr_IF >= `INSTR_ADDR_LIMIT);
   assign ExcCode_IF = ExcReq_IF ? `EC_INV_IA : 3'b000;
   
   /******************************************************************************/
