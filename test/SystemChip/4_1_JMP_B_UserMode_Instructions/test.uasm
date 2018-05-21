@@ -1,0 +1,65 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_isr:
+	BR(start)
+svc_isr:
+	BR(.)
+ill_isr:
+	BR(.)
+inv_op_isr:
+	BR(.)
+inv_da_isr:
+	BR(.)
+inv_ia_isr:
+	BR(.)
+irq0_isr:
+	BR(.)
+irq1_isr:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+start:
+
+	| Switch to User Mode
+	CMOVE(user_mode%PC_MASK, R0)	| 0x20
+	JMP(R0)							| 0x24
+user_mode:
+
+	MOVC(0, R21)			| 0x28
+	BEQ(R21, tgt_beq)		| 0x2C
+
+	MOVC(1, R1)				| 0x30
+	MOVC(2, R2)				| 0x34
+
+tgt_beq:
+	MOVC(1, R22)			| 0x38
+	BNE(R22, tgt_bne)		| 0x3C
+
+	MOVC(3, R3)				| 0x40
+	MOVC(4, R4)				| 0x44
+
+tgt_bne:
+	MOVC(tgt_jmp, R23)		| 0x48
+	JMP(R23)				| 0x4C
+
+	MOVC(5, R5)				| 0x50
+	MOVC(6, R6)				| 0x54
+
+tgt_jmp:
+	MOVC(end, R24)			| 0x58
+	MOVC(1, R0)				| 0x5C
+	SHL(R0, 31, R0)			| 0x60
+	OR(R24, R0, R24)		| 0x64
+	| R24=S|end, test U-mode->S-mode
+	JMP(R24)				| 0x68
+
+end:
+	BR(.)					| 0x6C

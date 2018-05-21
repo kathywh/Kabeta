@@ -4,6 +4,17 @@
 # e.g.  ./run_all_tests | tee all_tests.log
 #       grep -E '\---- [0-9]+_|Kabeta' all_tests.log
 
+if(! -f ../altera_mf.v) then
+  echo "Missing sim lib file: altera_mf.v."
+  exit;
+endif
+
+grep -E '//.*[[:space:]]+S_PLL[[:space:]]+' ../../rtl/SystemChip.v
+if($?) then
+  echo "Maybe S_PLL not bypass. Bypass it before test."
+  exit
+endif
+
 foreach dir ([1-9]*)
   cd $dir
   echo "---------------- $dir ----------------"
