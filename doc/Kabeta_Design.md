@@ -342,7 +342,7 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 
 ### 7.2 Branch and Exception Control Signaling
 
-| Exc.  Req.  &&  Cond. | RST           | ExcReqMA       | ExcReqEX && !Stall | ExcReqRR  && !BrTaken  && !Stall [3] | ExcReqIF  && !BrTaken  && !Stall [3] | IRQ  && (~PC_IF.S) | Stall   | BrTaken                                                   | (None Assert) |
+| Exc.  Req.  &&  Cond. | RST           | ExcReqMA       | ExcReqEX && !Stall | ExcReqRR  && !BrTaken  && !Stall [3] | ExcReqIF  && !BrTaken  && !Stall [3] | IRQ_Int [4]  && (~PC_IF.S) | Stall   | BrTaken                                                   | (None Assert) |
 | --------------------- | ------------- | -------------- | -------------- | -------------------------------- | -------------------------------- | ------------------ | ---------- | ------------------------------------------------------------ | ------------- |
 | Exc.  Code            | (N/A)         | ExcCodeMA      | ExcCodeEX      | ExcCodeRR                        | ExcCodeIF                        | (N/A)              | (N/A)      | (N/A)                                                        |               |
 | Priority              | 0 (Highest)   | 1              | 2              | 3                                | 4                                | 5                  | 6 | 7  (Lowest)                                                |               |
@@ -369,15 +369,14 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
    - PCNX – PC+4
    - PCLIT – PC+4+4*Sext(Literal)
    - REGA – Register Ra
-
 2. ExcAck*
    - 0 – Select NOP
    - 1 – Select BNE
-
 3. BrTaken =  
     (BrCond == AL)  
     || ((BrCond == EQ) && RaZero)  
     || ((BrCond == NE) && !RaZero)  
+4. IRQ_Int is the internal status if IRQ pin.
 
 
 ## Appendix A: Document Version History
