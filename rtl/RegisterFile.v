@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 04/06/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/15/2018                                                    */
+/*  Edited on:  05/21/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Register file with zero register.                                     */
@@ -16,6 +16,7 @@
 /*      04/12/2018  Kathy       1) Remove reset signal and functionality.     */
 /*                              2) Remove read addr reg, register read data.  */
 /*      05/15/2018  Kathy       Rewrite module in a different style.          */
+/*      05/21/2018  Kathy       Correct write-through condition.              */
 /******************************************************************************/
 
 module RegisterFile
@@ -57,7 +58,7 @@ module RegisterFile
             begin
               DataX <= 0;
             end
-          else if(AddrX == AddrW)         // write-through
+          else if(EnW & (AddrX == AddrW))         // write-through
             begin
               DataX <= DataW;
             end
