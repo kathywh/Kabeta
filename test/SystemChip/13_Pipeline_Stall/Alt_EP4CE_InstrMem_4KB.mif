@@ -1,0 +1,30 @@
+WIDTH=32;
+DEPTH=1024;
+
+ADDRESS_RADIX=HEX;
+DATA_RADIX=HEX;
+
+CONTENT BEGIN
+  0000 : 77ff0007;
+  0001 : 77ffffff;
+  0002 : 77ffffff;
+  0003 : 77ffffff;
+  0004 : 77ffffff;
+  0005 : 77ffffff;
+  0006 : 77ffffff;
+  0007 : 77ffffff;
+  0008 : c01f0028;
+  0009 : 6fe00000;
+  000a : c01f5a03;
+  000b : 641f0000;
+  000c : c2bf5a00;
+  000d : c2df0001;
+  000e : 603f0000;
+  000f : 8041f800;
+  0010 : 7c3f0002;
+  0011 : 8041f800;
+  0012 : 77ffffff;
+  0013 : 00005a04;
+  [0014..03ff] : 00000000;
+END;
+

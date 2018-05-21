@@ -1,0 +1,90 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| data segment
+|--------------------------------------
+__DATA(0)
+data:
+	LONG()
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_vec:
+	BR(start)
+svc_vec:
+	BR(.)
+ill_vec:
+	BR(.)
+inv_op_vec:
+	BR(.)
+inv_da_vec:
+	BR(.)
+inv_ia_vec:
+	BR(.)
+irq0_vec:
+	BR(.)
+irq1_vec:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+
+start:
+	| Switch to User Mode
+	MOVC(user_mode%PC_MASK, R0)		| 0x20
+	JMP(R0)							| 0x24
+user_mode:
+
+	MOVC(tgt_jmp, R0)	| load jmp tgt addr 	| 0x28
+	ST(R0, data)					| 0x2C
+	MOVC(0x5A00, R21)				| 0x30
+	MOVC(1, R22)					| 0x34
+
+	|--------------------------------
+	| Register file write-thru, preceding by 3 instructions
+
+	| JMP to tgt_jmp
+	JMP(R0, R1)				| JMP: 0x3C 	| 0x38
+
+	XORC(R21, 1, R25)
+	SHL(R21, R22, R26)
+	SUB(R21, R22, R27)
+
+tgt_jmp:
+	MOV(R1, R2)
+
+	| BEQ
+	BEQ(R31, tgt_beq, R1)	| BEQ: 0x50		| 0x4C
+
+	XORC(R21, 1, R28)
+	SHL(R21, R22, R29)
+	SUB(R21, R22, R24)
+
+tgt_beq:
+	MOV(R1, R2)
+
+	| BNE
+	BNE(R22, tgt_bne, R1)	| BNE: 0x64		| 0x60
+
+	XORC(R21, 1, R11)
+	SHL(R21, R22, R12)
+	SUB(R21, R22, R13)
+
+tgt_bne:
+	MOV(R1, R2)
+
+end:
+	BR(.)
+
+|--------------------------------------
+| literal segment
+|--------------------------------------
+__LITERAL()
+
+literal:
+	LONG(0x5A04)

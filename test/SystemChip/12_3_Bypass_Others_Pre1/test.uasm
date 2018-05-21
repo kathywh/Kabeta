@@ -1,0 +1,72 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| data segment
+|--------------------------------------
+__DATA(0)
+data:
+	LONG()
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+__EXC()
+
+rst_vec:
+	BR(start)
+svc_vec:
+	BR(.)
+ill_vec:
+	BR(.)
+inv_op_vec:
+	BR(.)
+inv_da_vec:
+	BR(.)
+inv_ia_vec:
+	BR(.)
+irq0_vec:
+	BR(.)
+irq1_vec:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+__CODE(0x20)
+
+start:
+	| Switch to User Mode
+	MOVC(user_mode%PC_MASK, R0)		| 0x20
+	JMP(R0)							| 0x24
+user_mode:
+
+	MOVC(0x5A03, R0)				| 0x28
+	ST(R0, data)					| 0x2C
+	MOVC(0x5A00, R21)				| 0x30
+	MOVC(1, R22)					| 0x34
+
+	|--------------------------------
+	| Bypass from MA-Stage, preceding by 1 instruction
+
+	ADD(R21, R22, R1)	| ADD: 0x5A01	| 0x38
+	MOV(R1, R2)
+
+	ADDC(R21, 2, R1)	| ADDC: 0x5A02	| 0x40
+	MOV(R1, R2)
+
+	BEQ(R22, end, R1)	| BEQ: 0x4C		| 0x48
+	MOV(R1, R2)
+
+	BNE(R31, end, R1)	| BNE: 0x54		| 0x50
+	MOV(R1, R2)
+
+end:
+	BR(.)
+
+|--------------------------------------
+| literal segment
+|--------------------------------------
+__LITERAL()
+
+literal:
+	LONG(0x5A04)
