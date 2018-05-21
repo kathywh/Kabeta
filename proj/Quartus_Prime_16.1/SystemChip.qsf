@@ -78,6 +78,7 @@ set_global_assignment -name VERILOG_FILE ../../rtl/RegisterEn.v
 set_global_assignment -name VERILOG_FILE ../../rtl/InstructionRegister.v
 set_global_assignment -name VERILOG_FILE ../../rtl/InstructionMemory.v
 set_global_assignment -name VERILOG_FILE ../../rtl/InstructionDecoder.v
+set_global_assignment -name VERILOG_FILE ../../rtl/CoreInterruptUnit.v
 set_global_assignment -name VERILOG_FILE ../../rtl/DataMemory.v
 set_global_assignment -name VERILOG_FILE ../../rtl/BranchExceptionUnit.v
 set_global_assignment -name VERILOG_FILE ../../rtl/ArithmeticLogicUnit.v
