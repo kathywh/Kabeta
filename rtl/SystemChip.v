@@ -24,6 +24,7 @@ module SystemChip
   wire IO_EnR, IO_EnW;
   wire [31:0] IO_DataW, IO_DataR;
   wire [29:0] IO_Address;
+  wire EIC_I_Ack;
 
   assign Dout = &IO_DataW;    // Stub
 
@@ -51,7 +52,8 @@ module SystemChip
     .IO_DataR(IO_DataR),
     .IO_DataW(IO_DataW),
     .EIC_I_Req(1'b0), 
-    .EIC_I_Id(1'b0)
+    .EIC_I_Id(1'b0),
+    .EIC_I_Ack(EIC_I_Ack)
   );
   
 endmodule

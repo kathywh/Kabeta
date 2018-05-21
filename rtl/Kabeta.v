@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/19/2018                                                    */
+/*  Edited on:  05/21/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      An implementation of pipelined MIT Beta processor.                    */
@@ -13,17 +13,25 @@
 /*      05/18/2018  Kathy       Rename signals & components.                  */
 /*      05/19/2018  Kathy       Add missing connection.                       */
 /*                              Add missing port.                             */
+/*      05/21/2018  Kathy       Add core interrupt unit.                      */
 /******************************************************************************/
 
 module Kabeta
 (
+  // System Signals
   input Sys_Reset,
   input Sys_Clock,
+
+  // I/O Signals
   output IO_EnR, IO_EnW,
   input [31:0] IO_DataR,
   output [29:0] IO_Address,
   output [31:0] IO_DataW,
-  input EIC_I_Req, EIC_I_Id
+
+  // Interrupt Signals
+  input EIC_I_Req, 
+  input EIC_I_Id,
+  output EIC_I_Ack
 );
 
   // System wide signals
@@ -98,6 +106,10 @@ module Kabeta
   // Signals from/to ADB
   wire ADB_En;
   wire [31:0] ADB_Out;
+
+  // Signals from/to KIU
+  wire KIU_I_Req;
+  wire KIU_I_Id;
 
   // Signals common for stage
   wire StageEn_RR = ~Sys_Stall | Sys_FlushIF;
@@ -411,6 +423,19 @@ module Kabeta
     .DataOut(ADB_Out)
   );
 
+  CoreInterruptUnit KIU
+  (
+    .EIC_I_Req(EIC_I_Req), 
+    .EIC_I_Id(EIC_I_Id),
+    .EIC_I_Ack(EIC_I_Ack),
+
+    .Sys_Reset(Sys_Reset),
+    .Sys_Clock(Sys_Clock),
+    .S_Mode_IF(PC_IF_Out[31]),
+    .KIU_I_Req(KIU_I_Req),
+    .KIU_I_Id(KIU_I_Id)
+  );
+
   BranchExceptionUnit BEU
   (
     .SysReset(Sys_Reset),
@@ -423,8 +448,8 @@ module Kabeta
     .ExcCodeEX(ExcCode_EX), 
     .ExcCodeMA(ExcCode_MA),
     .Stall(Sys_Stall),
-    .IRQ_Int(EIC_I_Req),
-    .IID_Sync(EIC_I_Id),
+    .IRQ_Int(KIU_I_Req),
+    .IID_Sync(KIU_I_Id),
     .S_Mode_EX(PC_EX_Out[31]),
     .BrCond(BrCond),
     .Ra(RF_ChX_Data),

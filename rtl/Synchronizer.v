@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/16/2018                                                    */
+/*  Edited on:  05/21/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Configurable synchronizer.                                            */
@@ -11,6 +11,7 @@
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/16/2018  Kathy       Unit created.                                 */
+/*      05/21/2018  Kathy       Correct implementation.                       */
 /******************************************************************************/
 
 `define SYNC_RST_LOW 1'b0
@@ -22,21 +23,24 @@ module Synchronizer
   input Reset,
   input Clock,
   input DataIn,
-  output reg DataOut
+  output DataOut
 );
 
-  reg SyncData;
+  reg SyncData1, SyncData2;
+
+  assign DataOut = SyncData2;
 
   always @(negedge Reset or posedge Clock)
     begin
       if(!Reset)
         begin
-          SyncData <= RST_STATE;
+          SyncData1 <= RST_STATE;
+          SyncData2 <= RST_STATE;
         end
       else
         begin
-          SyncData <= DataIn;
-          DataOut <= SyncData;
+          SyncData1 <= DataIn;
+          SyncData2 <= SyncData1;
         end
     end
 endmodule
