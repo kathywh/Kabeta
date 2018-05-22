@@ -9,8 +9,10 @@
 /*      Handshake for clock domain cross.                                     */
 /*      NOTE: 1) T_Start is required to be 1 transmitter clock cycle wide.    */
 /*            2) R_Finish is required to be 1 receiver clock cycle wide.      */
+/*            3) R_DataReady is granteed to be 1 receiver clock cycle wide.   */
 /*  Revisions:                                                                */
 /*      05/22/2018  Kathy       Unit created.                                 */
+/*                              Add some comments.                            */
 /******************************************************************************/
 
 module Handshaker
