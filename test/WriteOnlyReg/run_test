@@ -1,0 +1,19 @@
+#!/bin/csh
+
+set lib_files = ""
+
+set tb_files = "ClockGenerator.sv Tester.sv Testbench.sv"
+
+set src_files = \
+"../../rtl/CommonDefinitions.v \
+ ../../rtl/Synchronizer.v \
+ ../../rtl/RegisterRstEn.v \
+ ../../rtl/Peripherals/Handshaker.v \
+ ../../rtl/Peripherals/WriteOnlyReg.v"
+
+
+alias openwv 'nWave -ssf WriteOnlyReg.fsdb -sswr WriteOnlyReg.rc'
+
+alias startvd 'verdi -sv ${lib_files} ${src_files} ${tb_files} -ssf WriteOnlyReg.fsdb -sswr WriteOnlyReg.rc' 
+
+vcs -full64 -sverilog -R -nc -debug_pp -LDFLAGS -rdynamic -P ${VERDI_HOME}/share/PLI/VCS/LINUX64/novas.tab ${VERDI_HOME}/share/PLI/VCS/LINUX64/pli.a +define+FSDB_DUMP -timescale=1ns/1ps ${lib_files} ${src_files} ${tb_files}
