@@ -1,3 +1,18 @@
+/******************************************************************************/
+/*  Unit Name:  CoreInterruptUnit                                             */
+/*  Created by: Kathy                                                         */
+/*  Created on: 05/21/2018                                                    */
+/*  Edited by:  Kathy                                                         */
+/*  Edited on:  05/23/2018                                                    */
+/*                                                                            */
+/*  Description:                                                              */
+/*                                                                            */
+/*                                                                            */
+/*  Revisions:                                                                */
+/*      05/21/2018  Kathy       Unit created.                                 */
+/*      05/23/2018  Kathy       Add IID output register.                      */
+/******************************************************************************/
+
 module CoreInterruptUnit
 (
   input EIC_I_Req, 
@@ -8,13 +23,11 @@ module CoreInterruptUnit
   input Sys_Clock,
   input S_Mode_IF,
   output reg KIU_I_Req, // internal interrupt status
-  output KIU_I_Id
+  output reg KIU_I_Id
 );
 
   wire IRQ_Sync;    // synchronized IRQ
   reg IRQ_Sync_Last;
-
-  assign KIU_I_Id = EIC_I_Id;
 
   Synchronizer SYNC_IRQ
   (
@@ -36,6 +49,7 @@ module CoreInterruptUnit
           if(~IRQ_Sync_Last & IRQ_Sync)   // rising edge of IRQ_Sync
             begin
               KIU_I_Req <= `TRUE;
+              KIU_I_Id <= EIC_I_Id;
             end
 
           if(KIU_I_Req & ~S_Mode_IF)
