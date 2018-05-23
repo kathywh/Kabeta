@@ -7,13 +7,14 @@
 /*                                                                            */
 /*  Description:                                                              */
 /*      Handshake for clock domain cross.                                     */
-/*      NOTE: 1) T_Start is required to be 1 transmitter clock cycle wide.    */
-/*            2) R_Finish is required to be 1 receiver clock cycle wide.      */
+/*      NOTE: 1) CAUTION: R_Data is NOT registered.                           */
+/*            2) T_Start is required to be 1 transmitter clock cycle wide.    */
 /*            3) R_DataReady is granteed to be 1 receiver clock cycle wide.   */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/22/2018  Kathy       Unit created.                                 */
 /*                              Add some comments.                            */
+/*      05/23/2018  Kathy       Finish signal is generated internally.        */
 /******************************************************************************/
 
 module Handshaker
@@ -27,8 +28,7 @@ module Handshaker
   // Receiver side signals
   input R_Reset, R_Clock,
   output [WID_DATA-1:0] R_Data,
-  output R_DataReady,     /* Data is ready */
-  input R_Finish      /* a positive pulse to finish transmission */
+  output R_DataReady     /* Data is ready */
 );
 
   reg T_Req;
@@ -41,6 +41,7 @@ module Handshaker
   wire T_AckSync;
   reg T_AckSyncLast;
   wire T_AckReady;
+  reg R_Finish;    /* Add 1-cycle delay before ack */
 
   assign R_DataReady = R_ReqSyncLast ~^ ~R_ReqSync;
   assign T_AckReady = T_AckSyncLast ~^ ~T_AckSync;
@@ -101,6 +102,7 @@ module Handshaker
     begin
       if(!R_Reset)
         begin
+          R_Finish <= `FALSE;
           R_Ack <= `FALSE;
           R_ReqSyncLast <= `FALSE;
         end
@@ -108,8 +110,14 @@ module Handshaker
         begin
           R_ReqSyncLast <= R_ReqSync;
 
+          if(R_DataReady)
+            begin
+              R_Finish <= `TRUE;
+            end
+
           if(R_Finish)
             begin
+              R_Finish <= `FALSE;
               R_Ack <= ~R_Ack;      /* invert R_Ack */
             end
         end

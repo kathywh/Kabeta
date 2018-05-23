@@ -51,28 +51,7 @@ module WriteOnlyReg
     .R_Reset(IO_Reset),
     .R_Clock(IO_Clock),
     .R_Data(IO_Data),
-    .R_DataReady(IO_DataReady),
-    .R_Finish(IO_Finish)
+    .R_DataReady(IO_DataReady)
   );
 
-  always @(negedge IO_Reset or posedge IO_Clock)
-    begin
-      if(!IO_Reset)
-        begin
-          IO_Finish <= `FALSE;
-        end
-      else
-        begin
-          if(IO_DataReady)
-            begin
-              IO_Finish <= `TRUE;
-            end
-
-          if(IO_Finish)
-            begin
-              IO_Finish <= `FALSE;
-            end
-        end
-    end
-  
 endmodule
