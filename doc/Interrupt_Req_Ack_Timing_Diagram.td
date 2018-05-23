@@ -2,22 +2,22 @@ Header (
 	company("EMA Design Automation") 
 	product("TimingDesigner") 
 	rev("9.2") 
-	file("f:/workspace/kabeta/doc/intinterface.td") 
-	date("04/25/2018") time("16:20") 
+	file("f:\\workspace\\kabeta\\doc\\interrupt_req_ack_timing_diagram.td") 
+	date("05/23/2018") time("17:38") 
 	format("9.0") 
 	baseScale(1000.000000) 
-	zoomFactor("0.00328035") 
-	zoomBegin(0) 
-	zoomEnd(74943.8) 
-	nameFrameWidth(200) 
+	zoomFactor("0.00165249") 
+	zoomBegin(14527) 
+	zoomEnd(162292) 
+	nameFrameWidth(231) 
 	simHDL(Verilog) 
 	simDelayMechanism(Transport) 
-	nextID(27) 
+	nextID(35) 
 	TimingAnalysisMethod(51) 
 	SDCVersion(0) 
 	
-	generalPrintParams( "printer,,,portrait,png,Letter,default,12,8,in,color,scaleable,")
-	diagramPrintParams( "0,8,0,220000,true,false,1,1,true,false,false,false,all,diagramEnd")
+	generalPrintParams( "printer,,,portrait,png,Letter,default,9,5,in,color,scaleable,")
+	diagramPrintParams( "0,9,0,220000,true,false,1,1,true,false,false,false,all,diagramEnd")
 	spreadsheetPrintParams( "0,2147483647,true,false,1,true,all")
 	)
 tclPreferences (UseAboveSixtyFiveNm UseAlteraFastTimingModel 
@@ -72,94 +72,104 @@ DiagramStyle (
 	showSlopedEdges 
 	edgeDisplayType(Uncertainty) 
 	)
-Clock ( objectID(9) name("CLK_INTC") minheight("0") periodScale(1000.000) period(15.000000) dutyCycle(50.000000) 
+Clock ( objectID(9) name("CLK_IO") minheight("0") periodScale(1000.000) period(15.000000) dutyCycle(50.000000) 
 	hdl( direction(internal) ) square label(showDefault,"","H") )
-Waveform ( objectID(3) name("IRQ") minheight("0") edges(
+Waveform ( objectID(3) name("EIC_IRQ") minheight("0") edges(
 	(low,0.000,0.000,L), 
-	(high,7500.000,7500.000), 
+	(high,30000.000,30000.000), 
 	(low,90000.000,90000.000), 
 	(high,105000.000,105000.000), 
-	(low,195000.000,195000.000), 
+	(low,180000.000,180000.000), 
 	(blank,220000.000,220000.000)) 
 	hdl( direction(internal) ) label(showDefault,"","H") )
-Bus ( objectID(6) name("IID") minheight("0") edges(
-	(valid,0.000,0.000,L), 
-	(valid,7500.000,7500.000), 
-	(valid,105000.000,105000.000), 
+Bus ( objectID(6) name("EIC_IID") minheight("0") edges(
+	(invalid,0.000,0.000,L), 
+	(valid,15000.000,15000.000), 
+	(valid,90000.000,90000.000), 
 	(blank,220000.000,220000.000,T)) 
 	hdl( direction(internal) ) label(showDefault,"","H") )
 Waveform ( objectID(15) name("IACK_SYNC") minheight("0") edges(
 	(low,0.000,0.000,L), 
 	(high,75000.000,75000.000), 
-	(low,180000.000,180000.000), 
+	(low,165000.000,165000.000), 
 	(blank,220000.000,220000.000)) 
 	hdl( direction(internal) ) label(showDefault,"","H") )
-Clock ( objectID(2) name("CLK_CPU") minheight("0") periodScale(1000.000) period(10.000000) dutyCycle(50.000000) 
+Clock ( objectID(2) name("CLK_CPU") minheight("0") periodScale(1000.000) period(6.000000) dutyCycle(50.000000) 
 	hdl( direction(internal) ) square label(showDefault,"","H") )
 Waveform ( objectID(4) name("IRQ_SYNC") minheight("0") edges(
 	(low,0.000,0.000,L), 
-	(high,20000.000,20000.000), 
-	(low,110000.000,110000.000), 
-	(high,120000.000,120000.000), 
-	(low,210000.000,210000.000), 
+	(high,42000.000,42000.000), 
+	(low,102000.000,102000.000), 
+	(high,114000.000,114000.000), 
+	(low,192000.000,192000.000), 
 	(blank,220000.000,220000.000)) 
 	hdl( direction(internal) ) label(showDefault,"","H") )
-Waveform ( objectID(7) name("IRQ_I") minheight("0") edges(
+Waveform ( objectID(7) name("KIU_IRQ") minheight("0") edges(
 	(low,0.000,0.000,L), 
-	(high,30000.000,30000.000), 
-	(low,40000.000,40000.000), 
-	(high,130000.000,130000.000), 
-	(low,150000.000,150000.000), 
+	(high,48000.000,48000.000), 
+	(low,54000.000,54000.000), 
+	(high,120000.000,120000.000), 
+	(low,144000.000,144000.000), 
 	(blank,220000.000,220000.000)) 
+	hdl( direction(internal) ) label(showDefault,"","H") )
+Bus ( objectID(28) name("KIU_IID") minheight("0") edges(
+	(invalid,0.000,0.000,L), 
+	(valid,48000.000,48000.000), 
+	(valid,120000.000,120000.000), 
+	(blank,220000.000,220000.000,T)) 
 	hdl( direction(internal) ) label(showDefault,"","H") )
 Waveform ( objectID(5) name("PC_IF.S") minheight("0") edges(
 	(low,0.000,0.000,L), 
-	(high,40000.000,40000.000), 
-	(low,70000.000,70000.000), 
-	(high,100000.000,100000.000), 
-	(low,140000.000,140000.000), 
-	(high,150000.000,150000.000), 
+	(high,54000.000,54000.000), 
+	(low,72000.000,72000.000), 
+	(high,90000.000,90000.000), 
+	(low,138000.000,138000.000), 
+	(high,144000.000,144000.000), 
 	(low,200000.000,200000.000), 
 	(blank,220000.000,220000.000)) 
 	hdl( direction(internal) ) label(showDefault,"","H") )
-Waveform ( objectID(8) name("IACK") minheight("0") edges(
+Waveform ( objectID(8) name("KIU_IACK") minheight("30") edges(
 	(low,0.000,0.000,L), 
-	(high,50000.000,50000.000), 
-	(low,160000.000,160000.000), 
+	(high,54000.000,54000.000), 
+	(low,144000.000,144000.000), 
 	(blank,220000.000,220000.000)) 
 	hdl( direction(internal) ) label(showDefault,"","H") )
-Grid ( "CLK_CPU" topWave("CLK_CPU") bottomWave("IACK") 
+Grid ( "CLK_CPU" topWave("CLK_CPU") bottomWave("KIU_IACK") 
 	 color(6) 1stWidth(0) 2ndWidth(0) 1stStyle(1) 2ndStyle(0) 
   show1st )
-Grid ( "CLK_INTC" topWave("CLK_INTC") bottomWave("IACK_SYNC") 
+Grid ( "CLK_IO" topWave("CLK_IO") bottomWave("IACK_SYNC") 
 	 color(6) 1stWidth(0) 2ndWidth(0) 1stStyle(1) 2ndStyle(0) 
   show1st )
 
-CauseAndEffect(objectID(10) source("IRQ",1) target("IRQ_SYNC",1) label(showDefault,"") fromLatestEnd toEarliestBegin color(10) width("0")  )
+CauseAndEffect(objectID(10) source("EIC_IRQ",1) target("IRQ_SYNC",1) label(showDefault,"") fromLatestEnd toEarliestBegin color(10) width("0")  )
 
-CauseAndEffect(objectID(11) source("IRQ_SYNC",1) target("IRQ_I",1) label(showDefault,"") fromLatestEnd toEarliestBegin color(14) width("0")  )
+CauseAndEffect(objectID(11) source("IRQ_SYNC",1) target("KIU_IRQ",1) label(showDefault,"") fromLatestEnd toEarliestBegin slot(1) color(14) width("0")  )
 
-CauseAndEffect(objectID(12) source("IRQ_I",1) target("IRQ_I",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(14) width("0")  )
+CauseAndEffect(objectID(12) source("KIU_IRQ",1) target("KIU_IRQ",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(14) width("0")  )
 
-CauseAndEffect(objectID(13) source("IRQ_I",2) target("IACK",1) label(showDefault,"") fromLatestEnd toEarliestBegin color(14) width("0")  )
+CauseAndEffect(objectID(17) source("KIU_IACK",1) target("IACK_SYNC",1) label(showDefault,"") fromLatestEnd toEarliestBegin color(10) width("0")  )
 
-CauseAndEffect(objectID(17) source("IACK",1) target("IACK_SYNC",1) label(showDefault,"") fromLatestEnd toEarliestBegin color(10) width("0")  )
+CauseAndEffect(objectID(18) source("IACK_SYNC",1) target("EIC_IRQ",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(14) width("0")  )
 
-CauseAndEffect(objectID(18) source("IACK_SYNC",1) target("IRQ",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(14) width("0")  )
+CauseAndEffect(objectID(19) source("EIC_IRQ",2) target("IRQ_SYNC",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(10) width("0")  )
 
-CauseAndEffect(objectID(19) source("IRQ",2) target("IRQ_SYNC",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(10) width("0")  )
+CauseAndEffect(objectID(20) source("EIC_IRQ",3) target("IRQ_SYNC",3) label(showDefault,"") fromLatestEnd toEarliestBegin color(7) width("0")  )
 
-CauseAndEffect(objectID(20) source("IRQ",3) target("IRQ_SYNC",3) label(showDefault,"") fromLatestEnd toEarliestBegin color(7) width("0")  )
+CauseAndEffect(objectID(21) source("IRQ_SYNC",3) target("KIU_IRQ",3) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
 
-CauseAndEffect(objectID(21) source("IRQ_SYNC",3) target("IRQ_I",3) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
+CauseAndEffect(objectID(24) source("IACK_SYNC",2) target("EIC_IRQ",4) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
 
-CauseAndEffect(objectID(22) source("PC_IF.S",4) target("IRQ_I",4) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
+CauseAndEffect(objectID(25) source("KIU_IACK",2) target("IACK_SYNC",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(7) width("0")  )
 
-CauseAndEffect(objectID(23) source("IRQ_I",4) target("IACK",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
+CauseAndEffect(objectID(26) source("EIC_IRQ",4) target("IRQ_SYNC",4) label(showDefault,"") fromLatestEnd toEarliestBegin color(7) width("0")  )
 
-CauseAndEffect(objectID(24) source("IACK_SYNC",2) target("IRQ",4) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
+CauseAndEffect(objectID(29) source("IRQ_SYNC",1) target("KIU_IID",1) label(showDefault,"") fromLatestEnd toEarliestBegin color(14) width("0")  )
 
-CauseAndEffect(objectID(25) source("IACK",2) target("IACK_SYNC",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(7) width("0")  )
+CauseAndEffect(objectID(30) source("KIU_IRQ",1) target("KIU_IACK",1) label(showDefault,"") fromLatestEnd toEarliestBegin color(14) width("0")  )
 
-CauseAndEffect(objectID(26) source("IRQ",4) target("IRQ_SYNC",4) label(showDefault,"") fromLatestEnd toEarliestBegin color(7) width("0")  )
+CauseAndEffect(objectID(32) source("PC_IF.S",4) target("KIU_IRQ",4) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
+
+CauseAndEffect(objectID(33) source("PC_IF.S",4) target("KIU_IACK",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
+
+CauseAndEffect(objectID(34) source("IRQ_SYNC",3) target("KIU_IID",2) label(showDefault,"") fromLatestEnd toEarliestBegin color(8) width("0")  )
 EndCycleEvent ( objectID(1) name("end") time(220.000000) showVert hideOnPrinter label(showDefault,"") fromLatestEnd toEarliestBegin  )
