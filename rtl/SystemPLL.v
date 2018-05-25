@@ -14,17 +14,19 @@
 
 module SystemPLL
 (
-  input Reset,
   input Clock,
-  output Sys_Clock
+  output Sys_Clock,
+  output IO_Clock,
+  output Locked
 );
 
 `ifdef ALT_EP4CE
   Alt_EP4CE_SysPLL SysPLL
   (
-    .areset(Reset),
     .inclk0(Clock),
-    .c0(Sys_Clock)
+    .c0(Sys_Clock),
+    .c1(IO_Clock),
+    .locked(Locked)
   );
 `elsif XIL_XC6SLX
 `endif

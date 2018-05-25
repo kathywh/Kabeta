@@ -20,26 +20,39 @@ module SystemChip
   output Dout
 );
 
+  wire PLL_Locked;
+  wire AsyncReset;
   wire Sys_Reset, Sys_Clock;
+  wire IO_Reset, IO_Clock;
   wire IO_EnR, IO_EnW;
   wire [31:0] IO_DataW, IO_DataR;
   wire [29:0] IO_Address;
-  wire EIC_I_Ack;
+  wire EIC_I_Ack, EIC_I_Req, EIC_I_Id;
 
   assign Dout = &IO_DataW;    // Stub
 
   SystemPLL S_PLL
   (
-    .Reset(Reset),
     .Clock(Clock),
-    .Sys_Clock(Sys_Clock)
+    .Sys_Clock(Sys_Clock),
+    .IO_Clock(IO_Clock),
+    .Locked(PLL_Locked)
   );
 
-  ResetSynchronizer RstSync
+  assign AsyncReset = Reset & PLL_Locked;
+
+  ResetSynchronizer SYS_RSTSYNC
   (
-    .Reset(Reset),
+    .Reset(AsyncReset),
     .Clock(Sys_Clock),
     .SysReset(Sys_Reset)
+  );
+
+  ResetSynchronizer IO_RSTSYNC
+  (
+    .Reset(AsyncReset),
+    .Clock(IO_Clock),
+    .SysReset(IO_Reset)
   );
 
   Kabeta KabCore
@@ -51,9 +64,26 @@ module SystemChip
     .IO_Address(IO_Address),
     .IO_DataR(IO_DataR),
     .IO_DataW(IO_DataW),
-    .EIC_I_Req(1'b0), 
-    .EIC_I_Id(1'b0),
+    .EIC_I_Req(EIC_I_Req), 
+    .EIC_I_Id(EIC_I_Id),
     .EIC_I_Ack(EIC_I_Ack)
+  );
+
+  KabIO KABIO
+  (
+    .Sys_Clock(Sys_Clock), 
+    .Sys_Reset(Sys_Reset),
+    .IO_Clock(IO_Clock), 
+    .IO_Reset(IO_Reset),
+  
+    .Sys_WrData(IO_DataW),
+    .Sys_Address(IO_Address),
+    .Sys_WrEn(IO_EnW), 
+    .Sys_RdEn(IO_EnR),
+    .Sys_RdData(IO_DataR),
+    .K_IntReq(EIC_I_Req),
+    .K_IntID(EIC_I_Id),
+    .I_IntAck(EIC_I_Ack)
   );
   
 endmodule
