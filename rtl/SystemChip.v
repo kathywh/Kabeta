@@ -17,7 +17,11 @@ module SystemChip
 (
   input Reset,
   input Clock,
-  output Dout
+  output Dout,
+
+  // For test
+  input logic UrgentReq,
+  input logic [7:0] IntReq  
 );
 
   wire PLL_Locked;
@@ -83,7 +87,11 @@ module SystemChip
     .Sys_RdData(IO_DataR),
     .K_IntReq(EIC_I_Req),
     .K_IntID(EIC_I_Id),
-    .I_IntAck(EIC_I_Ack)
+    .I_IntAck(EIC_I_Ack),
+
+      // For test
+    .UrgentReq(UrgentReq),
+    .IntReq(IntReq)
   );
   
 endmodule

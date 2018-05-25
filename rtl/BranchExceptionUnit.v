@@ -21,7 +21,7 @@ module BranchExceptionUnit
 (
   input SysReset, ExcReqIF, ExcReqRR, ExcReqEX, ExcReqMA,
   input [2:0] ExcCodeIF, ExcCodeRR, ExcCodeEX, ExcCodeMA,
-  input Stall, IRQ_Int, IID_Sync, S_Mode_EX,
+  input Stall, IRQ_Int, IID_Sync, S_Mode_IF,
   input [1:0] BrCond,
   input [31:0] Ra,
   output reg [31:0] ExcAddr,
@@ -110,16 +110,16 @@ module BranchExceptionUnit
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
         end
-      else if(IRQ_Int & ~S_Mode_EX)    // Interrupts
+      else if(IRQ_Int & ~S_Mode_IF)    // Interrupts
         begin
           ExcAddr <= IID_Sync ? `EV_INT_1 : `EV_INT_0;
           PC_Sel <= `PCS_EXCA;
           FlushIF  <= `TRUE;
-          ExcAckIF <= `FALSE;
-          FlushRR  <= `TRUE;
+          ExcAckIF <= `TRUE;
+          FlushRR  <= `FALSE;
           ExcAckRR <= `FALSE;
-          FlushEX  <= `TRUE;
-          ExcAckEX <= `TRUE;
+          FlushEX  <= `FALSE;
+          ExcAckEX <= `FALSE;
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;

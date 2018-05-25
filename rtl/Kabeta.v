@@ -450,7 +450,7 @@ module Kabeta
     .Stall(Sys_Stall),
     .IRQ_Int(KIU_I_Req),
     .IID_Sync(KIU_I_Id),
-    .S_Mode_EX(PC_EX_Out[31]),
+    .S_Mode_IF(PC_IF_Out[31]),
     .BrCond(BrCond),
     .Ra(RF_ChX_Data),
     .ExcAddr(ExcAddress),
