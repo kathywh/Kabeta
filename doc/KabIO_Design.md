@@ -44,6 +44,23 @@ RO -- Read Only
 
 WO -- Write Only
 
+### 1.4 I/O Address Format 
+
+I/O address is divided into two parts, block address and register address.
+
+| 31            7 | 6                     4 | 3                        0 |
+| --------------- | :---------------------: | :------------------------: |
+| (Reserved)      |      Block Address      |      Register Address      |
+
+### 1.5 I/O Registers
+
+- All registers are 32-bit wide
+- Four types:
+  - Write Only - read data is undefined
+  - Read Only - write has no effect
+  - Read Clear - read the register while clear some bits, and write has no effect
+  - Read Write - read back what has been written or reset value
+
 ## 2 External Interrupt Controller (EIC)
 
 ### 2.1 Description
@@ -61,6 +78,24 @@ Features:
 ![](IO_EIC.png)
 
 *Figure 3. [External Interrupt Controller](IO_EIC.png)*
+
+### 2.3 Registers
+
+#### 2.3.1 Interrupt Enable Register (IE) -- 0x00 - Write Only
+
+| 31            1 |  0   |
+| :-------------: | :--: |
+|   (Reserved)    | GIE  |
+
+- GIE: Global Interrupt Enable
+
+#### 2.3.2 Interrupt Number Register (IN) -- 0x04 -- Read Only
+
+| 31            3 | 2           0 |
+| :-------------: | :-----------: |
+|   (Reserved)    |      IN       |
+
+- IN: Interrupt Number
 
 ## Appendix A: Document Version History
 
