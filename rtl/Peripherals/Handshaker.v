@@ -24,6 +24,7 @@ module Handshaker
   input T_Reset, T_Clock,
   input [WID_DATA-1:0] T_Data,
   input T_Start,      /* a positive pulse to start transmission */
+  output reg T_Busy,  /* Transmission in progress, ingore start signal */
 
   // Receiver side signals
   input R_Reset, R_Clock,
@@ -35,7 +36,6 @@ module Handshaker
   reg R_Ack;
   reg [WID_DATA-1:0] Data;
   reg T_DataReady;
-  reg T_Busy;     // Transmission in progress, ingore start signal
   wire R_ReqSync;
   reg R_ReqSyncLast;
   wire T_AckSync;
