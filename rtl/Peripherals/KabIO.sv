@@ -26,14 +26,19 @@ module KabIO
 
   output logic EIC_IntReq,
   output logic EIC_IntId,
-  input  logic EIC_IntAck
+  input  logic EIC_IntAck,
+
+  // Key Ports (test)
+  input logic [8:0] Keys
 );
 
   import IO_AddressTable::*;
 
-  // Interrupt signals
+  // Interrupt signals (test)
   logic UrgentReq;
+  assign UrgentReq = Keys[0];
   logic [7:0] IntReq;
+  assign IntReq = Keys[8:1];
 
   IO_AccessItf#(32) Sys_RegInterface
   (

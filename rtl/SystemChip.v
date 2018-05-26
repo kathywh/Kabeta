@@ -15,8 +15,14 @@
 
 module SystemChip
 (
+  // Rest/Clock Ports
   input Reset,
   input Clock,
+
+  // Key Ports (test)
+  input [8:0] Keys,
+
+  // Data Out Ports
   output Dout
 );
 
@@ -83,7 +89,9 @@ module SystemChip
     .Sys_RdData(IO_DataR),
     .EIC_IntReq(EIC_IntReq),
     .EIC_IntId(EIC_IntId),
-    .EIC_IntAck(EIC_IntAck)
+    .EIC_IntAck(EIC_IntAck),
+
+    .Keys(Keys)
   );
   
 endmodule
