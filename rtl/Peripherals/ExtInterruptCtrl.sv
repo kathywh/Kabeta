@@ -3,32 +3,37 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/24/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/24/2018                                                    */
+/*  Edited on:  05/26/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      External interrupt controller.                                        */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/24/2018  Kathy       Unit created.                                 */
+/*      05/26/2018  Kathy       Clear URQ Status Reg at reset.                */
 /******************************************************************************/
 
 module ExtInterruptCtrl
 (
+  // I/O register side ports
   IO_AccessItf.SlavePort Sys_Interface,
   output logic [31:0] Sys_RdData,
   input logic [3:0] Sys_RegAddress,
   input logic Sys_BlockSelect,
 
+  // I/O logic side ports
   IO_AccessItf.SlavePort IO_Interface,
   input logic [3:0] IO_RegAddress,
   input logic IO_BlockSelect,
 
+  // Interrupt ports
   input  logic UrgentReq,
   input  logic [7:0] IntReq,
 
-  output logic K_IntReq,
-  output logic K_IntID,
-  input  logic I_IntAck
+  // KIU side ports
+  output logic EIC_IntReq,
+  output logic EIC_IntId,
+  input  logic EIC_IntAck
 );
 
   import IO_AddressTable::*;
@@ -41,7 +46,7 @@ module ExtInterruptCtrl
   (
     .Reset(IO_Interface.Reset),
     .Clock(IO_Interface.Clock),
-    .DataIn(I_IntAck),
+    .DataIn(EIC_IntAck),
     .DataOut(IO_IntAckSync)
   );
 
@@ -72,12 +77,12 @@ module ExtInterruptCtrl
   (
     .Sys_Interface,
     .Sys_RdData(Sys_INR_RdData),
+    .Sys_RegSelect(IO_Select_INR),
     .IO_Reset(IO_Interface.Reset),
     .IO_Clock(IO_Interface.Clock),
     .IO_WrData(IO_INR_WrData),
     .IO_WrEn(IO_INR_WrEn),
-    .IO_Busy(IO_INR_Busy),
-    .Sys_RegSelect(IO_Select_INR)
+    .IO_Busy(IO_INR_Busy)    
   );
 
   // Sys read data mux
@@ -104,13 +109,13 @@ module ExtInterruptCtrl
         end
     end
 
-  // Interrupt Req Status
-  logic [7:0] IO_IntReqStatus;
-  logic IO_UrgentReqStatus;
+  // Interrupt Req Status Reg
+  logic [7:0] IO_IntReqStatus;      // IRQ request status register
+  logic IO_UrgentReqStatus;         // URQ request status register
   logic [7:0] IntReqLast;
   logic UrgentReqLast;
-  logic [7:0] IO_IntReqSetStatus, IO_IntReqClrStatus;
-  logic IO_UrgReqSetStatus, IO_UrgReqClrStatus;
+  logic [7:0] IO_IntReqSetStatus, IO_IntReqClrStatus;   // IRQ status set/clear signal
+  logic IO_UrgReqSetStatus, IO_UrgReqClrStatus;         // URQ status set/clear signal
 
   assign IO_IntReqSetStatus = IntReq & ~IntReqLast;
   assign IO_UrgReqSetStatus = UrgentReq & ~UrgentReqLast;
@@ -120,6 +125,7 @@ module ExtInterruptCtrl
       if(!IO_Interface.Reset)
         begin
           IO_IntReqStatus <= '0;
+          IO_UrgentReqStatus <= '0;
           IntReqLast <= '0;
           UrgentReqLast <= '0;
         end
@@ -132,13 +138,13 @@ module ExtInterruptCtrl
             begin
               if(IO_IntReqSetStatus[i] | IO_IntReqClrStatus[i])
                 begin
-                  IO_IntReqStatus[i] <= IO_IntReqSetStatus[i];
+                  IO_IntReqStatus[i] <= IO_IntReqSetStatus[i];      // set take priority over clear
                 end
             end
 
           if(IO_UrgReqSetStatus | IO_UrgReqClrStatus)
             begin
-              IO_UrgentReqStatus <= IO_UrgReqSetStatus;
+              IO_UrgentReqStatus <= IO_UrgReqSetStatus;       // set take priority over clear
             end
         end
     end
@@ -154,59 +160,59 @@ module ExtInterruptCtrl
       if(!IO_Interface.Reset)
         begin
           State <= IDLE;
-          K_IntID <= '0;
+          EIC_IntId <= '0;
           IO_INR_WrData <= 3'h0;
         end
       else
         begin
           unique case(State)
             IDLE:
-              if(IO_IntEnReg)
+              if(IO_IntEnReg)     // check int enable reg
                 begin
                   // Interrupt priority check
                   if(IO_UrgentReqStatus)
                     begin
-                      K_IntID <= '1;
+                      EIC_IntId <= '1;
                       State <= WAIT_REQ;
                     end
                   else if(IO_IntReqStatus[0])
                     begin
-                      K_IntID <= '0;
+                      EIC_IntId <= '0;
                       StartWriteINR(3'h0);
                     end
                   else if(IO_IntReqStatus[1])
                     begin
-                      K_IntID <= '0;
+                      EIC_IntId <= '0;
                       StartWriteINR(3'h1);
                     end
                   else if(IO_IntReqStatus[2])
                     begin
-                      K_IntID <= '0;
+                      EIC_IntId <= '0;
                       StartWriteINR(3'h2);
                     end
                   else if(IO_IntReqStatus[3])
                     begin
-                      K_IntID <= '0;
+                      EIC_IntId <= '0;
                       StartWriteINR(3'h3);
                     end
                   else if(IO_IntReqStatus[4])
                     begin
-                      K_IntID <= '0;
+                      EIC_IntId <= '0;
                       StartWriteINR(3'h4);
                     end
                   else if(IO_IntReqStatus[5])
                     begin
-                      K_IntID <= '0;
+                      EIC_IntId <= '0;
                       StartWriteINR(3'h5);
                     end
                   else if(IO_IntReqStatus[6])
                     begin
-                      K_IntID <= '0;
+                      EIC_IntId <= '0;
                       StartWriteINR(3'h6);
                     end
                   else if(IO_IntReqStatus[7])
                     begin
-                      K_IntID <= '0;
+                      EIC_IntId <= '0;
                       StartWriteINR(3'h7);
                     end
                 end
@@ -233,7 +239,7 @@ module ExtInterruptCtrl
 
             WAIT_ACK:
               begin
-                if(IO_IntAckSync ^ IO_IntAckSyncLast)
+                if(IO_IntAckSync ^ IO_IntAckSyncLast)     // wait for ack transition
                   begin
                     State <= CLR_REQ_S;
                   end
@@ -252,7 +258,7 @@ module ExtInterruptCtrl
       unique case(State)
         IDLE, WAIT_INR, WAIT_REQ, WAIT_ACK:
           begin
-            K_IntReq <= '0;
+            EIC_IntReq <= '0;
             IO_INR_WrEn <= '0;
             IO_IntReqClrStatus <= '0;
             IO_UrgReqClrStatus <= '0;
@@ -260,7 +266,7 @@ module ExtInterruptCtrl
 
         WR_INR:
           begin
-            K_IntReq <= '0;
+            EIC_IntReq <= '0;
             IO_INR_WrEn <= '1;
             IO_IntReqClrStatus <= '0;
             IO_UrgReqClrStatus <= '0;
@@ -268,7 +274,7 @@ module ExtInterruptCtrl
 
         DO_REQ:
           begin
-            K_IntReq <= '1;
+            EIC_IntReq <= '1;
             IO_INR_WrEn <= '0;
             IO_IntReqClrStatus <= '0;
             IO_UrgReqClrStatus <= '0;         
@@ -276,10 +282,10 @@ module ExtInterruptCtrl
 
         CLR_REQ_S:
           begin
-            K_IntReq <= '0;
+            EIC_IntReq <= '0;
             IO_INR_WrEn <= '0;
             // Clear IRQ status bit
-            if(K_IntID == 1'b0)       // IRQ
+            if(EIC_IntId == 1'b0)       // IRQ
               begin
                 IO_IntReqClrStatus <= 1'b1 << IO_INR_WrData;
                 IO_UrgReqClrStatus <= '0;
