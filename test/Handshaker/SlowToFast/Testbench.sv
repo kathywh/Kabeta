@@ -12,6 +12,7 @@ module Testbench;
   logic [WID_DATA-1:0] T_Data;
   logic T_Start;
   logic R_Finish;
+  logic T_Busy;
 
   // monitored signals
   logic [WID_DATA-1:0] R_Data;
