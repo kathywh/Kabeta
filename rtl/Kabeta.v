@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/21/2018                                                    */
+/*  Edited on:  05/26/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      An implementation of pipelined MIT Beta processor.                    */
@@ -14,6 +14,7 @@
 /*      05/19/2018  Kathy       Add missing connection.                       */
 /*                              Add missing port.                             */
 /*      05/21/2018  Kathy       Add core interrupt unit.                      */
+/*      05/26/2018  Kathy       PC replicates from PC_IF_In.                  */
 /******************************************************************************/
 
 module Kabeta
@@ -211,8 +212,18 @@ module Kabeta
   assign NextPC[31] = PC_IF_Out[31];
 
   // PC Replicator
-  assign PC_RR_In = Sys_ReplicatePC ? PC_EX_Out : NextPC;
-  assign PC_EX_In = Sys_ReplicatePC ? PC_EX_Out : PC_RR_Out;
+  wire [31:0] PC_NextPlus4;
+
+  assign PC_NextPlus4[31] = PC_IF_In[31];
+
+  AddressInc PC_NEXT_PLUS4
+  (
+    .AddressIn(PC_IF_In[30:0]),
+    .AddressOut(PC_NextPlus4[30:0])
+  ); 
+
+  assign PC_RR_In = Sys_ReplicatePC ? PC_NextPlus4 : NextPC;
+  assign PC_EX_In = Sys_ReplicatePC ? PC_NextPlus4 : PC_RR_Out;
 
   RegisterEn PC_RR
   (

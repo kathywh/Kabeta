@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/01/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/16/2018                                                    */
+/*  Edited on:  05/26/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Branch and exception controller                                       */
@@ -15,6 +15,7 @@
 /*      05/16/2018  Kathy       1) Make stall priority higher than branch.    */
 /*                              2) Exc. in EX-Stage is suppressed by Stall.   */
 /*                              3) Add Invalid IA exception from MA-Stage.    */
+/*      05/26/2018  Kathy       S bit comes from IF-Stage.                    */
 /******************************************************************************/
 
 module BranchExceptionUnit
@@ -115,11 +116,11 @@ module BranchExceptionUnit
           ExcAddr <= IID_Sync ? `EV_INT_1 : `EV_INT_0;
           PC_Sel <= `PCS_EXCA;
           FlushIF  <= `TRUE;
-          ExcAckIF <= `TRUE;
-          FlushRR  <= `FALSE;
+          ExcAckIF <= `FALSE;
+          FlushRR  <= `TRUE;
           ExcAckRR <= `FALSE;
-          FlushEX  <= `FALSE;
-          ExcAckEX <= `FALSE;
+          FlushEX  <= `TRUE;
+          ExcAckEX <= `TRUE;
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
