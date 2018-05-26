@@ -3,18 +3,18 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/22/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/22/2018                                                    */
+/*  Edited on:  05/26/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Handshake for clock domain cross.                                     */
-/*      NOTE: 1) CAUTION: R_Data is NOT registered.                           */
-/*            2) T_Start is required to be 1 transmitter clock cycle wide.    */
-/*            3) R_DataReady is granteed to be 1 receiver clock cycle wide.   */
+/*      NOTE: 1) T_Start is a positive pulse of one transmission cycle.       */
+/*            2) R_DataReady is a positive pulse of one receiver cycle.       */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/22/2018  Kathy       Unit created.                                 */
 /*                              Add some comments.                            */
 /*      05/23/2018  Kathy       Finish signal is generated internally.        */
+/*      05/26/2018  Kathy       Add synchronizer for data bits.               */
 /******************************************************************************/
 
 module Handshaker
@@ -34,18 +34,18 @@ module Handshaker
 
   reg T_Req;
   reg R_Ack;
-  reg [WID_DATA-1:0] Data;
+  reg [WID_DATA-1:0] T_DataReg;
+  reg [WID_DATA-1:0] R_DataReg;
   reg T_DataReady;
   wire R_ReqSync;
   reg R_ReqSyncLast;
   wire T_AckSync;
   reg T_AckSyncLast;
   wire T_AckReady;
-  reg R_Finish;    /* Add 1-cycle delay before ack */
 
-  assign R_DataReady = R_ReqSyncLast ~^ ~R_ReqSync;
-  assign T_AckReady = T_AckSyncLast ~^ ~T_AckSync;
-  assign R_Data = Data;
+  assign R_DataReady = R_ReqSyncLast ^ R_ReqSync;
+  assign T_AckReady = T_AckSyncLast ^ T_AckSync;
+  assign R_Data = R_DataReg;
 
   // T->R
   Synchronizer REQ_SYNC
@@ -55,6 +55,22 @@ module Handshaker
     .DataIn(T_Req),
     .DataOut(R_ReqSync)
   );
+
+
+  genvar i;
+
+  generate
+    for(i=0; i<WID_DATA; i=i+1)
+      begin: DATA_BIT
+        Synchronizer SYNC
+        (
+          .Reset(R_Reset),
+          .Clock(R_Clock),
+          .DataIn(T_DataReg[i]),
+          .DataOut(R_DataReg[i])
+        );        
+      end
+  endgenerate
 
   // R->T
   Synchronizer ACK_SYNC
@@ -80,7 +96,7 @@ module Handshaker
 
           if(T_Start & ~T_Busy)
             begin
-              Data <= T_Data;
+              T_DataReg <= T_Data;
               T_DataReady <= `TRUE;
               T_Busy <= `TRUE;
             end
@@ -102,7 +118,6 @@ module Handshaker
     begin
       if(!R_Reset)
         begin
-          R_Finish <= `FALSE;
           R_Ack <= `FALSE;
           R_ReqSyncLast <= `FALSE;
         end
@@ -112,12 +127,6 @@ module Handshaker
 
           if(R_DataReady)
             begin
-              R_Finish <= `TRUE;
-            end
-
-          if(R_Finish)
-            begin
-              R_Finish <= `FALSE;
               R_Ack <= ~R_Ack;      /* invert R_Ack */
             end
         end
