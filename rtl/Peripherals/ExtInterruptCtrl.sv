@@ -11,6 +11,7 @@
 /*  Revisions:                                                                */
 /*      05/24/2018  Kathy       Unit created.                                 */
 /*      05/26/2018  Kathy       Clear URQ Status Reg at reset.                */
+/*                              Register EIC_IntReq signal.                   */
 /******************************************************************************/
 
 module ExtInterruptCtrl
@@ -160,6 +161,7 @@ module ExtInterruptCtrl
       if(!IO_Interface.Reset)
         begin
           State <= IDLE;
+          EIC_IntReq <= '0;
           EIC_IntId <= '0;
           IO_INR_WrData <= 3'h0;
         end
@@ -225,16 +227,19 @@ module ExtInterruptCtrl
             WR_INR:
               begin
                 State <= DO_REQ;
+                EIC_IntReq <= '1;
               end
 
             WAIT_REQ:     // Wait for a cycle
               begin
                 State <= DO_REQ;
+                EIC_IntReq <= '1;
               end
 
             DO_REQ:
               begin
                 State <= WAIT_ACK;
+                EIC_IntReq <= '0;
               end
 
             WAIT_ACK:
@@ -256,9 +261,8 @@ module ExtInterruptCtrl
   always_comb
     begin
       unique case(State)
-        IDLE, WAIT_INR, WAIT_REQ, WAIT_ACK:
+        IDLE, WAIT_INR, WAIT_REQ, WAIT_ACK, DO_REQ:
           begin
-            EIC_IntReq <= '0;
             IO_INR_WrEn <= '0;
             IO_IntReqClrStatus <= '0;
             IO_UrgReqClrStatus <= '0;
@@ -266,23 +270,13 @@ module ExtInterruptCtrl
 
         WR_INR:
           begin
-            EIC_IntReq <= '0;
             IO_INR_WrEn <= '1;
             IO_IntReqClrStatus <= '0;
             IO_UrgReqClrStatus <= '0;
           end
 
-        DO_REQ:
-          begin
-            EIC_IntReq <= '1;
-            IO_INR_WrEn <= '0;
-            IO_IntReqClrStatus <= '0;
-            IO_UrgReqClrStatus <= '0;         
-          end
-
         CLR_REQ_S:
           begin
-            EIC_IntReq <= '0;
             IO_INR_WrEn <= '0;
             // Clear IRQ status bit
             if(EIC_IntId == 1'b0)       // IRQ
