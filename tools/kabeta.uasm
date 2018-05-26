@@ -118,8 +118,6 @@
 .macro WORD(x) x%0x100 (x>>8)%0x100 
 .macro LONG(x) WORD(x) WORD(x >> 16)	| little-endian for Maybe
 .macro STORAGE(NWORDS)	. = .+(4*NWORDS)| Reserve NWORDS words of RAM
-.macro LONG()			. = .+4			| Reserve 32-bit long word
-.macro ARRAY(NWORDS)	STORAGE(NWORDS)
 
 
 | register designators
@@ -333,26 +331,16 @@ PC_MASK            = 0x7fffffff		| a mask for the rest of the PC
 | Directives
 |--------------------------------------------------------
 
-| Define data segment at ADDR
-.macro __DATA(ADDR) {
+| Locate a segment at specific address
+.macro LOCATE(ADDR) {
 	. = ADDR
 	.align 4 }
 
-| Define code segment at ADDR
-.macro __CODE(ADDR) {
-	. = ADDR
-	.align 4 }
-
-| Define exception segment (always at 0)
-.macro __EXC() {
+| Define exception vector table (always at 0)
+.macro EXCVT() {
 	. = 0
 	.align 4 }
 
-| Define literal segment at ADDR
-.macro __LITERAL(ADDR) {
-	. = ADDR
-	.align 4 }
-
 | Define literal segment at next aligned address
-.macro __LITERAL() {
+.macro LITERAL() {
 	.align 4 }
