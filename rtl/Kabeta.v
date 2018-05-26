@@ -29,9 +29,9 @@ module Kabeta
   output [31:0] IO_DataW,
 
   // Interrupt Signals
-  input EIC_I_Req, 
-  input EIC_I_Id,
-  output EIC_I_Ack
+  input EIC_IntReq, 
+  input EIC_IntId,
+  output EIC_IntAck
 );
 
   // System wide signals
@@ -108,8 +108,8 @@ module Kabeta
   wire [31:0] ADB_Out;
 
   // Signals from/to KIU
-  wire KIU_I_Req;
-  wire KIU_I_Id;
+  wire KIU_IntReq;
+  wire KIU_IntId;
 
   // Signals common for stage
   wire StageEn_RR = ~Sys_Stall | Sys_FlushIF;
@@ -425,15 +425,15 @@ module Kabeta
 
   CoreInterruptUnit KIU
   (
-    .EIC_I_Req(EIC_I_Req), 
-    .EIC_I_Id(EIC_I_Id),
-    .EIC_I_Ack(EIC_I_Ack),
+    .EIC_IntReq(EIC_IntReq), 
+    .EIC_IntId(EIC_IntId),
+    .EIC_IntAck(EIC_IntAck),
 
     .Sys_Reset(Sys_Reset),
     .Sys_Clock(Sys_Clock),
     .S_Mode_IF(PC_IF_Out[31]),
-    .KIU_I_Req(KIU_I_Req),
-    .KIU_I_Id(KIU_I_Id)
+    .KIU_IntReq(KIU_IntReq),
+    .KIU_IntId(KIU_IntId)
   );
 
   BranchExceptionUnit BEU
@@ -448,8 +448,8 @@ module Kabeta
     .ExcCodeEX(ExcCode_EX), 
     .ExcCodeMA(ExcCode_MA),
     .Stall(Sys_Stall),
-    .IRQ_Int(KIU_I_Req),
-    .IID_Sync(KIU_I_Id),
+    .IRQ_Int(KIU_IntReq),
+    .IID_Sync(KIU_IntId),
     .S_Mode_IF(PC_IF_Out[31]),
     .BrCond(BrCond),
     .Ra(RF_ChX_Data),

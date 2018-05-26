@@ -9,16 +9,16 @@ module KabIO
   input  logic Sys_WrEn, Sys_RdEn,
   output logic [31:0] Sys_RdData,
 
-  output logic K_IntReq,
-  output logic K_IntID,
-  input  logic I_IntAck,
-
-  // For test
-  input logic UrgentReq,
-  input logic [7:0] IntReq  
+  output logic EIC_IntReq,
+  output logic EIC_IntId,
+  input  logic EIC_IntAck
 );
 
   import IO_AddressTable::*;
+
+  // Interrupt signals
+  logic UrgentReq;
+  logic [7:0] IntReq;
 
   IO_AccessItf Sys_RegInterface
   (

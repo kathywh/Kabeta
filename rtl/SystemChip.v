@@ -17,11 +17,7 @@ module SystemChip
 (
   input Reset,
   input Clock,
-  output Dout,
-
-  // For test
-  input logic UrgentReq,
-  input logic [7:0] IntReq  
+  output Dout
 );
 
   wire PLL_Locked;
@@ -31,11 +27,11 @@ module SystemChip
   wire IO_EnR, IO_EnW;
   wire [31:0] IO_DataW, IO_DataR;
   wire [29:0] IO_Address;
-  wire EIC_I_Ack, EIC_I_Req, EIC_I_Id;
+  wire EIC_IntAck, EIC_IntReq, EIC_IntId;
 
   assign Dout = &IO_DataW;    // Stub
 
-  SystemPLL S_PLL
+  SystemPLL PLL
   (
     .Clock(Clock),
     .Sys_Clock(Sys_Clock),
@@ -43,7 +39,7 @@ module SystemChip
     .Locked(PLL_Locked)
   );
 
-  assign AsyncReset = Reset & PLL_Locked;
+  assign AsyncReset = Reset & PLL_Locked;     // extend reset until pll locked
 
   ResetSynchronizer SYS_RSTSYNC
   (
@@ -59,7 +55,7 @@ module SystemChip
     .SysReset(IO_Reset)
   );
 
-  Kabeta KabCore
+  Kabeta KAB_CORE
   (
     .Sys_Reset(Sys_Reset),
     .Sys_Clock(Sys_Clock),
@@ -68,12 +64,12 @@ module SystemChip
     .IO_Address(IO_Address),
     .IO_DataR(IO_DataR),
     .IO_DataW(IO_DataW),
-    .EIC_I_Req(EIC_I_Req), 
-    .EIC_I_Id(EIC_I_Id),
-    .EIC_I_Ack(EIC_I_Ack)
+    .EIC_IntReq(EIC_IntReq), 
+    .EIC_IntId(EIC_IntId),
+    .EIC_IntAck(EIC_IntAck)
   );
 
-  KabIO KABIO
+  KabIO KAB_IO
   (
     .Sys_Clock(Sys_Clock), 
     .Sys_Reset(Sys_Reset),
@@ -85,13 +81,9 @@ module SystemChip
     .Sys_WrEn(IO_EnW), 
     .Sys_RdEn(IO_EnR),
     .Sys_RdData(IO_DataR),
-    .K_IntReq(EIC_I_Req),
-    .K_IntID(EIC_I_Id),
-    .I_IntAck(EIC_I_Ack),
-
-      // For test
-    .UrgentReq(UrgentReq),
-    .IntReq(IntReq)
+    .EIC_IntReq(EIC_IntReq),
+    .EIC_IntId(EIC_IntId),
+    .EIC_IntAck(EIC_IntAck)
   );
   
 endmodule
