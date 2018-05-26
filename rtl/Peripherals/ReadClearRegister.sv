@@ -3,13 +3,14 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/24/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/24/2018                                                    */
+/*  Edited on:  05/26/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Write only from I/O logic, read with clear from processor.            */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/24/2018  Kathy       Unit created.                                 */
+/*      05/26/2018  Kathy       Correct IO_WrData vector size.                */
 /******************************************************************************/
 
 module ReadClearRegister
@@ -27,7 +28,7 @@ module ReadClearRegister
   // I/O Side Ports
   input logic IO_Reset,
   input logic IO_Clock,
-  input logic IO_WrData,
+  input logic [DATA_WIDTH-1:0] IO_WrData,
   input logic IO_WrEn,
   output logic IO_Busy
 );

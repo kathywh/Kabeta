@@ -20,9 +20,9 @@ module ReadOnlyRegister
 (
   // Processor Side Ports
   IO_AccessItf.SlavePort Sys_Interface,
-  output logic [DATA_WIDTH-1:0] Sys_RdData,
   input logic Sys_RegSelect,
-
+  output logic [DATA_WIDTH-1:0] Sys_RdData,
+  
   // I/O Side Ports
   input logic IO_Reset,
   input logic IO_Clock,

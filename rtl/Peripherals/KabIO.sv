@@ -1,3 +1,18 @@
+/******************************************************************************/
+/*  Unit Name:  KabIO                                                         */
+/*  Created by: Kathy                                                         */
+/*  Created on: 05/24/2018                                                    */
+/*  Edited by:  Kathy                                                         */
+/*  Edited on:  05/26/2018                                                    */
+/*                                                                            */
+/*  Description:                                                              */
+/*                                                                            */
+/*                                                                            */
+/*  Revisions:                                                                */
+/*      05/24/2018  Kathy       Unit created.                                 */
+/*      05/26/2018  Kathy       Add parameter to interface.                   */
+/******************************************************************************/
+
 module KabIO
 (
   input logic Sys_Clock, Sys_Reset,
@@ -20,13 +35,13 @@ module KabIO
   logic UrgentReq;
   logic [7:0] IntReq;
 
-  IO_AccessItf Sys_RegInterface
+  IO_AccessItf#(32) Sys_RegInterface
   (
     .Clock(Sys_Clock),
     .Reset(Sys_Reset)
   );
 
-  IO_AccessItf IO_LogicInterface
+  IO_AccessItf#(32) IO_LogicInterface
   (
     .Clock(IO_Clock),
     .Reset(IO_Reset)
