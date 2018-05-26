@@ -12,15 +12,14 @@
 /*      05/18/2018  Kathy       Unit created.                                 */
 /******************************************************************************/
 
-`define UrgentReq Testbench.DesignTop.KAB_IO.UrgentReq
-`define IntReq    Testbench.DesignTop.KAB_IO.IntReq
 
 program Tester
 #(
   parameter TCLK
 )
 ( 
-  output logic Reset
+  output logic Reset,
+  output logic [8:0] Keys
 );
 
   wire Sys_Clock = Testbench.DesignTop.Sys_Clock;
@@ -44,20 +43,20 @@ program Tester
 
   initial
     begin
-      `IntReq = '0;
-      `UrgentReq = '0;
+      Keys = '0;
+      Keys[0] = '0;
 
       // Generate interrupts
       repeat(15)  @(posedge IO_Clock);
 
-      `UrgentReq = '1;
-      `IntReq[0] = '1;
-      `IntReq[2] = '1;
+      Keys[0] = '1;
+      Keys[1] = '1;
+      Keys[3] = '1;
       @(posedge IO_Clock);
 
-      `UrgentReq = '0;
-      `IntReq[0] = '0;
-      `IntReq[2] = '0;
+      Keys[0] = '0;
+      Keys[1] = '0;
+      Keys[3] = '0;
       @(posedge IO_Clock);
 
       repeat(200)  @(posedge IO_Clock);      

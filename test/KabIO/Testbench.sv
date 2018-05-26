@@ -22,8 +22,7 @@ module Testbench;
 
   // stimuli signals
   logic Reset, Clock;
-  logic UrgentReq;
-  logic [7:0] IntReq;
+  logic [8:0] Keys;
 
   // monitored signals
   logic Dout;
