@@ -3,59 +3,71 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/21/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/23/2018                                                    */
+/*  Edited on:  05/26/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
-/*                                                                            */
+/*      Interrupt unit of processor core.                                     */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/21/2018  Kathy       Unit created.                                 */
 /*      05/23/2018  Kathy       Add IID output register.                      */
+/*      05/26/2018  Kathy       Add IID synchronizer.                         */
 /******************************************************************************/
 
 module CoreInterruptUnit
 (
-  input EIC_I_Req, 
-  input EIC_I_Id,
-  output reg EIC_I_Ack,
+  // EIC side ports
+  input EIC_IntReq, 
+  input EIC_IntId,
+  output reg EIC_IntAck,
 
+  // Processor core side ports
   input Sys_Reset,
   input Sys_Clock,
   input S_Mode_IF,
-  output reg KIU_I_Req, // internal interrupt status
-  output reg KIU_I_Id
+  output reg KIU_IntReq, // internal interrupt status
+  output reg KIU_IntId
 );
 
   wire IRQ_Sync;    // synchronized IRQ
+  wire IID_Sync;    // synchronized IID
   reg IRQ_Sync_Last;
 
   Synchronizer SYNC_IRQ
   (
     .Reset(Sys_Reset),
     .Clock(Sys_Clock),
-    .DataIn(EIC_I_Req),
+    .DataIn(EIC_IntReq),
     .DataOut(IRQ_Sync)
+  );
+
+  Synchronizer SYNC_IID
+  (
+    .Reset(Sys_Reset),
+    .Clock(Sys_Clock),
+    .DataIn(EIC_IntId),
+    .DataOut(IID_Sync)
   );
 
   always @(negedge Sys_Reset or posedge Sys_Clock)
     begin
       if(!Sys_Reset)
         begin
-          KIU_I_Req <= `FALSE;
-          EIC_I_Ack <= `FALSE;
+          KIU_IntReq <= `FALSE;
+          EIC_IntAck <= `FALSE;
         end
       else
         begin
           if(~IRQ_Sync_Last & IRQ_Sync)   // rising edge of IRQ_Sync
             begin
-              KIU_I_Req <= `TRUE;
-              KIU_I_Id <= EIC_I_Id;
+              KIU_IntReq <= `TRUE;
+              KIU_IntId <= IID_Sync;
             end
 
-          if(KIU_I_Req & ~S_Mode_IF)
+          if(KIU_IntReq & ~S_Mode_IF)
             begin
-              KIU_I_Req <= `FALSE;
-              EIC_I_Ack <= ~EIC_I_Ack;
+              KIU_IntReq <= `FALSE;
+              EIC_IntAck <= ~EIC_IntAck;
             end
         end
     end
