@@ -1,4 +1,4 @@
-## Generated SDC file "F:/Workspace/Kabeta/proj/Quartus_Prime_16.1/scripts/SystemChip.out.sdc"
+## Generated SDC file "F:/Workspace/Kabeta/proj/Quartus_Prime_16.1/scripts/SystemChip.sdc"
 
 ## Copyright (C) 2017  Intel Corporation. All rights reserved.
 ## Your use of Intel Corporation's design tools, logic functions 
@@ -20,7 +20,7 @@
 ## PROGRAM "Quartus Prime"
 ## VERSION "Version 16.1.2 Build 203 01/18/2017 SJ Standard Edition"
 
-## DATE    "Fri May 25 17:53:08 2018"
+## DATE    "Sat May 26 11:06:28 2018"
 
 ##
 ## DEVICE  "EP4CE6F17C8"
@@ -78,15 +78,24 @@ derive_clock_uncertainty
 # Set Clock Groups
 #**************************************************************
 
-set_clock_groups -asynchronous -group [get_clocks {S_PLL|SysPLL|altpll_component|auto_generated|pll1|clk[0]}] -group [get_clocks {S_PLL|SysPLL|altpll_component|auto_generated|pll1|clk[1]}] 
 
 
 #**************************************************************
 # Set False Path
 #**************************************************************
 
-set_false_path -from [get_ports {Reset}] 
+set_false_path -from [get_ports {Reset}]
+set_false_path -from [get_ports {Keys[*]}]
 set_false_path -to [get_ports {Dout}]
+
+# IACK (ACK) Sys->I/O
+set_false_path -from [get_pins {KAB_CORE|KIU|EIC_IntAck|clk}] -to [get_pins {KAB_IO|EIC|IACK_SYNC|SyncData1|*}]
+
+# IOIF (ACK): I/O->Sys
+set_false_path -from [get_pins {KAB_IO|IOIF|HSHK|R_Ack|clk}] -to [get_pins {KAB_IO|IOIF|HSHK|ACK_SYNC|SyncData1|*}]
+
+# EIC write INR (ACK) Sys->I/O
+set_false_path -from [get_pins {KAB_IO|EIC|INR|HSHK|R_Ack|clk}] -to [get_pins {KAB_IO|EIC|INR|HSHK|ACK_SYNC|SyncData1|*}]
 
 
 #**************************************************************
@@ -111,3 +120,17 @@ set_false_path -to [get_ports {Dout}]
 # Set Input Transition
 #**************************************************************
 
+
+
+#**************************************************************
+# Set Max Skew
+#**************************************************************
+
+# IRQ (REQ): I/O->Sys
+set_max_skew -from [get_pins {KAB_IO|EIC|EIC_IntReq|clk KAB_IO|EIC|EIC_IntId|clk}] -to [get_pins {KAB_CORE|KIU|SYNC_IRQ|SyncData1|* KAB_CORE|KIU|SYNC_IID|SyncData1|*}] -exclude {from_clock to_clock clock_uncertainty} -get_skew_value_from_clock_period src_clock_period -skew_value_multiplier 0.8
+
+# IOIF (REQ): Sys->I/O
+set_max_skew -from [get_pins {KAB_IO|IOIF|HSHK|T_Req|clk KAB_IO|IOIF|HSHK|T_DataReg[*]|clk}] -to [get_pins {KAB_IO|IOIF|HSHK|REQ_SYNC|SyncData1|* KAB_IO|IOIF|HSHK|DATA_BIT[0].SYNC|SyncData1|*}] -exclude {from_clock to_clock clock_uncertainty} -get_skew_value_from_clock_period src_clock_period -skew_value_multiplier 0.8
+
+# EIC write INR (REQ): I/O->Sys
+set_max_skew -from [get_pins {KAB_IO|EIC|INR|HSHK|T_Req|clk KAB_IO|EIC|INR|HSHK|T_DataReg[*]|clk}] -to [get_pins {KAB_IO|EIC|INR|HSHK|REQ_SYNC|SyncData1|* KAB_IO|EIC|INR|HSHK|DATA_BIT[*].SYNC|SyncData1|*}] -exclude {from_clock to_clock clock_uncertainty} -get_skew_value_from_clock_period src_clock_period -skew_value_multiplier 0.8
