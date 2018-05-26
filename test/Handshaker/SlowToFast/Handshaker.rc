@@ -1,0 +1,90 @@
+Magic 271485
+Revision Verdi3_L-2016.06-1
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 0 33 1920 979 199 65
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/home/kathy/kabeta/test/Handshaker/SlowToFast/Handshaker.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 0.000000 343080.917197
+cursor 0.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 0
+; marker line index
+markerPos 22
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "Tran"
+activeDirFile "" "/home/kathy/kabeta/test/Handshaker/SlowToFast/Handshaker.fsdb"
+addSignal -h 16 /Testbench/DesignTop/T_Clock
+addSignal -h 16 -holdScope T_Reset
+addSignal -h 16 -holdScope T_Busy
+addSignal -h 16 -holdScope T_Start
+addSignal -h 16 -UNSIGNED -HEX -holdScope T_Data[3:0]
+addSignal -h 16 -holdScope T_DataReady
+addSignal -h 15 -UNSIGNED -HEX -holdScope T_DataReg[3:0]
+addSignal -h 16 -holdScope T_Req
+addSignal -h 16 -holdScope T_AckSync
+addSignal -h 16 -holdScope T_AckSyncLast
+addSignal -h 16 -holdScope T_AckReady
+addGroup "Recv"
+addSignal -h 16 /Testbench/DesignTop/R_Clock
+addSignal -h 16 -holdScope R_Reset
+addSignal -h 16 -holdScope R_ReqSync
+addSignal -h 16 -holdScope R_ReqSyncLast
+addSignal -h 16 -holdScope R_DataReady
+addSignal -h 15 -UNSIGNED -HEX -holdScope R_DataReg[3:0]
+addSignal -h 16 -UNSIGNED -HEX -holdScope R_Data[3:0]
+addSignal -h 16 -holdScope R_Finish
+addSignal -h 16 -holdScope R_Ack
+addGroup "G3"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+activeDirFile "" "/home/kathy/kabeta/test/Handshaker/SlowToFast/Handshaker.fsdb"
+
+GETSIGNALFORM_SCOPE_HIERARCHY_BEGIN
+getSignalForm close
+
+"/Testbench"
+"/Testbench/DesignTop"
+
+SCOPE_LIST_BEGIN
+"/Testbench"
+"/Testbench/DesignTop"
+SCOPE_LIST_END
+
+GETSIGNALFORM_SCOPE_HIERARCHY_END
+
+
