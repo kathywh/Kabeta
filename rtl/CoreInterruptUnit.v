@@ -12,7 +12,8 @@
 /*      05/21/2018  Kathy       Unit created.                                 */
 /*      05/23/2018  Kathy       Add IID output register.                      */
 /*      05/26/2018  Kathy       Add IID synchronizer.                         */
-/*      05/27/2018  Kathy       IRQ Ack comes from BEU.                       */
+/*      05/27/2018  Kathy       1) IRQ Ack comes from BEU.                    */
+/*                              2) Remove IID synchronizer.                   */
 /******************************************************************************/
 
 module CoreInterruptUnit
@@ -31,7 +32,6 @@ module CoreInterruptUnit
 );
 
   wire IRQ_Sync;    // synchronized IRQ
-  wire IID_Sync;    // synchronized IID
   reg IRQ_Sync_Last;
 
   Synchronizer SYNC_IRQ
@@ -40,14 +40,6 @@ module CoreInterruptUnit
     .Clock(Sys_Clock),
     .DataIn(EIC_IntReq),
     .DataOut(IRQ_Sync)
-  );
-
-  Synchronizer SYNC_IID
-  (
-    .Reset(Sys_Reset),
-    .Clock(Sys_Clock),
-    .DataIn(EIC_IntId),
-    .DataOut(IID_Sync)
   );
 
   always @(negedge Sys_Reset or posedge Sys_Clock)
@@ -62,7 +54,7 @@ module CoreInterruptUnit
           if(~IRQ_Sync_Last & IRQ_Sync)   // rising edge of IRQ_Sync
             begin
               KIU_IntReq <= `TRUE;
-              KIU_IntId <= IID_Sync;
+              KIU_IntId <= EIC_IntId;
             end
 
           if(KIU_IntAck)
