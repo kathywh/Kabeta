@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/01/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/26/2018                                                    */
+/*  Edited on:  05/27/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Branch and exception controller                                       */
@@ -16,6 +16,7 @@
 /*                              2) Exc. in EX-Stage is suppressed by Stall.   */
 /*                              3) Add Invalid IA exception from MA-Stage.    */
 /*      05/26/2018  Kathy       S bit comes from IF-Stage.                    */
+/*      05/27/2018  Kathy       Add IRQ Ack signaling.                        */
 /******************************************************************************/
 
 module BranchExceptionUnit
@@ -28,7 +29,8 @@ module BranchExceptionUnit
   output reg [31:0] ExcAddr,
   output reg [1:0] PC_Sel,
   output reg FlushIF, FlushRR, FlushEX, FlushMA, ReplicatePC,
-  output reg ExcAckIF, ExcAckRR, ExcAckEX, ExcAckMA
+  output reg ExcAckIF, ExcAckRR, ExcAckEX, ExcAckMA,
+  output reg IntAck
 );
 
   wire BrJmp, BrBxxTaken, BrTaken, RaZero;
@@ -53,7 +55,8 @@ module BranchExceptionUnit
           ExcAckEX <= `FALSE;
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
-          ReplicatePC <= `FALSE;   
+          ReplicatePC <= `FALSE;  
+          IntAck <= `FALSE; 
         end
       else if(ExcReqMA)     // Exception from MA-Stage
         begin
@@ -68,6 +71,7 @@ module BranchExceptionUnit
           FlushMA  <= `TRUE;
           ExcAckMA <= `TRUE;
           ReplicatePC <= `FALSE;
+          IntAck <= `FALSE;
         end
       else if(ExcReqEX & ~Stall)     // Exception from EX-Stage
         begin
@@ -82,6 +86,7 @@ module BranchExceptionUnit
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
+          IntAck <= `FALSE;
         end
       else if(ExcReqRR & ~BrTaken & ~Stall)   // Exception from RR-Stage
         begin
@@ -96,6 +101,7 @@ module BranchExceptionUnit
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
+          IntAck <= `FALSE;
         end
       else if(ExcReqIF & ~BrTaken & ~Stall)   // Exception from IF-Stage
         begin
@@ -110,6 +116,7 @@ module BranchExceptionUnit
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
+          IntAck <= `FALSE;
         end
       else if(IRQ_Int & ~S_Mode_IF)    // Interrupts
         begin
@@ -124,6 +131,7 @@ module BranchExceptionUnit
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
+          IntAck <= `TRUE;
         end
       else if(Stall)      // Pipeline Stall
         begin
@@ -138,6 +146,7 @@ module BranchExceptionUnit
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
+          IntAck <= `FALSE;
         end
       else if(BrTaken)     // JMP/BEQ/BNE branch taken
         begin
@@ -155,6 +164,7 @@ module BranchExceptionUnit
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `TRUE;
+          IntAck <= `FALSE;
         end
       else                // No exceptions, interrupts, stall or branch taken
         begin
@@ -169,6 +179,7 @@ module BranchExceptionUnit
           FlushMA  <= `FALSE;
           ExcAckMA <= `FALSE;
           ReplicatePC <= `FALSE;
+          IntAck <= `FALSE;
         end
     end
   

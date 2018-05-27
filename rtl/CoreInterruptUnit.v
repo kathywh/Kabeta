@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/21/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/26/2018                                                    */
+/*  Edited on:  05/27/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Interrupt unit of processor core.                                     */
@@ -12,6 +12,7 @@
 /*      05/21/2018  Kathy       Unit created.                                 */
 /*      05/23/2018  Kathy       Add IID output register.                      */
 /*      05/26/2018  Kathy       Add IID synchronizer.                         */
+/*      05/27/2018  Kathy       IRQ Ack comes from BEU.                       */
 /******************************************************************************/
 
 module CoreInterruptUnit
@@ -24,7 +25,7 @@ module CoreInterruptUnit
   // Processor core side ports
   input Sys_Reset,
   input Sys_Clock,
-  input S_Mode_IF,
+  input KIU_IntAck,
   output reg KIU_IntReq, // internal interrupt status
   output reg KIU_IntId
 );
@@ -64,7 +65,7 @@ module CoreInterruptUnit
               KIU_IntId <= IID_Sync;
             end
 
-          if(KIU_IntReq & ~S_Mode_IF)
+          if(KIU_IntAck)
             begin
               KIU_IntReq <= `FALSE;
               EIC_IntAck <= ~EIC_IntAck;

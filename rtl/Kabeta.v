@@ -111,6 +111,7 @@ module Kabeta
   // Signals from/to KIU
   wire KIU_IntReq;
   wire KIU_IntId;
+  wire KIU_IntAck;
 
   // Signals common for stage
   wire StageEn_RR = ~Sys_Stall | Sys_FlushIF;
@@ -442,7 +443,7 @@ module Kabeta
 
     .Sys_Reset(Sys_Reset),
     .Sys_Clock(Sys_Clock),
-    .S_Mode_IF(PC_IF_Out[31]),
+    .KIU_IntAck(KIU_IntAck),
     .KIU_IntReq(KIU_IntReq),
     .KIU_IntId(KIU_IntId)
   );
@@ -474,6 +475,7 @@ module Kabeta
     .ExcAckIF(Sys_ExcAckIF),
     .ExcAckRR(Sys_ExcAckRR),
     .ExcAckEX(Sys_ExcAckEX),
-    .ExcAckMA(Sys_ExcAckMA)
+    .ExcAckMA(Sys_ExcAckMA),
+    .IntAck(KIU_IntAck)
   );
 endmodule
