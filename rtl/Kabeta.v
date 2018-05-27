@@ -194,9 +194,12 @@ module Kabeta
       endcase
     end
 
-  RegisterEn PC_IF
+  RegisterRstEn
+  #(.RST_VALUE(`EV_RST))
+  PC_IF
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(I_Mem_En_I),
     .DataIn(PC_IF_In),
     .DataOut(PC_IF_Out)
@@ -226,17 +229,23 @@ module Kabeta
   assign PC_RR_In = Sys_ReplicatePC ? PC_NextPlus4 : NextPC;
   assign PC_EX_In = Sys_ReplicatePC ? PC_NextPlus4 : PC_RR_Out;
 
-  RegisterEn PC_RR
+  RegisterRstEn
+  #(.RST_VALUE(`EV_RST+4)) 
+  PC_RR
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(StageEn_RR),
     .DataIn(PC_RR_In),
     .DataOut(PC_RR_Out)
   );
 
-  RegisterEn PC_EX
+  RegisterRstEn
+  #(.RST_VALUE(`EV_RST+4)) 
+  PC_EX
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(StageEn_EX),
     .DataIn(PC_EX_In),
     .DataOut(PC_EX_Out)
@@ -253,17 +262,23 @@ module Kabeta
   // S bit of OffsetPC is copied as is
   assign OffsetPC[31] = PC_EX_Out[31];
 
-  RegisterEn PC_MA
+  RegisterRstEn
+  #(.RST_VALUE(`EV_RST+4)) 
+  PC_MA
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(`TRUE),
     .DataIn(PC_EX_Out),
     .DataOut(PC_MA_Out)
   );
 
-  RegisterEn PC_WB
+  RegisterRstEn
+  #(.RST_VALUE(`EV_RST+4)) 
+  PC_WB
   (
     .Clock(Sys_Clock),
+    .Reset(Sys_Reset),
     .Enable(`TRUE),
     .DataIn(PC_MA_Out),
     .DataOut(PC_WB_Out)
