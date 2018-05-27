@@ -292,15 +292,17 @@ SP = sp
 | BP = 29			| Frame pointer (points to base of frame)
 
 | Conventional stack frames look like:
-|	arg[N-1]
-|	...
-|	arg[0]
-|	<saved lp>
-|	<saved bp>
-|	<other saved regs>
-|   BP-><locals>
-|       ...
-|   SP->(first unused location)
+|	     arg[n-1]                             Lower Address
+|	     ...
+|	     arg[0]
+|	     <saved lp>
+|	     <saved bp>
+|	     <other saved regs>
+|  BP -> <local0>
+|        <local1>
+|        ...
+|        <localm>
+|  SP -> (first unused location)              Higher Address
 
 | Convention: define a symbol for each arg/local giving bp-relative offset.
 | Then use
@@ -309,7 +311,11 @@ SP = sp
 
 
 .macro GETFRAME(OFFSET, REG) LD(bp, OFFSET, REG)
+.macro GETARG(N, REG)	GETFRAME(-(N+3)*4, REG)
+.macro GETVAR(N, REG)	GETFRAME(N*4, REG)
 .macro PUTFRAME(REG, OFFSET) ST(REG, bp, OFFSET)
+.macro PUTARG(REG, N)	PUTFRAME(REG, -(N+3)*4)
+.macro PUTVAR(REG, N)	PUTFRAME(REG, N*4)
 .macro CALL(S,N) BR(S,lp) SUBC(sp, 4*N, sp)
 
 .macro ALLOCATE(N) ADDC(sp, N*4, sp)
