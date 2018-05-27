@@ -47,7 +47,7 @@ program Tester
       Keys[0] = '0;
 
       // Generate interrupts
-      repeat(15)  @(posedge IO_Clock);
+      repeat(5)  @(posedge IO_Clock);
 
       Keys[0] = '1;
       Keys[1] = '1;
@@ -59,7 +59,7 @@ program Tester
       Keys[3] = '0;
       @(posedge IO_Clock);
 
-      repeat(200)  @(posedge IO_Clock);      
+      repeat(50)  @(posedge IO_Clock);      
     end
 
 endprogram

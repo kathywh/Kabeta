@@ -308,9 +308,9 @@ Show_Cycle_Info = TRUE
 [QtDialog]
 QwWarnMsgDlg = 666,520,600,250
 ExpressionDialog = 573,311,778,493
-qWaveSignalDialog = 368,290,1188,534
 QwQuestionMsgDlg = 790,471,324,110
 QwUserAskDlg = 804,702,324,128
+qWaveSignalDialog = 368,290,1188,534
 [Session Cache]
 1 = string (session file name)
 2 = string (session file name)
