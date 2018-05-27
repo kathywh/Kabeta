@@ -41,8 +41,8 @@ module ReadClearRegister
   logic Sys_RdEnFromProc;
   logic [DATA_WIDTH-1:0] Sys_WrData;
 
-  logic Sys_DataMask;
-  logic Sys_DataSource;
+  logic [DATA_WIDTH-1:0] Sys_DataMask;
+  logic [DATA_WIDTH-1:0] Sys_DataSource;
 
   // Clear reg data
   assign Sys_RdEnFromProc = Sys_Interface.RdEn & Sys_RegSelect;

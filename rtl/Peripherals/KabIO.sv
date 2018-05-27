@@ -28,17 +28,21 @@ module KabIO
   output logic EIC_IntId,
   input  logic EIC_IntAck,
 
-  // Key Ports (test)
-  input logic [8:0] Keys
+  // BKD pins
+  output logic [3:0] LED,
+  output logic [7:0] Segment,
+  output logic [5:0] Digital,
+  input  logic [3:0] Keys
 );
 
   import IO_AddressTable::*;
 
-  // Interrupt signals (test)
+  // Interrupt signals
+  logic BKD_KeyPressInt;
   logic UrgentReq;
-  assign UrgentReq = Keys[0];
+  assign UrgentReq = '0;
   logic [7:0] IntReq;
-  assign IntReq = Keys[8:1];
+  assign IntReq = {6'h00, BKD_KeyPressInt, 1'b0};
 
   IO_AccessItf#(32) Sys_RegInterface
   (
@@ -73,7 +77,17 @@ module KabIO
     .*
   );
 
-  assign Sys_RegRdData[RESV1_ADDR] = '0;
+  BasicKeyDisplay BKD
+  (
+    .Sys_Interface(Sys_RegInterface),
+    .Sys_RdData(Sys_RegRdData[BKD_ADDR]),
+    .Sys_BlockSelect(Sys_BlockSelect[BKD_ADDR]),
+    .IO_Interface(IO_LogicInterface),
+    .IO_BlockSelect(IO_BlockSelect[BKD_ADDR]),
+    .KeyPressInt(BKD_KeyPressInt),
+    .*
+  );
+
   assign Sys_RegRdData[RESV2_ADDR] = '0;
   assign Sys_RegRdData[RESV3_ADDR] = '0;
   assign Sys_RegRdData[RESV4_ADDR] = '0;

@@ -19,11 +19,11 @@ module SystemChip
   input Reset,
   input Clock,
 
-  // Key Ports (test)
-  input [8:0] Keys,
-
-  // Data Out Ports
-  output Dout
+  // BKD pins
+  output logic [3:0] LED,
+  output logic [7:0] Segment,
+  output logic [5:0] Digital,
+  input  logic [3:0] Keys
 );
 
   wire PLL_Locked;
@@ -34,8 +34,6 @@ module SystemChip
   wire [31:0] IO_DataW, IO_DataR;
   wire [29:0] IO_Address;
   wire EIC_IntAck, EIC_IntReq, EIC_IntId;
-
-  assign Dout = &IO_DataW;    // Stub
 
   SystemPLL PLL
   (
@@ -91,6 +89,10 @@ module SystemChip
     .EIC_IntId(EIC_IntId),
     .EIC_IntAck(EIC_IntAck),
 
+    // BKD pins
+    .LED(LED),
+    .Segment(Segment),
+    .Digital(Digital),
     .Keys(Keys)
   );
   
