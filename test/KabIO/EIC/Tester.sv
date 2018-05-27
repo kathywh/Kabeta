@@ -59,7 +59,7 @@ program Tester
       Keys[3] = '0;
       @(posedge IO_Clock);
 
-      repeat(50)  @(posedge IO_Clock);      
+      repeat(45)  @(posedge IO_Clock);      
     end
 
 endprogram
