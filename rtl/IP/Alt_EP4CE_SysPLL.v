@@ -101,12 +101,12 @@ module Alt_EP4CE_SysPLL (
 		altpll_component.bandwidth_type = "AUTO",
 		altpll_component.clk0_divide_by = 5,
 		altpll_component.clk0_duty_cycle = 50,
-		altpll_component.clk0_multiply_by = 3,
+		altpll_component.clk0_multiply_by = 4,
 		altpll_component.clk0_phase_shift = "0",
-		altpll_component.clk1_divide_by = 25,
+		altpll_component.clk1_divide_by = 10,
 		altpll_component.clk1_duty_cycle = 50,
-		altpll_component.clk1_multiply_by = 6,
-		altpll_component.clk1_phase_shift = "6944",
+		altpll_component.clk1_multiply_by = 3,
+		altpll_component.clk1_phase_shift = "5556",
 		altpll_component.compensate_clock = "CLK0",
 		altpll_component.inclk0_input_frequency = 20000,
 		altpll_component.intended_device_family = "Cyclone IV E",
@@ -184,8 +184,8 @@ endmodule
 // Retrieval info: PRIVATE: DIV_FACTOR1 NUMERIC "1"
 // Retrieval info: PRIVATE: DUTY_CYCLE0 STRING "50.00000000"
 // Retrieval info: PRIVATE: DUTY_CYCLE1 STRING "50.00000000"
-// Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE0 STRING "30.000000"
-// Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE1 STRING "12.000000"
+// Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE0 STRING "40.000000"
+// Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE1 STRING "15.000000"
 // Retrieval info: PRIVATE: EXPLICIT_SWITCHOVER_COUNTER STRING "0"
 // Retrieval info: PRIVATE: EXT_FEEDBACK_RADIO STRING "0"
 // Retrieval info: PRIVATE: GLOCKED_COUNTER_EDIT_CHANGED STRING "1"
@@ -213,8 +213,8 @@ endmodule
 // Retrieval info: PRIVATE: MULT_FACTOR0 NUMERIC "1"
 // Retrieval info: PRIVATE: MULT_FACTOR1 NUMERIC "1"
 // Retrieval info: PRIVATE: NORMAL_MODE_RADIO STRING "1"
-// Retrieval info: PRIVATE: OUTPUT_FREQ0 STRING "30.00000000"
-// Retrieval info: PRIVATE: OUTPUT_FREQ1 STRING "12.00000000"
+// Retrieval info: PRIVATE: OUTPUT_FREQ0 STRING "40.00000000"
+// Retrieval info: PRIVATE: OUTPUT_FREQ1 STRING "15.00000000"
 // Retrieval info: PRIVATE: OUTPUT_FREQ_MODE0 STRING "1"
 // Retrieval info: PRIVATE: OUTPUT_FREQ_MODE1 STRING "1"
 // Retrieval info: PRIVATE: OUTPUT_FREQ_UNIT0 STRING "MHz"
@@ -262,12 +262,12 @@ endmodule
 // Retrieval info: CONSTANT: BANDWIDTH_TYPE STRING "AUTO"
 // Retrieval info: CONSTANT: CLK0_DIVIDE_BY NUMERIC "5"
 // Retrieval info: CONSTANT: CLK0_DUTY_CYCLE NUMERIC "50"
-// Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "3"
+// Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "4"
 // Retrieval info: CONSTANT: CLK0_PHASE_SHIFT STRING "0"
-// Retrieval info: CONSTANT: CLK1_DIVIDE_BY NUMERIC "25"
+// Retrieval info: CONSTANT: CLK1_DIVIDE_BY NUMERIC "10"
 // Retrieval info: CONSTANT: CLK1_DUTY_CYCLE NUMERIC "50"
-// Retrieval info: CONSTANT: CLK1_MULTIPLY_BY NUMERIC "6"
-// Retrieval info: CONSTANT: CLK1_PHASE_SHIFT STRING "6944"
+// Retrieval info: CONSTANT: CLK1_MULTIPLY_BY NUMERIC "3"
+// Retrieval info: CONSTANT: CLK1_PHASE_SHIFT STRING "5556"
 // Retrieval info: CONSTANT: COMPENSATE_CLOCK STRING "CLK0"
 // Retrieval info: CONSTANT: INCLK0_INPUT_FREQUENCY NUMERIC "20000"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
