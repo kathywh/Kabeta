@@ -82,6 +82,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ReadOnlyReg
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ReadClearRegister.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_Interface.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ExtInterruptCtrl.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/BasicKeyDisplay.sv
 set_global_assignment -name VERILOG_FILE ../../rtl/SystemPLL.v
 set_global_assignment -name VERILOG_FILE ../../rtl/Synchronizer.v
 set_global_assignment -name VERILOG_FILE ../../rtl/ResetSynchronizer.v

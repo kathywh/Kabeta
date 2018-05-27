@@ -86,7 +86,9 @@ set_clock_groups -asynchronous -group [get_clocks {PLL|SysPLL|altpll_component|a
 
 set_false_path -from [get_ports {Reset}]
 set_false_path -from [get_ports {Keys[*]}]
-set_false_path -to [get_ports {Dout}]
+set_false_path -to [get_ports {LED[*]}]
+set_false_path -to [get_ports {Segment[*]}]
+set_false_path -to [get_ports {Digital[*]}]
 
 
 #**************************************************************
