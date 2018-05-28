@@ -11,6 +11,7 @@
 /*  Revisions:                                                                */
 /*      05/28/2018  Kathy       Unit created.                                 */
 /*      05/28/2018  Kathy       Add LED enable control.                       */
+/*                              Correct LED enable implementation.            */
 /******************************************************************************/
 
   /////////////////////////////////////////////////////////////////////////////
@@ -291,7 +292,7 @@ module BasicKeyDisplay
         begin
           Counter <= '0;
           DigitIndex <= '0;
-          Digital <= 6'b00_0001;
+          Digital <= 6'b11_1110;      // select 1st digit (0: select, 1: deselect)
         end
       else
         begin
@@ -308,7 +309,7 @@ module BasicKeyDisplay
                   else 
                     begin
                       DigitIndex <= DigitIndex + 3'd1;
-                      Digital <= Digital << 1;
+                      Digital <= {Digital[4:0], 1'b1};    // select next
                     end              
                 end
               else 
@@ -320,7 +321,10 @@ module BasicKeyDisplay
     end
 
   // seven segment display scan signals
-  assign Segment = SegmentCodeReg[DigitIndex] & {8{LED_Enable}};
+  // 0: on, 1: off
+  // LED_Enable=0: all off
+  //            1: normal
+  assign Segment = SegmentCodeReg[DigitIndex] | {8{~LED_Enable}};     
 
   /////////////////////////////////////////////////////////////////////////////
   // key & display interrupt enable
