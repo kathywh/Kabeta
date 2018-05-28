@@ -1,0 +1,370 @@
+.include ../../../tools/kabeta.uasm
+
+|--------------------------------------
+| const definitions
+|--------------------------------------
+
+| Interrupt Numbers
+BKD_KPI	= 1			| BKD: Key Press Interrupt
+
+| SVC function codes
+SVC_FCNT = 3		| SVC function count
+SVC_LED  = 0
+SVC_SSD  = 1
+SVC_KEY  = 2
+
+| LED pattern count
+LED_PAT_COUNT = 12
+
+|--------------------------------------
+| data segment
+|--------------------------------------
+LOCATE(0)
+
+| SVC jump table
+svc_sub_tab:
+	STORAGE(SVC_FCNT)
+
+| LED pattern table
+led_pat_tab:
+	STORAGE(LED_PAT_COUNT)
+
+| Stack
+stack:
+	STORAGE(256)
+
+|--------------------------------------
+| I/O segment
+|--------------------------------------
+LOCATE(0)
+EIC_IE:	
+	STORAGE(1)		| 0x000, WO
+EIC_IN:
+	STORAGE(1)		| 0x004, RO
+
+LOCATE(0x040)
+BKD_LEDC:
+	STORAGE(1)		| 0x040, RW
+BKD_SSDC:
+	STORAGE(1)		| 0x044, RW
+BKD_KDIE:
+	STORAGE(1)		| 0x048, WO
+BKD_KEYS:
+	STORAGE(1)		| 0x04C, RC
+
+|--------------------------------------
+| exception vectors
+|--------------------------------------
+EXCVT()
+
+rst_vec:
+	BR(start)
+svc_vec:
+	BR(svc_esr)
+ill_vec:
+	BR(.)
+inv_op_vec:
+	BR(.)
+inv_da_vec:
+	BR(.)
+inv_ia_vec:
+	BR(.)
+irq0_vec:
+	BR(irq0_esr)
+irq1_vec:
+	BR(.)
+
+|--------------------------------------
+| code segment
+|--------------------------------------
+LOCATE(0x100)
+
+	|-------------------------------------------------------------------------------|
+	| IRQ0 Handler                                                                  |
+	|-------------------------------------------------------------------------------|
+irq0_esr:
+	| Adjust & save XP
+	SUBC(XP, 4, XP)
+	PUSH(XP)
+
+	| Save registers
+	PUSH(R0)
+	PUSH(R1)
+	PUSH(R2)
+
+	| Get interrupt number
+	IOR(EIC_IN, R1)			| R1: interrupt number
+
+	| If key int, read key status
+	CMPEQC(R1, BKD_KPI, R0)
+	BF(R0, irq0_rks_end)
+	IOR(BKD_KEYS, R2)		| Read key status reg
+	IOR(BKD_KEYS, R2)		| Read again, check if cleared
+	BR(irq0_end)
+irq0_rks_end:
+
+irq0_end:
+	| Restore registers
+	POP(R2)
+	POP(R1)
+	POP(R0)
+
+	| Restore XP then return
+	POP(XP)
+	JMP(XP)
+
+	|-------------------------------------------------------------------------------|
+	| SVC Handler                                                                   |
+	|                                                                               |
+	|   1) Function code is in register R0.                                         |
+	|   2) Input/Output arguments are in registers, R1, R2, R3, ...                 |
+	|   3) Status code is returned in R0.                                           |
+	|                                                                               |
+	|   Function            R0    R1           R2          Comment                  |
+	|   ---------------     --    ---------    --------    -----------------------  |
+	|   Turn on/off LED      0    IN  b3-b0    -           0: off, 1: on            |
+	|   Display in SSD       1    IN  index    IN b4-b0    b4: dp, b3-b0: bcd code  |
+	|   Get key status       2    OUT b3-b0    -           0: pressed, 1: normal    |
+	|-------------------------------------------------------------------------------|
+
+svc_esr:
+	| Save XP
+	PUSH(XP)
+
+	| Save registers
+	PUSH(R8)
+	PUSH(R9)
+	PUSH(R10)
+
+	| Function jump
+	CMPLTC(R0, 0, R8)			| If R0 < 0, then go to error handler
+	BT(R8, svc_fc_oor)
+	CMPLEC(R0, SVC_FCNT, R8)	| If R0 > SVC_FCNT, then go to error handler
+	BF(R8, svc_fc_oor)
+	SHLC(R0, 2, R0)				| Convert function code into offset in jump table
+	LD(R0, svc_sub_tab, R8)		| Load subroutine address
+	JMP(R8)
+
+	| Function code out of range
+svc_fc_oor:
+	MOVC(1, R0)
+	BR(svc_end)
+
+svc_led:
+	ANDC(R1, 0x000F, R1)
+	IOW(R1, BKD_LEDC)		| Write LEDC register
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_ssd:
+	IOR(BKD_SSDC, R8)		| Read SSDC register (R8)
+
+	SHLC(R1, 2, R9)			| Get DIGn position (R9)
+	MOVC(0x000F, R10)
+	SHL(R10, R9, R10)		| Get DIGn mask (R10)
+	XORC(R10, 0xFFFF, R10)
+	AND(R8, R10, R8)		| Clear DIGn bits (R8)
+	ANDC(R2, 0x000F, R10)
+	SHL(R10, R9, R10)		| Shift bcd code (R10)
+	OR(R8, R10, R8)			| Set DIGn bits (R8)
+
+	ADDC(R1, 24, R9)		| Get DPn position (R9)
+	MOVC(0x0001, R10)
+	SHL(R10, R9, R10)		| Get DPn mask (R10)
+	XORC(R10, 0xFFFF, R10)
+	AND(R8, R10, R8)		| Clear DPn bit (R8)
+	ANDC(R2, 0x0010, R10)
+	SHRC(R10, 4, R10)
+	SHL(R10, R9, R10)		| Shift dp bit (R10)
+	OR(R8, R10, R8)			| Set DPn bit (R8)
+
+	IOW(R8, BKD_SSDC)		| Write SSDC register
+
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_key:
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_end:
+	| Restore registers
+	POP(R10)
+	POP(R9)
+	POP(R8)
+
+	| Restore XP then return
+	POP(XP)
+	JMP(XP)
+
+start:
+	|-------------------------------------------------------------------------------|
+	| System initialization                                                         |
+	|-------------------------------------------------------------------------------|
+
+	| Set SP
+	MOVC(stack, SP)
+
+	| Fill SVC jump table
+	MOVC(svc_sub_tab, R1)
+	LDR(svc_led_addr, R0)			| svc_led
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(svc_ssd_addr, R0)			| svc_ssd
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(svc_key_addr, R0)			| svc_key
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+
+	| Enable Key Interrupt
+	MOVC(1, R0)
+	IOW(R0, BKD_KDIE)
+
+	| Delay between IOW
+	MOVC(3, R0)	| R0: delay count
+en_int_delay:
+	SUBC(R0, 1, R0)
+	BT(R0, en_int_delay)
+
+	| Enable interrupt
+	MOVC(1, R0)
+	IOW(R0, EIC_IE)
+
+	| Switch to User Mode
+	MOVC(user_mode%PC_MASK, R0)
+	JMP(R0)
+user_mode:
+
+	|-------------------------------------------------------------------------------|
+	| Blink LED                                                                     |
+	|-------------------------------------------------------------------------------|
+
+	| Fill led pattern table
+	MOVC(led_pat_tab, R1)
+led_p_0001:
+	MOVC(0x01, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_0010:
+	MOVC(0x02, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p0100:
+	MOVC(0x04, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_1000:
+	MOVC(0x08, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_0000:
+	MOVC(0x00, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_0011:
+	MOVC(0x03, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_0110:
+	MOVC(0x06, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_1010:
+	MOVC(0x0A, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_0101:
+	MOVC(0x05, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_1110:
+	MOVC(0x0E, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_1011:
+	MOVC(0x0B, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+led_p_1111:
+	MOVC(0x0F, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+
+blink_led:
+	MOVC(LED_PAT_COUNT, R12)	| R12: led count
+	MOVC(led_pat_tab, R11)		| Load pattern table address
+
+blink_one:
+	| Turn on/off leds
+	LD(R11, 0, R1)				| Load pattern
+	MOVC(SVC_LED, R0)
+	SVC()						| Do SVC
+
+	| Delay for 1 second
+	CALL(delay_1s)
+
+	ADDC(R11, 4, R11)			| Increase pattern address
+	SUBC(R12, 1, R12)
+	BT(R12, blink_one)
+
+	| Loop forever
+	BR(blink_led)
+
+end:
+	BR(.)
+
+|-------------------------------------------------------------------------------|
+| Delay for 1 second                                                            |
+|                                                                               |
+|   1) No arguments. No return value.                                           |
+|   2) Delay for delay_1s_cnt iterations                                        |
+|        4 cycles per iteration                                                 |
+|        except last one only 2 cycles                                          |
+|   3) Delay of prologue & epilogue does NOT count.                             |
+|-------------------------------------------------------------------------------|
+
+delay_1s:
+	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R0)		| Save registers
+
+	LDR(delay_1s_cnt, R0)	| R0: delay count
+delay_1s_loop:
+	SUBC(R0, 1, R0)
+	BT(R0, delay_1s_loop)
+
+	| Epilogue to the subroutine
+	POP(R0)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+|--------------------------------------
+| literal segment
+|--------------------------------------
+LITERAL()
+delay_1s_cnt:				| led blink delay count
+	LONG(0x00989680)		| 1E+7
+
+| SVC subroutine address table
+svc_led_addr:
+	LONG(svc_led+PC_SUPERVISOR)
+svc_ssd_addr:
+	LONG(svc_ssd+PC_SUPERVISOR)
+svc_key_addr:
+	LONG(svc_key+PC_SUPERVISOR)
+
+
+
+
+|--------------------------------------
+| signature
+|--------------------------------------
+LOCATE(0x0FFC)
+__signature:
+	LONG(0xCA3EBE3A)
