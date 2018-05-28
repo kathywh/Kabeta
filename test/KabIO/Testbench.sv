@@ -22,10 +22,10 @@ module Testbench;
 
   // stimuli signals
   logic Reset, Clock;
-  logic [8:0] Keys;
-
-  // monitored signals
-  logic Dout;
+  logic [3:0] LED;
+  logic [7:0] Segment;
+  logic [5:0] Digital;
+  logic [3:0] Keys;
 
   // test environment
   ClockGenerator#(TCLK) ClkGen(.*);

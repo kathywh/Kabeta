@@ -29,7 +29,10 @@ set src_files = \
  ../../../rtl/Peripherals/IO_AccessItf.sv \
  ../../../rtl/Peripherals/IO_Interface.sv \
  ../../../rtl/Peripherals/ReadOnlyRegister.sv \
+ ../../../rtl/Peripherals/ReadClearRegister.sv \
+ ../../../rtl/Peripherals/ReadWriteRegister.sv \
  ../../../rtl/Peripherals/ExtInterruptCtrl.sv \
+ ../../../rtl/Peripherals/BasicKeyDisplay.sv \
  ../../../rtl/Peripherals/KabIO.sv \
  ../../../rtl/SystemChip.v"
 
