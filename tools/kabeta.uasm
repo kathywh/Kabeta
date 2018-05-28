@@ -34,10 +34,10 @@
 
 | CMPEQ(RA, RB, RC)	| RC <- <RA> == <RB>
 | CMPEQC(RA, C, RC)	| RC <- <RA> == C
-| CMPLE(RA, RB, RC)	| RC <- <RA> <= <RB>
-| CMPLEC(RA, C, RC)	| RC <- <RA> <= C
-| CMPLT(RA, RB, RC)	| RC <- <RA> <  <RB>
-| CMPLTC(RA, C, RC)	| RC <- <RA> <  C
+| CMPLE(RA, RB, RC)	| RC <- <RA> <= <RB>  (Signed Comparison)
+| CMPLEC(RA, C, RC)	| RC <- <RA> <= C     (Signed Comparison)
+| CMPLT(RA, RB, RC)	| RC <- <RA> <  <RB>  (Signed Comparison)
+| CMPLTC(RA, C, RC)	| RC <- <RA> <  C     (Signed Comparison)
 
 
 | BR(LABEL,RC)		| RC <- <PC>+4; PC <- LABEL (PC-relative addressing)
