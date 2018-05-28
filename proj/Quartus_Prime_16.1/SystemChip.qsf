@@ -44,13 +44,11 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 16.1.2
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:03:12  MAY 16, 2018"
 set_global_assignment -name LAST_QUARTUS_VERSION "16.1.2 Standard Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
-set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
-set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
 set_global_assignment -name ENABLE_OCT_DONE OFF
 set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
 set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
-set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "PASSIVE SERIAL"
+set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL"
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVCMOS"
@@ -100,4 +98,31 @@ set_global_assignment -name VERILOG_FILE ../../rtl/AddressAdder.v
 set_global_assignment -name VERILOG_FILE ../../rtl/Kabeta.v
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/KabIO.sv
 set_global_assignment -name VERILOG_FILE ../../rtl/SystemChip.v
+set_location_assignment PIN_E15 -to Reset
+set_location_assignment PIN_E1 -to Clock
+set_location_assignment PIN_G15 -to LED[0]
+set_location_assignment PIN_F16 -to LED[1]
+set_location_assignment PIN_F15 -to LED[2]
+set_location_assignment PIN_D16 -to LED[3]
+set_location_assignment PIN_B7 -to Segment[0]
+set_location_assignment PIN_A8 -to Segment[1]
+set_location_assignment PIN_A6 -to Segment[2]
+set_location_assignment PIN_B5 -to Segment[3]
+set_location_assignment PIN_B6 -to Segment[4]
+set_location_assignment PIN_A7 -to Segment[5]
+set_location_assignment PIN_B8 -to Segment[6]
+set_location_assignment PIN_A5 -to Segment[7]
+set_location_assignment PIN_B1 -to Digital[0]
+set_location_assignment PIN_A2 -to Digital[1]
+set_location_assignment PIN_B3 -to Digital[2]
+set_location_assignment PIN_A3 -to Digital[3]
+set_location_assignment PIN_B4 -to Digital[4]
+set_location_assignment PIN_A4 -to Digital[5]
+set_location_assignment PIN_M12 -to Keys[0]
+set_location_assignment PIN_E16 -to Keys[1]
+set_location_assignment PIN_M16 -to Keys[2]
+set_location_assignment PIN_M15 -to Keys[3]
+set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
+set_global_assignment -name CYCLONEIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
