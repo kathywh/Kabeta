@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/24/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/26/2018                                                    */
+/*  Edited on:  05/28/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      External interrupt controller.                                        */
@@ -12,6 +12,7 @@
 /*      05/24/2018  Kathy       Unit created.                                 */
 /*      05/26/2018  Kathy       Clear URQ Status Reg at reset.                */
 /*                              Register EIC_IntReq signal.                   */
+/*      05/28/2018  Kathy       Correct IRQ deassertion.                      */
 /******************************************************************************/
 
 module ExtInterruptCtrl
@@ -82,6 +83,7 @@ module ExtInterruptCtrl
     .IO_Reset(IO_Interface.Reset),
     .IO_Clock(IO_Interface.Clock),
     .IO_WrData(IO_INR_WrData),
+    .IO_WrMask(3'b111),
     .IO_WrEn(IO_INR_WrEn),
     .IO_Busy(IO_INR_Busy)    
   );
@@ -238,8 +240,7 @@ module ExtInterruptCtrl
 
             DO_REQ:
               begin
-                State <= WAIT_ACK;
-                EIC_IntReq <= '0;
+                State <= WAIT_ACK;                
               end
 
             WAIT_ACK:
@@ -247,6 +248,7 @@ module ExtInterruptCtrl
                 if(IO_IntAckSync ^ IO_IntAckSyncLast)     // wait for ack transition
                   begin
                     State <= CLR_REQ_S;
+                    EIC_IntReq <= '0;
                   end
               end
 

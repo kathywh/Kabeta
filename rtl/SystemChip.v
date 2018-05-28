@@ -20,10 +20,10 @@ module SystemChip
   input Clock,
 
   // BKD pins
-  output logic [3:0] LED,
-  output logic [7:0] Segment,
-  output logic [5:0] Digital,
-  input  logic [3:0] Keys
+  output [3:0] LED,
+  output [7:0] Segment,
+  output [5:0] Digital,
+  input  [3:0] Keys
 );
 
   wire PLL_Locked;

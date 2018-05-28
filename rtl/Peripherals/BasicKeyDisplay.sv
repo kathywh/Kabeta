@@ -10,6 +10,7 @@
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/28/2018  Kathy       Unit created.                                 */
+/*      05/28/2018  Kathy       Add LED enable control.                       */
 /******************************************************************************/
 
   /////////////////////////////////////////////////////////////////////////////
@@ -81,7 +82,7 @@ module BasicKeyDisplay
   // sys register select
   logic Sys_LEDC_Select, Sys_SSDC_Select, Sys_KEYS_Select;
   logic [3:0] Sys_LEDC_RdData;
-  logic [29:0] Sys_SSDC_RdData;
+  logic [31:0] Sys_SSDC_RdData;
   logic [3:0] Sys_KEYS_RdData;
 
   always_comb
@@ -102,7 +103,7 @@ module BasicKeyDisplay
                 Sys_LEDC_Select <= '0;
                 Sys_SSDC_Select <= '1;
                 Sys_KEYS_Select <= '0;
-                Sys_RdData <= {2'b00, Sys_SSDC_RdData};
+                Sys_RdData <= Sys_SSDC_RdData;
               end
 
             KEYS_ADDR:
@@ -147,8 +148,8 @@ module BasicKeyDisplay
 
   ReadWriteRegister
   #(
-    .DATA_WIDTH(30),
-    .RESET_VALUE(30'h00FF_FFFF)
+    .DATA_WIDTH(32),
+    .RESET_VALUE(32'h00FF_FFFF)
   )
   SSDC
   (
@@ -157,7 +158,7 @@ module BasicKeyDisplay
     .Sys_RdData(Sys_SSDC_RdData)
   );
 
-  logic [3:0] IO_KEYS_WrData;
+  logic [3:0] IO_KEYS_WrData, IO_KEYS_WrMask;
   logic IO_KEYS_WrEn;
 
   ReadClearRegister
@@ -174,6 +175,7 @@ module BasicKeyDisplay
     .IO_Reset(IO_Interface.Reset),
     .IO_Clock(IO_Interface.Clock),
     .IO_WrData(IO_KEYS_WrData),
+    .IO_WrMask(IO_KEYS_WrMask),
     .IO_WrEn(IO_KEYS_WrEn),
     .IO_Busy()
   );
@@ -245,6 +247,7 @@ module BasicKeyDisplay
   // seven segment display control (dynamic scan)
   logic [0:5][7:0] SegmentCodeReg;
   logic [0:5][7:0] SegmentCodeIn;
+  logic LED_Enable;
 
   genvar i;
 
@@ -266,12 +269,14 @@ module BasicKeyDisplay
       if(!IO_Interface.Reset)
         begin
           SegmentCodeReg <= '1;     // all segments off
+          LED_Enable <= '0;         // disable display
         end
       else
         begin
           if(IO_SSDC_Select & IO_Interface.WrEn)
             begin
               SegmentCodeReg <= SegmentCodeIn;
+              LED_Enable <= IO_Interface.WrData[31];
             end
         end
     end
@@ -290,29 +295,32 @@ module BasicKeyDisplay
         end
       else
         begin
-          if(Counter == 17'd99_999)    // 15MHz->150Hz=25*6Hz
+          if(LED_Enable)
             begin
-              Counter <= '0;
-              if(DigitIndex == 3'd5)
+              if(Counter == 17'd99_999)    // 15MHz->150Hz=25*6Hz
                 begin
-                  DigitIndex <= 3'd0;
-                  Digital <= 6'b00_0001;
+                  Counter <= '0;
+                  if(DigitIndex == 3'd5)
+                    begin
+                      DigitIndex <= 3'd0;
+                      Digital <= 6'b00_0001;
+                    end
+                  else 
+                    begin
+                      DigitIndex <= DigitIndex + 3'd1;
+                      Digital <= Digital << 1;
+                    end              
                 end
               else 
                 begin
-                  DigitIndex <= DigitIndex + 3'd1;
-                  Digital <= Digital << 1;
+                  Counter <= Counter + 17'd1;
                 end              
-            end
-          else 
-            begin
-              Counter <= Counter + 17'd1;
             end
         end
     end
 
   // seven segment display scan signals
-  assign Segment = SegmentCodeReg[DigitIndex];
+  assign Segment = SegmentCodeReg[DigitIndex] & {8{LED_Enable}};
 
   /////////////////////////////////////////////////////////////////////////////
   // key & display interrupt enable
@@ -361,13 +369,15 @@ module BasicKeyDisplay
       else
         begin
           KeysSyncLast <= KeysSync;
-          KeyPressInt <= KeyPressIntEnReg & |KeysPressPulse;
+          KeyPressInt <= KeyPressIntEnReg & IO_KEYS_WrEn;
         end
     end
 
   assign KeysPressPulse = KeysSync & ~KeysSyncLast;
 
+  // Write only 1's
   assign IO_KEYS_WrData = KeysPressPulse;
+  assign IO_KEYS_WrMask = KeysPressPulse;
   assign IO_KEYS_WrEn = |KeysPressPulse;
 
 endmodule

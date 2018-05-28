@@ -39,7 +39,7 @@ module ReadWriteRegister
     .Reset(Sys_Interface.Reset),
     .Clock(Sys_Interface.Clock),
     .Enable(Sys_WrEn),
-    .DataIn(Sys_Interface.WrData),
+    .DataIn(Sys_Interface.WrData[DATA_WIDTH-1:0]),
     .DataOut(Sys_RdData)
   );
 
