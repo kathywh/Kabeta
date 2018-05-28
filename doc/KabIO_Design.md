@@ -1,7 +1,7 @@
 # KabIO Design
 
-**Date:** May 23, 2018  
-**Version:** 1.0  
+**Date:** May 28, 2018  
+**Version:** 1.0a  
 **Author:** Kathy  
 **Reviewer:** (N/A)  
 
@@ -134,9 +134,9 @@ I/O address is divided into two parts, block address and register address.
 
 #### 3.2.2 Seven Segment Display Control Register (SSDC) 
 
-| 31         30 |  29  |  28  |  27  |  26  |  25  |  24  | 23  20 | 19  16 | 15  12 | 11   8 | 7    4 | 3    0 |
-| :-----------: | :--: | :--: | :--: | :--: | :--: | :--: | :----: | :----: | :----: | :----: | :----: | :----: |
-|  (Reserved)   | DP5  | DP4  | DP3  | DP2  | DP1  | DP0  |  DIG5  |  DIG4  |  DIG3  |  DIG2  |  DIG1  |  DIG0  |
+|  31  |     30     |  29  |  28  |  27  |  26  |  25  |  24  | 23  20 | 19  16 | 15  12 | 11   8 | 7    4 | 3    0 |
+| :--: | :--------: | :--: | :--: | :--: | :--: | :--: | :--: | :----: | :----: | :----: | :----: | :----: | :----: |
+|  EN  | (Reserved) | DP5  | DP4  | DP3  | DP2  | DP1  | DP0  |  DIG5  |  DIG4  |  DIG3  |  DIG2  |  DIG1  |  DIG0  |
 
 - DIGn
   - 0-9: BCD code of n-th digit, or
@@ -144,6 +144,9 @@ I/O address is divided into two parts, block address and register address.
 - DPn
   - 0: turn off n-th decimal point
   - 1: turn on n-th decimal point
+- EN
+  - 0: Disable Display (turn off all digits)
+  - 1: Enable Display
 
 #### 3.2.3 Key & Display Interrupt Enable (KDIE) 
 
@@ -173,6 +176,7 @@ I/O address is divided into two parts, block address and register address.
 
 ## Appendix A: Document Version History
 
-| Version | Date      | Editor | Reviewer | Comment          |
-| ------- | --------- | ------ | -------- | ---------------- |
-| 1.0     | 5/23/2018 | Kathy  | (N/A)    | Initial version. |
+| Version | Date      | Editor | Reviewer | Comment                |
+| ------- | --------- | ------ | -------- | ---------------------- |
+| 1.0     | 5/23/2018 | Kathy  | (N/A)    | Initial version.       |
+| 1.0a    | 5/28/2018 | Kathy  | (N/A)    | Add basic key display. |
