@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/28/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/28/2018                                                    */
+/*  Edited on:  05/29/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Basic key & display unit.                                             */
@@ -12,6 +12,7 @@
 /*      05/28/2018  Kathy       Unit created.                                 */
 /*      05/28/2018  Kathy       Add LED enable control.                       */
 /*                              Correct LED enable implementation.            */
+/*      05/29/2018  Kathy       Increase SSD scan rate.                       */
 /******************************************************************************/
 
   /////////////////////////////////////////////////////////////////////////////
@@ -283,7 +284,7 @@ module BasicKeyDisplay
     end
 
   // scan pulse generator
-  logic [16:0] Counter;
+  logic [15:0] Counter;
   logic [2:0] DigitIndex;
 
   always_ff @(posedge IO_Interface.Clock or negedge IO_Interface.Reset)
@@ -298,13 +299,13 @@ module BasicKeyDisplay
         begin
           if(LED_Enable)
             begin
-              if(Counter == 17'd99_999)    // 15MHz->150Hz=25*6Hz
+              if(Counter == 16'd49_999)    // 15MHz->300Hz=50*6Hz
                 begin
                   Counter <= '0;
                   if(DigitIndex == 3'd5)
                     begin
                       DigitIndex <= 3'd0;
-                      Digital <= 6'b00_0001;
+                      Digital <= 6'b11_1110;
                     end
                   else 
                     begin
@@ -314,7 +315,7 @@ module BasicKeyDisplay
                 end
               else 
                 begin
-                  Counter <= Counter + 17'd1;
+                  Counter <= Counter + 16'd1;
                 end              
             end
         end
