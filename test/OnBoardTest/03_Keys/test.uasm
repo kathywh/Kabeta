@@ -277,7 +277,7 @@ user_mode:
 
 	| Display initial digits
 	MOVC(0x00, R8)		| Free running counter (bcd)
-	MOVC(100, R12)		|   increments every 100 iteration
+	MOVC(10, R12)		|   increments every 10 iteration
 	MOVC(0x00, R9)		| Count of Key3 events (bcd)
 	MOVC(0x10, R10)		| (K1H, K1L) (bcd)
 
@@ -298,9 +298,9 @@ key_process:
 	PUSH(R21)
 	CALL(disp_bcd, 2)
 
-	| Delay 10ms
-key_delay_10ms:
-	MOVC(10, R0)
+	| Delay 100ms
+key_delay_100ms:
+	MOVC(100, R0)
 	PUSH(R0)
 	CALL(delay_ms, 1)
 
@@ -310,7 +310,7 @@ key_delay_10ms:
 	PUSH(R8)
 	CALL(bcd_inc)
 	POP(R8)
-	MOVC(100, R12)
+	MOVC(10, R12)
 free_cnt_end:
 
 	| Get key events
