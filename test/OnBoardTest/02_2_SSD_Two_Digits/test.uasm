@@ -272,7 +272,7 @@ disp_digit:
 	MOVC(SVC_SSD, R0)
 	SVC()
 
-	| Display a half second
+	| Delay a half second
 	MOVC(500, R3)			| R3: delay ms
 	PUSH(R3)
 	CALL(delay_ms, 1)
