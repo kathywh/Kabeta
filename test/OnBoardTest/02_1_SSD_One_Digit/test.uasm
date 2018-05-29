@@ -157,8 +157,10 @@ svc_led:
 	BR(svc_end)
 
 svc_ssd:
+	| Read SSDC
 	IOR(BKD_SSDC, R8)		| Read SSDC register (R8)
 
+	| BCD code
 	SHLC(R1, 2, R9)			| Get DIGn position (R9)
 	MOVC(0x000F, R10)
 	SHL(R10, R9, R10)		| Get DIGn mask (R10)
@@ -168,6 +170,7 @@ svc_ssd:
 	SHL(R10, R9, R10)		| Shift bcd code (R10)
 	OR(R8, R10, R8)			| Set DIGn bits (R8)
 
+	| Decimal point
 	ADDC(R1, 24, R9)		| Get DPn position (R9)
 	MOVC(0x0001, R10)
 	SHL(R10, R9, R10)		| Get DPn mask (R10)
@@ -178,9 +181,16 @@ svc_ssd:
 	SHL(R10, R9, R10)		| Shift dp bit (R10)
 	OR(R8, R10, R8)			| Set DPn bit (R8)
 
+	| SSD enable bit
+	MOVC(0x01, R9)
+	SHLC(R9, 31, R9)
+	OR(R8, R9, R8)
+
+	| Write SSDC
 	IOW(R8, BKD_SSDC)		| Write SSDC register
 
-	MOVC(0, R0)				| Set status code
+	| Set status code
+	MOVC(0, R0)				
 	BR(svc_end)
 
 svc_key:
@@ -237,79 +247,47 @@ en_int_delay:
 user_mode:
 
 	|-------------------------------------------------------------------------------|
-	| Blink LED                                                                     |
+	| Seven Segment Display Test                                                    |
 	|-------------------------------------------------------------------------------|
 
-	| Fill led pattern table
-	MOVC(led_pat_tab, R1)
-led_p_0001:
-	MOVC(0x01, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0010:
-	MOVC(0x02, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p0100:
-	MOVC(0x04, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1000:
-	MOVC(0x08, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0000:
-	MOVC(0x00, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0011:
-	MOVC(0x03, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0110:
-	MOVC(0x06, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1010:
-	MOVC(0x0A, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0101:
-	MOVC(0x05, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1110:
-	MOVC(0x0E, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1011:
-	MOVC(0x0B, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1111:
-	MOVC(0x0F, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
+	| First digit index
+disp_ssd:
+	MOVC(0, R1)			
 
-blink_led:
-	MOVC(LED_PAT_COUNT, R12)	| R12: led count
-	MOVC(led_pat_tab, R11)		| Load pattern table address
+	| First bcd code
+disp_one_dig:
+	MOVC(11, R9)			| R9: bcd code count
+	MOVC(0x00, R2)		
 
-blink_one:
-	| Turn on/off leds
-	LD(R11, 0, R1)				| Load pattern
-	MOVC(SVC_LED, R0)
-	SVC()						| Do SVC
+	| Do SVC
+disp_one_num:
+	MOVC(SVC_SSD, R0)
+	SVC()				
 
 	| Delay for 1 second
 	CALL(delay_1s)
 
-	ADDC(R11, 4, R11)			| Increase pattern address
-	SUBC(R12, 1, R12)
-	BT(R12, blink_one)
+	| Turn on dp
+	ORC(R2, 0x10, R2)
+	MOVC(SVC_SSD, R0)
+	SVC()				
+
+	| Delay for 1 second
+	CALL(delay_1s)	
+
+	| Increase bcd & turn off dp
+	ADDC(R2, 1, R2)	
+	ANDC(R2, 0xFFEF, R2)		| Clear dp bit
+	SUBC(R9, 1, R9)
+	BNE(R9, disp_one_num)
+
+	| Increase digit index
+	ADDC(R1, 1, R1)		
+	CMPEQC(R1, 6, R10)
+	BF(R10, disp_one_dig)
 
 	| Loop forever
-	BR(blink_led)
+	BR(disp_ssd)
 
 end:
 	BR(.)

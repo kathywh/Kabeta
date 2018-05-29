@@ -249,42 +249,57 @@ user_mode:
 	|-------------------------------------------------------------------------------|
 	| Seven Segment Display Test                                                    |
 	|-------------------------------------------------------------------------------|
-
-	| First digit index
+	
 disp_ssd:
-	MOVC(0, R1)			
+	MOVC(3, R8)		| R8: Group count of digits
+	MOVC(0, R10)	| R10: Index of first digit
 
-	| First bcd code
-disp_one_dig:
-	MOVC(11, R4)
-	MOVC(0x00, R2)		
+disp_group:
+	MOVC(101, R9)	| R9: Number count
+	MOVC(0, R11)	| R11: BCD code of less significant digit
+	MOVC(0, R12)	| R12: BCD code of more significant digit
 
-	| Do SVC
-disp_one_num:
+disp_digit:
+	| Display lsd
+	MOV(R10, R1)
+	MOV(R11, R2)
 	MOVC(SVC_SSD, R0)
-	SVC()				
+	SVC()
 
-	| Delay for 1 second
-	CALL(delay_1s)
-
-	| Turn on dp
-	ORC(R2, 0x10, R2)
+	| Display msd
+	ADDC(R10, 1, R1)
+	MOV(R12, R2)
 	MOVC(SVC_SSD, R0)
-	SVC()				
+	SVC()
 
-	| Delay for 1 second
-	CALL(delay_1s)	
+	| Display a half second
+	MOVC(500, R3)			| R3: delay ms
+	PUSH(R3)
+	CALL(delay_ms, 1)
 
-	| Increase bcd
-	ADDC(R2, 1, R2)	
-	ANDC(R2, 0xFFEF, R2)		| Clear dp bit
-	SUBC(R4, 1, R4)
-	BNE(R4, disp_one_num)
+	| Increse BCD code (R12, R11)
+	ADDC(R11, 1, R11)
+	CMPLTC(R11, 10, R21)
+	BT(R21, disp_inc_bcd_end)
+	MOVC(0, R11)
+	ADDC(R12, 1, R12)
+disp_inc_bcd_end:
 
+	| Display two dp at last
+	CMPEQC(R12, 10, R21)
+	BF(R21, disp_set_dp_end)
+	MOVC(0x1F, R11)
+	MOVC(0x1F, R12)
+disp_set_dp_end:
+
+	ADDC(R9, -1, R9)
+	BNE(R9, disp_digit)
+	
 	| Increase digit index
-	ADDC(R1, 1, R1)		
-	CMPEQC(R1, 6, R3)
-	BF(R3, disp_one_dig)
+	ADDC(10, 2, R10)
+
+	ADDC(R8, -1, R8)
+	BNE(R8, disp_group)
 
 	| Loop forever
 	BR(disp_ssd)
@@ -293,34 +308,65 @@ end:
 	BR(.)
 
 |-------------------------------------------------------------------------------|
-| Delay for 1 second                                                            |
+| Delay for milliseconds.                                                       |
 |                                                                               |
-|   1) No arguments. No return value.                                           |
-|   2) Delay for delay_1s_cnt iterations                                        |
-|        4 cycles per iteration                                                 |
-|        except last one only 2 cycles                                          |
+|   int delay_ms(n)                                                             |
+|   1) Input arguments                                                          |
+|        n: delay for n milliseconds.                                           |
+|   2) Return value                                                             |
+|        0: ok                                                                  |
+|        1: error, n<0                                                          |
+|   2) Analysis of delay iteration                                              |
+|      [CODE]                                                                   |
+|      MOVC(10000, R0)                                                          |
+|      NOP()                                                                    |
+|      delay_1ms_loop:                                                          |
+|          SUBC(R0, 1, R0)                                                      |
+|          BT(R0, delay_1ms_loop)                                               |
+|      [END]                                                                    |
+|      10000 iterations count for 1ms (Fsysclk=40MHz)                           |
+|        4 cycles per iteration except last one only 2 cycles                   |
+|        MOVC & NOP compensate for the last iteration                           |
 |   3) Delay of prologue & epilogue does NOT count.                             |
 |-------------------------------------------------------------------------------|
 
-delay_1s:
+__DM_ARG_N = 0
+
+delay_ms:
 	| Prologue to the subroutine
 	PUSH(LP)		| Save LP & BP
 	PUSH(BP)
 	MOV(SP, BP)		| Set frame pointer (BP)
 	ALLOCATE(0)		| Allocate space for locals
-	PUSH(R0)		| Save registers
+	PUSH(R1)		| Save registers
+	
+	| Get and check argument `n'
+	GETARG(__DM_ARG_N, R1)
+	CMPLTC(R1, 0, R0)
+	BT(R0, delay_err_neg_n)
 
-	LDR(delay_1s_cnt, R0)	| R0: delay count
-delay_1s_loop:
+delay_1_ms:
+	| Delay for 1ms
+	MOVC(10000, R0)	| R0: delay count for 1ms (10000=0x2710, MSB=0)
+	NOP()
+delay_1ms_loop:
 	SUBC(R0, 1, R0)
-	BT(R0, delay_1s_loop)
+	BT(R0, delay_1ms_loop)
+
+	SUBC(R1, 1, R1)
+	BNE(R1, delay_1_ms)
 
 	| Epilogue to the subroutine
-	POP(R0)			| Store registers
+delay_ms_end:	
+	POP(R1)			| Store registers
 	MOV(BP, SP)		| Deallocate space for locals
 	POP(BP)			| Store LP & BP
 	POP(LP)
 	RTN()
+
+delay_err_neg_n:
+	MOVC(1, R0)
+	BR(delay_ms_end)
 
 |--------------------------------------
 | literal segment
