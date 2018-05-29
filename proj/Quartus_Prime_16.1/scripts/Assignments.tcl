@@ -68,6 +68,8 @@ set_location_assignment	PIN_F15	-to LED[2]
 set_location_assignment	PIN_D16	-to LED[3]
 
 # Keys
+#   NOTES: M12 is not connected on board, so pull it up.
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to Keys[0]
 set_location_assignment	PIN_M12	 -to Keys[0]
 set_location_assignment	PIN_E16	 -to Keys[1]
 set_location_assignment	PIN_M16  -to Keys[2]
