@@ -26,7 +26,7 @@ It has been tested on Intel Cyclone IV E FPGA and there are some Intel FPGA IPs 
 Follow the steps:
 
 1. Enter one of the directories in *test/OnBoardTest*, e.g. *01_LED*.
-2. Run the command: `java -jar ../../../tools/bsim.jar test.uasm`, then click the *assemble to a file* button.
+2. Run the command: `java -jar ../../../tools/bsim.jar test.uasm`, then click the *Assemble to Files* button.
 3. Run the command: `gawk -v size=1024 -f ../../../tools/coe2mif.awk test.coe > Alt_EP4CE_InstrMem_4KB.mif`
 4. Copy *Alt_EP4CE_InstrMem_4KB.mif* to *proj/Quartus_Prime_16.1* directory.
 5. Open the Quartus Prime project, compile and program.
