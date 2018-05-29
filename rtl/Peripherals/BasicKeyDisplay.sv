@@ -13,6 +13,7 @@
 /*      05/28/2018  Kathy       Add LED enable control.                       */
 /*                              Correct LED enable implementation.            */
 /*      05/29/2018  Kathy       Increase SSD scan rate.                       */
+/*                              Add key debounce.                             */
 /******************************************************************************/
 
   /////////////////////////////////////////////////////////////////////////////
@@ -378,7 +379,64 @@ module BasicKeyDisplay
         end
     end
 
-  assign KeysPressPulse = KeysSync & ~KeysSyncLast;
+  // Key debounce
+  logic [3:0] KeyStatus, KeyStatusLast;
+  logic [17:0] KeyCounter[4];
+  const logic [17:0] DELAY_COUNT = 18'd224_999;     /* f=15MHz, td=15ms */
+
+  enum logic[1:0] {S_IDLE, S_DELAY, S_SAMPLE} KeyState[4];
+
+  generate
+    for(i=0; i<4; i++)
+      begin: KEY_DEBOUNC
+        always_ff @(posedge IO_Interface.Clock or negedge IO_Interface.Reset)
+          begin
+            if(!IO_Interface.Reset)
+              begin
+                KeyStatus[i] <= '1;
+                KeyStatusLast[i] <= '1;
+                KeyState[i] <= S_IDLE;
+                KeyCounter[i] <= '0;
+              end
+            else
+              begin
+                KeyStatusLast[i] <= KeyStatus[i];
+
+                case(KeyState[i])
+                  S_IDLE:
+                    begin
+                      if(KeysSync[i] ^ KeysSyncLast[i])
+                        begin
+                          KeyState[i] <= S_DELAY;                          
+                        end
+                    end
+                
+                  S_DELAY:
+                    begin
+                      if(KeyCounter[i] == DELAY_COUNT)
+                        begin
+                          KeyCounter[i] <= '0;
+                          KeyState[i] <= S_SAMPLE;
+                        end
+                      else 
+                        begin
+                          KeyCounter[i] <= KeyCounter[i] + 18'd1;
+                        end
+                    end
+                  
+                  S_SAMPLE:
+                    begin
+                      KeyStatus[i] <= KeysSync[i];
+                      KeyState[i] <= S_IDLE;
+                    end
+                endcase
+              end
+          end
+      end
+  endgenerate
+
+
+  assign KeysPressPulse = KeyStatus & ~KeyStatusLast;
 
   // Write only 1's
   assign IO_KEYS_WrData = KeysPressPulse;
