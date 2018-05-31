@@ -1,7 +1,7 @@
 # KabIO Design
 
 **Date:** May 28, 2018  
-**Version:** 1.0a  
+**Version:** 1.0c  
 **Author:** Kathy  
 **Reviewer:** (N/A)  
 
@@ -96,10 +96,10 @@ I/O address is divided into two parts, block address and register address.
 
 ### 2.3 Registers
 
-|         Register Name          | Address |   Access   |
-| :----------------------------: | :-----: | :--------: |
-| Interrupt Enable Register (IE) |  0x000  | Write Only |
-| Interrupt Number Register (IN) |  0x004  | Read Only  |
+|         Register Name          | Reset Value | Address |   Access   |
+| :----------------------------: | :---------: | :-----: | :--------: |
+| Interrupt Enable Register (IE) |    (N/A)    |  0x000  | Write Only |
+| Interrupt Number Register (IN) | 0x0000_0000 |  0x004  | Read Only  |
 
 
 
@@ -307,6 +307,45 @@ I/O address is divided into two parts, block address and register address.
 | UART Receive Interrupt  | 3                | Data received            |
 | UART Transmit Interrupt | 4                | Data can be transmitted  |
 
+## 5 System Timer
+
+### 5.1 Description
+
+A 32-bit timer for system tick.
+
+### 5.2 Registers
+
+|    Register Name    | Reset Value | Address |   Access   |
+| :-----------------: | :---------: | :-----: | :--------: |
+|  Control Register   |    (N/A)    |  0x0C0  | Write Only |
+| Load Value Register |    (N/A)    |  0x0C4  | Write Only |
+
+#### 5.2.1 Control Register (CR)
+
+| 31            1 |  0   |
+| :-------------: | :--: |
+|   (Reserved)    |  EN  |
+
+- EN: enable/disable system timer. disabled after reset.
+  - 0: disable
+  - 1: enable
+
+#### 5.2.2 Load Value Register (LVR)
+
+| 31                    0 |
+| :---------------------: |
+|           LV            |
+
+- LV: load value of system timer, load into system timer every time it is enabled or overflowed.
+  - System timer period is T(IO_CLK)/(LV+1).
+  - It takes effect  only if system timer is disabled and LV is not zero.
+
+### 5.3 Interrupts
+
+| Interrupt Name | Interrupt Number | Condition              |
+| -------------- | ---------------- | ---------------------- |
+| System Tick    | 6                | System timer overflows |
+
 ## Appendix A: Document Version History
 
 | Version | Date      | Editor | Reviewer | Comment                |
@@ -314,3 +353,4 @@ I/O address is divided into two parts, block address and register address.
 | 1.0     | 5/23/2018 | Kathy  | (N/A)    | Initial version.       |
 | 1.0a    | 5/28/2018 | Kathy  | (N/A)    | Add basic key display. |
 | 1.0b    | 5/31/2018 | Kathy  | (N/A)    | Add UART I/O block.    |
+| 1.0c    | 5/31/2018 | Kathy  | (N/A)    | Add system timer.      |
