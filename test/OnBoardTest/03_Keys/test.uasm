@@ -5,7 +5,7 @@
 ||====================================================================================||
 
 | Interrupt Numbers
-BKD_KPI	= 1			| BKD: Key Press Interrupt
+BKD_KPI	= 7			| BKD: Key Press Interrupt
 
 | SVC function codes
 SVC_FCNT = 3		| SVC function count
