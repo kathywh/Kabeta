@@ -1,0 +1,676 @@
+.include ../../../tools/kabeta.uasm
+
+||====================================================================================||
+||                                Constant Definitions                                ||
+||====================================================================================||
+
+| Interrupt Numbers
+BKD_KEY	  = 7		| BKD: Key Press Interrupt
+STMR_TICK = 6		| STMR: Timer Tick
+
+| SVC function codes
+SVC_FCNT = 3		| SVC function count
+SVC_LED  = 0
+SVC_SSD  = 1
+SVC_KEY  = 2
+
+||====================================================================================||
+||                                 Macro  Definitions                                 ||
+||====================================================================================||
+
+| Wait for I/O completion
+.macro IOWAIT() {
+	NOP()  NOP()  NOP()  NOP()
+	NOP()  NOP()  NOP()  NOP()
+	NOP()  NOP()  NOP()  NOP()}
+
+||====================================================================================||
+||                                    Data Segment                                    ||
+||====================================================================================||
+LOCATE(0)
+
+| SVC Jump Table
+svc_sub_tab:
+	STORAGE(SVC_FCNT)
+
+| Key Event Table
+|  ---------------------
+|  | k3 | k2 | k1 | k0 |
+|  ---------------------
+key_event_tab:
+	STORAGE(1)
+
+| LED0 Status
+led0_status:
+	STORAGE(1)
+
+| Stack
+stack:
+	STORAGE(256)
+
+||====================================================================================||
+||                                    I/O  Segment                                    ||
+||====================================================================================||
+LOCATE(0x000)
+EIC_IE:	
+	STORAGE(1)		| 0x000, WO
+EIC_IN:
+	STORAGE(1)		| 0x004, RO
+
+LOCATE(0x040)
+BKD_LEDC:
+	STORAGE(1)		| 0x040, RW
+BKD_SSDC:
+	STORAGE(1)		| 0x044, RW
+BKD_KDIE:
+	STORAGE(1)		| 0x048, WO
+BKD_KEYS:
+	STORAGE(1)		| 0x04C, RC
+
+LOCATE(0x0C0)
+STMR_CR:
+	STORAGE(1)		| 0x0C0, WO
+STMR_LVR:
+	STORAGE(1)		| 0x0C4, WO
+
+||====================================================================================||
+||                                 Exception  Vectors                                 ||
+||====================================================================================||
+EXCVT()
+
+rst_vec:
+	BR(start)
+svc_vec:
+	BR(svc_esr)
+ill_vec:
+	BR(.)
+inv_op_vec:
+	BR(.)
+inv_da_vec:
+	BR(.)
+inv_ia_vec:
+	BR(.)
+irq0_vec:
+	BR(irq0_esr)
+irq1_vec:
+	BR(.)
+
+||====================================================================================||
+||                                    Code Segment                                    ||
+||====================================================================================||
+LOCATE(0x100)
+
+	|-------------------------------------------------------------------------------|
+	| IRQ0 Handler                                                                  |
+	|-------------------------------------------------------------------------------|
+irq0_esr:
+	| Adjust & save XP
+	SUBC(XP, 4, XP)
+	PUSH(XP)
+
+	| Save registers
+	PUSH(R0)
+	PUSH(R1)
+	PUSH(R2)
+
+	| Get interrupt number
+	IOR(EIC_IN, R1)			| R1: interrupt number
+
+	| If key int, read key status
+	CMPEQC(R1, BKD_KEY, R0)
+	BF(R0, irq0_key_end)
+	IOR(BKD_KEYS, R2)		| Read key status reg
+	ST(R2, key_event_tab)	| Write key event table
+	BR(irq0_end)
+irq0_key_end:
+
+	| If sys tick int, toggle LED0
+	CMPEQC(R1, STMR_TICK, R0)
+	BF(R0, irq0_tick_end)
+	LD(led0_status, R0)			| Load led0 status
+	XORC(R0, 0x0001, R0)		| Toggle led0 status
+	ST(R0, led0_status)			| Store led0 status
+	IOW(R0, BKD_LEDC)			| Write LEDC register
+	BR(irq0_end)
+irq0_tick_end:
+
+irq0_end:
+	| Restore registers
+	POP(R2)
+	POP(R1)
+	POP(R0)
+
+	| Restore XP then return
+	POP(XP)
+	JMP(XP)
+
+	|-------------------------------------------------------------------------------|
+	| SVC Handler                                                                   |
+	|                                                                               |
+	|   1) Function code is in register R0.                                         |
+	|   2) Input/Output arguments are in registers, R1, R2, R3, ...                 |
+	|   3) Status code is returned in R0.                                           |
+	|        0: ok                                                                  |
+	|        1: function code out of range                                          |
+	|                                                                               |
+	|   Function            R0    R1           R2          Comment                  |
+	|   ---------------     --    ---------    --------    -----------------------  |
+	|   Turn on/off LED      0    IN  b3-b0    -           0: off, 1: on            |
+	|   Display in SSD       1    IN  index    IN b4-b0    b4: dp, b3-b0: bcd code  |
+	|   Get key events       2    OUT b3-b0    -           1: pressed, 0: normal    |
+	|-------------------------------------------------------------------------------|
+
+svc_esr:
+	| Save XP
+	PUSH(XP)
+
+	| Save registers
+	PUSH(R8)
+	PUSH(R9)
+	PUSH(R10)
+
+	| Function jump
+	CMPLTC(R0, 0, R8)			| If R0 < 0, then go to error handler
+	BT(R8, svc_fc_oor)
+	CMPLEC(R0, SVC_FCNT, R8)	| If R0 > SVC_FCNT, then go to error handler
+	BF(R8, svc_fc_oor)
+	SHLC(R0, 2, R0)				| Convert function code into offset in jump table
+	LD(R0, svc_sub_tab, R8)		| Load subroutine address
+	JMP(R8)
+
+	| Function code out of range
+svc_fc_oor:
+	MOVC(1, R0)
+	BR(svc_end)
+
+svc_led:
+	ANDC(R1, 0x000F, R1)
+	IOW(R1, BKD_LEDC)		| Write LEDC register
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_ssd:
+	| Read SSDC
+	IOR(BKD_SSDC, R8)		| Read SSDC register (R8)
+
+	| BCD code
+	SHLC(R1, 2, R9)			| Get DIGn position (R9)
+	MOVC(0x000F, R10)
+	SHL(R10, R9, R10)		| Get DIGn mask (R10)
+	XORC(R10, 0xFFFF, R10)
+	AND(R8, R10, R8)		| Clear DIGn bits (R8)
+	ANDC(R2, 0x000F, R10)
+	SHL(R10, R9, R10)		| Shift bcd code (R10)
+	OR(R8, R10, R8)			| Set DIGn bits (R8)
+
+	| Decimal point
+	ADDC(R1, 24, R9)		| Get DPn position (R9)
+	MOVC(0x0001, R10)
+	SHL(R10, R9, R10)		| Get DPn mask (R10)
+	XORC(R10, 0xFFFF, R10)
+	AND(R8, R10, R8)		| Clear DPn bit (R8)
+	ANDC(R2, 0x0010, R10)
+	SHRC(R10, 4, R10)
+	SHL(R10, R9, R10)		| Shift dp bit (R10)
+	OR(R8, R10, R8)			| Set DPn bit (R8)
+
+	| SSD enable bit
+	MOVC(0x01, R9)
+	SHLC(R9, 31, R9)
+	OR(R8, R9, R8)
+
+	| Write SSDC
+	IOW(R8, BKD_SSDC)		| Write SSDC register
+
+	| Set status code
+	MOVC(0, R0)				
+	BR(svc_end)
+
+svc_key:
+	| Get key event
+	LD(key_event_tab, R1)
+	
+	| Set status code & Clear key event
+	MOVC(0, R0)
+	ST(R0, key_event_tab)
+	BR(svc_end)
+
+svc_end:
+	| Restore registers
+	POP(R10)
+	POP(R9)
+	POP(R8)
+
+	| Restore XP then return
+	POP(XP)
+	JMP(XP)
+
+start:
+	|-------------------------------------------------------------------------------|
+	| System initialization                                                         |
+	|-------------------------------------------------------------------------------|
+
+	| Set SP
+	MOVC(stack, SP)
+
+	| Fill SVC jump table
+	MOVC(svc_sub_tab, R1)
+	LDR(svc_led_addr, R0)			| svc_led
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(svc_ssd_addr, R0)			| svc_ssd
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(svc_key_addr, R0)			| svc_key
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+
+	| Set led0_status var
+	MOVC(0, R0)
+	ST(R0, led0_status)
+
+	| Setup system timer
+	LDR(sys_tick_lv, R0)
+	IOW(R0, STMR_LVR)
+	IOWAIT()
+	MOVC(0x01, R0)
+	IOW(R0, STMR_CR)
+	IOWAIT()
+
+	| Enable Key Interrupt
+	MOVC(1, R0)
+	IOW(R0, BKD_KDIE)
+	IOWAIT()
+
+	| Enable interrupt
+	MOVC(1, R0)
+	IOW(R0, EIC_IE)
+	IOWAIT()
+
+	| Switch to User Mode
+	MOVC(user_mode%PC_MASK, R0)
+	JMP(R0)
+user_mode:
+
+	|-------------------------------------------------------------------------------|
+	| Key Event Test                                                                |
+	|                                                                               |
+	|   -------------------------------------                                       |
+	|   | K3H | K3L | K2H | K2L | K1H | K1L |                                       |
+	|   -------------------------------------                                       |
+	|                                                                               |
+	|   (K3H, K3L): Free running counter.                                           |
+	|                                                                               |
+	|   (K2H, K2L): Count of Key3 events.                                           |
+	|                                                                               |
+	|   (K1H, K1L): Increase if Key1 pressed.                                       |
+	|               Decrease if Key2 pressed.                                       |
+	|-------------------------------------------------------------------------------|
+
+	| Display initial digits
+	MOVC(0x00, R8)		| Free running counter (bcd)
+	MOVC(10, R12)		|   increments every 10 iteration
+	MOVC(0x00, R9)		| Count of Key3 events (bcd)
+	MOVC(0x10, R10)		| (K1H, K1L) (bcd)
+
+key_process:
+	| Display numbers
+	MOVC(4, R21)
+	PUSH(R8)
+	PUSH(R21)
+	CALL(disp_bcd, 2)
+
+	ADDC(R21, -2, R21)
+	PUSH(R9)
+	PUSH(R21)
+	CALL(disp_bcd, 2)
+
+	ADDC(R21, -2, R21)
+	PUSH(R10)
+	PUSH(R21)
+	CALL(disp_bcd, 2)
+
+	| Delay 100ms
+key_delay_100ms:
+	MOVC(100, R0)
+	PUSH(R0)
+	CALL(delay_ms, 1)
+
+	| Increment free running counter
+	SUBC(R12, 1, R12)
+	BNE(R12, free_cnt_end)
+	PUSH(R8)
+	CALL(bcd_inc)
+	POP(R8)
+	MOVC(10, R12)
+free_cnt_end:
+
+	| Get key events
+	MOVC(SVC_KEY, R0)
+	SVC()
+	BNE(R0, key_end)	| Continue if error occurs
+
+	|| Turn on/off leds
+	|MOVC(SVC_LED, R0)
+	|SVC()
+
+	| Process Key3 events
+	ANDC(R1, 0x08, R11)
+	BEQ(R11, key3_end)
+	PUSH(R9)
+	CALL(bcd_inc)
+	POP(R9)
+key3_end:
+
+	| Process Key2 events
+	ANDC(R1, 0x04, R11)
+	BEQ(R11, key2_end)
+	PUSH(R10)
+	CALL(bcd_dec)
+	POP(R10)
+key2_end:
+
+	| Process Key1 events
+	ANDC(R1, 0x02, R11)
+	BEQ(R11, key1_end)
+	PUSH(R10)
+	CALL(bcd_inc)
+	POP(R10)
+key1_end:
+
+	| Loop forever
+key_end:
+	BR(key_process)
+
+end:
+	BR(.)
+
+
+    |-------------------------------------------------------------------------------|
+    | Delay for a while (26 cycles).                                                |
+    |   (CALL=1+2=3 cycles, total 3+4+12+7=26 cycles)                               |
+    |                                                                               |
+    |   void udelay(void)                                                           |   
+    |   Return:                                                                     |
+    |     none                                                                      |
+    |   Input:                                                                      |  
+    |     none                                                                      |
+    |   Output:                                                                     |
+    |     none                                                                      |
+    |-------------------------------------------------------------------------------|
+
+udelay:
+    | Prologue to the subroutine (4 cycles)
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	|PUSH(R1)		| Save registers
+
+	| Delay for a while (3x4=12 cycles)
+	MOVC(3, R0)		| R0: delay count
+	NOP()
+udelay_loop:
+	SUBC(R0, 1, R0)
+	BT(R0, udelay_loop)
+
+	| Epilogue to the subroutine (4+1+2=7 cycles)
+udelay_end:	
+	|POP(R1)		| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()			| Add one cycle for load delay
+
+    |-------------------------------------------------------------------------------|
+    | Delay for milliseconds.                                                       |
+    |                                                                               |
+    |   int delay_ms(n)                                                             |
+    |   1) Input arguments                                                          |
+    |        n: delay for n milliseconds.                                           |
+    |   2) Return value                                                             |
+    |        0: ok                                                                  |
+    |        1: error, n<0                                                          |
+    |   2) Analysis of delay iteration                                              |
+    |      [CODE]                                                                   |
+    |      MOVC(10000, R0)                                                          |
+    |      NOP()                                                                    |
+    |      delay_1ms_loop:                                                          |
+    |          SUBC(R0, 1, R0)                                                      |
+    |          BT(R0, delay_1ms_loop)                                               |
+    |      [END]                                                                    |
+    |      10000 iterations count for 1ms (Fsysclk=40MHz)                           |
+    |        4 cycles per iteration except last one only 2 cycles                   |
+    |        MOVC & NOP compensate for the last iteration                           |
+    |   3) Delay of prologue & epilogue does NOT count.                             |
+    |-------------------------------------------------------------------------------|
+
+__DM_ARG_N = 0
+
+delay_ms:
+	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	
+	| Get and check argument `n'
+	GETARG(__DM_ARG_N, R1)
+	CMPLTC(R1, 0, R0)
+	BT(R0, delay_err_neg_n)
+
+delay_1_ms:
+	| Delay for 1ms
+	MOVC(10000, R0)	| R0: delay count for 1ms (10000=0x2710, MSB=0)
+	NOP()
+delay_1ms_loop:
+	SUBC(R0, 1, R0)
+	BT(R0, delay_1ms_loop)
+
+	SUBC(R1, 1, R1)
+	BNE(R1, delay_1_ms)
+
+	| Epilogue to the subroutine
+delay_ms_end:	
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+delay_err_neg_n:
+	MOVC(1, R0)
+	BR(delay_ms_end)
+
+    |-------------------------------------------------------------------------------|
+    | BCD code increment.                                                           |
+    |                                                                               |
+    |   void bcd_inc(a)                                                             |  
+    |   Return:                                                                     |
+    |     none                                                                      |  
+    |   Input:                                                                      |
+    |     a: bcd code                                                               |
+    |   Output:                                                                     | 
+    |     a: increment result                                                       |
+    |-------------------------------------------------------------------------------|
+
+__BI_ARG_A = 0
+
+bcd_inc:
+	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+
+	| Increment as if it were binary
+	GETARG(__BI_ARG_A, R1)
+	ADDC(R1, 1, R1)
+
+	| Adjust for bcd code
+	ANDC(R1, 0x0F, R2)
+	CMPLTC(R2, 10, R2)
+	BT(R2, bcd_inc_adj_msd)
+	ADDC(R1, 0x06, R1)
+bcd_inc_adj_msd:
+	ANDC(R1, 0xF0, R2)
+	SHRC(R2, 4, R2)
+	CMPLTC(R2, 10, R2)
+	BT(R2, bcd_inc_mask_hi)
+	ADDC(R1, 0x60, R1)
+bcd_inc_mask_hi:
+	MOVC(0x00FF, R2)
+	AND(R1, R2, R1)
+
+	| Save result
+	PUTARG(R1, __BI_ARG_A)
+
+	| Epilogue to the subroutine
+bcd_inc_end:
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+    |-------------------------------------------------------------------------------|
+    | BCD code decrement.                                                           |
+    |                                                                               |
+    |   void bcd_dec(a)                                                             |  
+    |   Return:                                                                     |
+    |     none                                                                      |    
+    |   Input:                                                                      |
+    |     a: bcd code                                                               |
+    |   Output:                                                                     | 
+    |     a: decrement result                                                       |
+    |-------------------------------------------------------------------------------|
+
+__BD_ARG_A = 0
+
+bcd_dec:
+	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+
+	| Increment as if it were binary
+	GETARG(__BD_ARG_A, R1)
+	SUBC(R1, 1, R1)
+
+	| Adjust for bcd code
+	ANDC(R1, 0x0F, R2)
+	CMPLTC(R2, 10, R2)
+	BT(R2, bcd_dec_adj_msd)
+	SUBC(R1, 0x06, R1)
+bcd_dec_adj_msd:
+	ANDC(R1, 0xF0, R2)
+	SHRC(R2, 4, R2)
+	CMPLTC(R2, 10, R2)
+	BT(R2, bcd_dec_mask_hi)
+	SUBC(R1, 0x60, R1)
+bcd_dec_mask_hi:
+	MOVC(0x00FF, R2)
+	AND(R1, R2, R1)
+
+	| Save result
+	PUTARG(R1, __BD_ARG_A)
+
+	| Epilogue to the subroutine
+bcd_dec_end:
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+    |-------------------------------------------------------------------------------|
+    | Dsipaly bcd code with a decimal point.                                        |
+    |                                                                               |
+    |   int disp_bcd(i, bcd)                                                        |  
+    |   Return:                                                                     |
+    |     0: ok                                                                     |   
+    |     1: error, index out of range                                              |
+    |   Input:                                                                      |
+    |     i:   digit index                                                          |
+    |     bcd: bcd code, A-F turn off digit                                         |
+    |   Output:                                                                     | 
+    |     none                                                                      |
+    |-------------------------------------------------------------------------------|
+
+ __DB_I   = 0
+ __DB_BCD = 1
+
+ disp_bcd:
+ 	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+	PUSH(R3)
+
+	| Check index range
+	GETARG(__DB_I, R1)
+	GETARG(__DB_BCD, R3)		| Load delay slot
+	CMPLTC(R1, 0, R0)
+	BT(R0, disp_bcd_i_oor)
+	CMPLEC(R1, 4, R0)
+	BF(R0, disp_bcd_i_oor)
+
+	| Display less significant digit
+	ANDC(R3, 0x0F, R2)
+	ORC(R2, 0x10, R2)		| Turn on dp
+	MOVC(SVC_SSD, R0)
+	SVC()
+
+	| Display more significant digit
+	ADDC(R1, 1, R1)
+	ANDC(R3, 0xF0, R2)
+	SHRC(R2, 4, R2)
+	MOVC(SVC_SSD, R0)
+	SVC()
+
+	| Epilogue to the subroutine
+disp_bcd_end:
+	POP(R3)	
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+disp_bcd_i_oor:
+	MOVC(1, R0)
+	BR(disp_bcd_end)
+
+||====================================================================================||
+||                                  Literal  Segment                                  ||
+||====================================================================================||
+LITERAL()
+sys_tick_lv:			| system timer load value
+	LONG(14999999)		| 15E+6 - 1
+
+| SVC subroutine address table
+svc_led_addr:
+	LONG(svc_led+PC_SUPERVISOR)
+svc_ssd_addr:
+	LONG(svc_ssd+PC_SUPERVISOR)
+svc_key_addr:
+	LONG(svc_key+PC_SUPERVISOR)
+
+|--------------------------------------|
+| Program Signature                    |
+|--------------------------------------|
+LOCATE(0x0FFC)
+__signature:
+	LONG(0xCA3EBE3A)
