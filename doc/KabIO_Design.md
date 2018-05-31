@@ -32,19 +32,20 @@ I/O devices of Kabeta processor.
 
 ![](IO_Block.png)
 
-*Figure 2. [I/O Block](IO_Block.png)*
+*Figure 2. [I/O Block](IO_Block.png)*
 
 **NOTES:**
 
-RW -- Read/Write
+- RW -- Read/Write
 
-RC -- Read with Clear
+- RC -- Read with Clear
 
-RO -- Read Only
+- RO -- Read Only
 
-WO -- Write Only
+- WO -- Write Only
 
-### 1.4 I/O Address Format 
+
+### 1.4 I/O Address Format 
 
 I/O address is divided into two parts, block address and register address.
 
@@ -58,15 +59,30 @@ I/O address is divided into two parts, block address and register address.
 - Four types:
   - Write Only - read data is undefined
   - Read Only - write has no effect
-  - Read Clear - read the register while clear some bits, and write has no effect
+  - Read Clear - read the register while clear some bits, and write has no effect
   - Read Write - read back what has been written or reset value
+
+### 1.6 Block Address Allocation
+
+| Block Name                                  | Block Address | Block Description                    |
+| ------------------------------------------- | ------------- | ------------------------------------ |
+| External Interrupt Controller               | 0             | Interrupt & urgent event control     |
+| Basic Key & Display                         | 1             | Keys, LEDs and seven segment display |
+| Universal Asynchronous Receiver Transmitter | 2             | UART serial communication            |
+| System Timer (Reserved)                     | 3             | A timer for system tick              |
+|                                             | 4             |                                      |
+|                                             | 5             |                                      |
+|                                             | 6             |                                      |
+|                                             | 7             |                                      |
+
+
 
 ## 2 External Interrupt Controller (EIC)
 
 ### 2.1 Description
 
 - 8 IRQ (Interrupt ReQuest) inputs
-- An URQ (Urgent ReQuest) input
+- An URQ (Urgent ReQuest) input
 - IRQ/URQ inputs are rising edge trigered
 - URQ has priority over IRQs
 - Fixed IRQ priorities, IR0 highest and IRQ7 lowest among IRQs
@@ -76,14 +92,14 @@ I/O address is divided into two parts, block address and register address.
 
 ![](IO_EIC.png)
 
-*Figure 3. [External Interrupt Controller](IO_EIC.png)*
+*Figure 3. [External Interrupt Controller](IO_EIC.png)*
 
 ### 2.3 Registers
 
 |         Register Name          | Address |   Access   |
 | :----------------------------: | :-----: | :--------: |
 | Interrupt Enable Register (IE) |  0x000  | Write Only |
-| Interrupt Number Register (IN) |  0x004  | Read Only  |
+| Interrupt Number Register (IN) |  0x004  | Read Only  |
 
 
 
@@ -95,13 +111,26 @@ I/O address is divided into two parts, block address and register address.
 
 - GIE: Global Interrupt Enable
 
-#### 2.3.2 Interrupt Number Register (IN)
+#### 2.3.2 Interrupt Number Register (IN)
 
 | 31            3 | 2           0 |
 | :-------------: | :-----------: |
 |   (Reserved)    |      IN       |
 
 - IN: Interrupt Number
+
+### 2.4 Interrupt Sources
+
+| Interrupt Name          | IRQ Number | Interrupt Source    |
+| ----------------------- | ---------- | ------------------- |
+|                         | 0          |                     |
+|                         | 1          |                     |
+| UART Error Interrupt    | 2          | UART                |
+| UART Receive Interrupt  | 3          | UART                |
+| UART Transmit Interrupt | 4          | UART                |
+|                         | 5          |                     |
+| System Tick             | 6          | System Timer        |
+| Key Press Interrupt     | 7          | Basic Key & Display |
 
 ## 3 Basic Key & Display
 
@@ -115,12 +144,12 @@ I/O address is divided into two parts, block address and register address.
 
 |                 Register Name                 | Reset Value | Address |   Access   |
 | :-------------------------------------------: | :---------: | :-----: | :--------: |
-|          LED Control Register (LEDC)          | 0x0000_0000 |  0x040  | Read Write |
+|          LED Control Register (LEDC)          | 0x0000_0000 |  0x040  | Read Write |
 | Seven Segment Display Control Register (SSDC) | 0x00FF_FFFF |  0x044  | Read Write |
 |     Key & Display Interrupt Enable (KDIE)     |    (N/A)    |  0x048  | Write Only |
 |          Key Status Register (KEYS)           | 0x0000_0000 |  0x04C  | Read Clear |
 
-#### 3.2.1 LED Control Register (LEDC)
+#### 3.2.1 LED Control Register (LEDC)
 
 | 31             4 |  3   |  2   |  1   |  0   |
 | :--------------: | :--: | :--: | :--: | :--: |
@@ -132,7 +161,7 @@ I/O address is divided into two parts, block address and register address.
 
   - 1 -- on  
 
-#### 3.2.2 Seven Segment Display Control Register (SSDC) 
+#### 3.2.2 Seven Segment Display Control Register (SSDC) 
 
 |  31  |     30     |  29  |  28  |  27  |  26  |  25  |  24  | 23  20 | 19  16 | 15  12 | 11   8 | 7    4 | 3    0 |
 | :--: | :--------: | :--: | :--: | :--: | :--: | :--: | :--: | :----: | :----: | :----: | :----: | :----: | :----: |
@@ -145,10 +174,10 @@ I/O address is divided into two parts, block address and register address.
   - 0: turn off n-th decimal point
   - 1: turn on n-th decimal point
 - EN
-  - 0: Disable Display (turn off all digits)
+  - 0: Disable Display (turn off all digits)
   - 1: Enable Display
 
-#### 3.2.3 Key & Display Interrupt Enable (KDIE) 
+#### 3.2.3 Key & Display Interrupt Enable (KDIE) 
 
 | 31            1 |  0   |
 | :-------------: | :--: |
@@ -158,7 +187,7 @@ I/O address is divided into two parts, block address and register address.
   - 0: disable key press interrupt
   - 1: enable key press interrupt
 
-#### 3.2.4 Key Status Register (KEYS) 
+#### 3.2.4 Key Status Register (KEYS) 
 
 | 31            4 |  3   |  2   |  1   |  0   |
 | :-------------: | :--: | :--: | :--: | :--: |
@@ -173,6 +202,110 @@ I/O address is divided into two parts, block address and register address.
 | Interrupt Name      | Interrupt Number | Condition                             |
 | ------------------- | ---------------- | ------------------------------------- |
 | Key Press Interrupt | 1                | A key is released after pressed down. |
+
+## 4 Universal Asynchronous Receiver Transmitter (UART)
+
+### 4.1 Description
+
+- Stop bits: 1 bit, 2 bits
+- Data bits: 7 bits, 8 bits
+- Parity: none, odd, even
+- Baud rate: 1200, 9600, 19200, 115200
+
+### 4.2 Registers
+
+|       Register Name        | Reset Value | Address |   Access   |
+| :------------------------: | :---------: | :-----: | :--------: |
+|      Control Register      | 0x0000_0000 |  0x080  | Read Write |
+|      Status Register       | 0x0000_0000 |  0x084  | Read Clear |
+| Interrupt Control Register | 0x0000_0000 |  0x088  | Read Write |
+|   Transmit Data Register   |    (N/A)    |  0x08C  | Write Only |
+|   Receive Data Register    | 0x0000_0000 |  0x08C  | Read Only  |
+
+#### 4.2.1 Control Register (CR)
+
+| 31            7 | 6       5 | 4        3 |  2   |  1   |  0   |
+| :-------------: | :-------: | :--------: | :--: | :--: | :--: |
+|   (Reserved)    |   BAUD    |   PARITY   | SLEN | DLEN |  EN  |
+
+- EN: transceiver enable
+  - 0: disable
+  - 1: enable
+- DLEN: data length
+  - 0: 7 bits
+  - 1: 8 bits
+- SLEN: stop bits length
+  - 0: 1 bit
+  - 1: 2bit
+- PARITY: parity control
+  - 00/01: none
+  - 10: even
+  - 11: odd
+- BAUD: baud rate
+  - 00: 1200 baud
+  - 01: 9600 baud
+  - 10: 19200 baud
+  - 11: 115200 baud
+
+**NOTES:**
+
+- All fields except EN must be written when EN = 0, or else it has no effect on transceiver.
+
+#### 4.2.2 Status Register (SR)
+
+| 31             3 |  2   |  1   |  0   |
+| :--------------: | :--: | :--: | :--: |
+|    (Reserved)    | TIS  | RIS  | EIS  |
+
+- EIS: error interrupt status
+- RIS: receive interrupt status
+- TIS: transmit interrupt status
+
+**NOTES:**
+
+- For all fields,
+  -  0 indicates the interrupt is not asserted
+  - 1 indicates the interrupt is pending
+
+#### 4.2.3 Interrupt Control Register (ICR)
+
+| 31             3 |  2   |  1   |  0   |
+| :--------------: | :--: | :--: | :--: |
+|    (Reserved)    | TIE  | RIE  | EIE  |
+
+- EIE: error interrupt enable
+- RIE: receive interrupt enable
+- TIE: transmit interrupt enable
+
+**NOTES:**
+
+- For all fields,
+  -  write 0 to disable the interrupt
+  - write 1 to enable the interrupt
+
+#### 4.2.4 Transmit Data Register (TDR)
+
+| 31            8 | 7                  0 |
+| :-------------: | :------------------: |
+|   (Reserved)    |         Data         |
+
+**NOTES:**
+
+- Write TDR to start transmission.
+
+#### 4.2.5 Receive Data Register (RDR)
+
+| 31            8 | 7                  0 |
+| --------------- | -------------------- |
+| (Reserved)      | Data                 |
+
+### 4.3 Interrupts
+
+| Interrupt Name          | Interrupt Number | Condition               |
+| ----------------------- | ---------------- | ----------------------- |
+| UART Error Interrupt    | 3                | Frame error             |
+| UART Receive Interrupt  | 4                | Data received           |
+| UART Transmit Interrupt | 5                | Data can be transmitted |
 
 ## Appendix A: Document Version History
 
