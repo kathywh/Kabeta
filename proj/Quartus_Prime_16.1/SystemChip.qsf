@@ -50,7 +50,7 @@ set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
 set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
-set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVCMOS"
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
@@ -65,38 +65,6 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
-set_global_assignment -name SDC_FILE scripts/SystemChip.sdc
-set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_SysPLL.qip
-set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_InstrMem_4KB.qip
-set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_DataMem_16KB.qip
-set_global_assignment -name VERILOG_FILE ../../rtl/CommonDefinitions.v
-set_global_assignment -name VERILOG_FILE ../../rtl/RegisterRstEn.v
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_AddressTable.sv
-set_global_assignment -name VERILOG_FILE ../../rtl/Peripherals/Handshaker.v
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_AccessItf.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ReadWriteRegister.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ReadOnlyRegister.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ReadClearRegister.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_Interface.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ExtInterruptCtrl.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/BasicKeyDisplay.sv
-set_global_assignment -name VERILOG_FILE ../../rtl/SystemPLL.v
-set_global_assignment -name VERILOG_FILE ../../rtl/Synchronizer.v
-set_global_assignment -name VERILOG_FILE ../../rtl/ResetSynchronizer.v
-set_global_assignment -name VERILOG_FILE ../../rtl/RegisterFile.v
-set_global_assignment -name VERILOG_FILE ../../rtl/RegisterEn.v
-set_global_assignment -name VERILOG_FILE ../../rtl/InstructionRegister.v
-set_global_assignment -name VERILOG_FILE ../../rtl/InstructionMemory.v
-set_global_assignment -name VERILOG_FILE ../../rtl/InstructionDecoder.v
-set_global_assignment -name VERILOG_FILE ../../rtl/CoreInterruptUnit.v
-set_global_assignment -name VERILOG_FILE ../../rtl/DataMemory.v
-set_global_assignment -name VERILOG_FILE ../../rtl/BranchExceptionUnit.v
-set_global_assignment -name VERILOG_FILE ../../rtl/ArithmeticLogicUnit.v
-set_global_assignment -name VERILOG_FILE ../../rtl/AddressInc.v
-set_global_assignment -name VERILOG_FILE ../../rtl/AddressAdder.v
-set_global_assignment -name VERILOG_FILE ../../rtl/Kabeta.v
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/KabIO.sv
-set_global_assignment -name VERILOG_FILE ../../rtl/SystemChip.v
 set_location_assignment PIN_E15 -to Reset
 set_location_assignment PIN_E1 -to Clock
 set_location_assignment PIN_G15 -to LED[0]
@@ -126,4 +94,40 @@ set_global_assignment -name CYCLONEIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS INPUT TRI-STATED"
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to Keys[0]
+set_global_assignment -name SDC_FILE scripts/SystemChip.sdc
+set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_SysPLL.qip
+set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_InstrMem_4KB.qip
+set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_DataMem_16KB.qip
+set_global_assignment -name VERILOG_FILE ../../rtl/CommonDefinitions.v
+set_global_assignment -name VERILOG_FILE ../../rtl/RegisterRstEn.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_AddressTable.sv
+set_global_assignment -name VERILOG_FILE ../../rtl/Peripherals/Handshaker.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_AccessItf.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ReadWriteRegister.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ReadOnlyRegister.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ReadClearRegister.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_Interface.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ExtInterruptCtrl.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/BasicKeyDisplay.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/SystemTimer.sv
+set_global_assignment -name VERILOG_FILE ../../rtl/SystemPLL.v
+set_global_assignment -name VERILOG_FILE ../../rtl/Synchronizer.v
+set_global_assignment -name VERILOG_FILE ../../rtl/ResetSynchronizer.v
+set_global_assignment -name VERILOG_FILE ../../rtl/RegisterFile.v
+set_global_assignment -name VERILOG_FILE ../../rtl/RegisterEn.v
+set_global_assignment -name VERILOG_FILE ../../rtl/InstructionRegister.v
+set_global_assignment -name VERILOG_FILE ../../rtl/InstructionMemory.v
+set_global_assignment -name VERILOG_FILE ../../rtl/InstructionDecoder.v
+set_global_assignment -name VERILOG_FILE ../../rtl/CoreInterruptUnit.v
+set_global_assignment -name VERILOG_FILE ../../rtl/DataMemory.v
+set_global_assignment -name VERILOG_FILE ../../rtl/BranchExceptionUnit.v
+set_global_assignment -name VERILOG_FILE ../../rtl/ArithmeticLogicUnit.v
+set_global_assignment -name VERILOG_FILE ../../rtl/AddressInc.v
+set_global_assignment -name VERILOG_FILE ../../rtl/AddressAdder.v
+set_global_assignment -name VERILOG_FILE ../../rtl/Kabeta.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/KabIO.sv
+set_global_assignment -name VERILOG_FILE ../../rtl/SystemChip.v
+set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "PASSIVE SERIAL"
+set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
