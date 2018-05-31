@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/24/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/26/2018                                                    */
+/*  Edited on:  05/31/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*                                                                            */
@@ -11,6 +11,7 @@
 /*  Revisions:                                                                */
 /*      05/24/2018  Kathy       Unit created.                                 */
 /*      05/26/2018  Kathy       Add parameter to interface.                   */
+/*      05/31/2018  Kathy       Change BKD interrupt number.                  */
 /******************************************************************************/
 
 module KabIO
@@ -42,7 +43,8 @@ module KabIO
   logic UrgentReq;
   assign UrgentReq = '0;
   logic [7:0] IntReq;
-  assign IntReq = {6'h00, BKD_KeyPressInt, 1'b0};
+  // IRQ           #7               #6~#0
+  assign IntReq = {BKD_KeyPressInt, 7'h00};
 
   IO_AccessItf#(32) Sys_RegInterface
   (
