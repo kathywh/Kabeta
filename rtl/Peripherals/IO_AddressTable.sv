@@ -14,7 +14,13 @@ package IO_AddressTable;
   parameter [3:0] KEYS_ADDR = 4'h3;
 
   parameter [2:0] RESV2_ADDR = 3'h2;
-  parameter [2:0] RESV3_ADDR = 3'h3;
+
+  // System Timer
+  parameter [2:0] STMR_ADDR = 3'h3;
+
+  parameter [3:0] STCR_ADDR = 4'h0;
+  parameter [3:0] STLV_ADDR = 4'h1;
+
   parameter [2:0] RESV4_ADDR = 3'h4;
   parameter [2:0] RESV5_ADDR = 3'h5;
   parameter [2:0] RESV6_ADDR = 3'h6;

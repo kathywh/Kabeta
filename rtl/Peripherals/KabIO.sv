@@ -40,11 +40,17 @@ module KabIO
 
   // Interrupt signals
   logic BKD_KeyPressInt;
+  logic STMR_SysTimerInt;
   logic UrgentReq;
   assign UrgentReq = '0;
   logic [7:0] IntReq;
-  // IRQ           #7               #6~#0
-  assign IntReq = {BKD_KeyPressInt, 7'h00};
+  
+  assign IntReq = 
+  {
+    BKD_KeyPressInt,    // IRQ7
+    STMR_SysTimerInt,   // IRQ6
+    6'h00
+  };
 
   IO_AccessItf#(32) Sys_RegInterface
   (
@@ -90,8 +96,19 @@ module KabIO
     .*
   );
 
+  SystemTimer STMR
+  (
+    .Sys_Interface(Sys_RegInterface),
+    .Sys_RdData(Sys_RegRdData[STMR_ADDR]),
+    .Sys_BlockSelect(Sys_BlockSelect[STMR_ADDR]),
+    .IO_Interface(IO_LogicInterface),
+    .IO_BlockSelect(IO_BlockSelect[STMR_ADDR]),
+    .SysTimerInt(STMR_SysTimerInt),
+    .*
+  );
+
   assign Sys_RegRdData[RESV2_ADDR] = '0;
-  assign Sys_RegRdData[RESV3_ADDR] = '0;
+
   assign Sys_RegRdData[RESV4_ADDR] = '0;
   assign Sys_RegRdData[RESV5_ADDR] = '0;
   assign Sys_RegRdData[RESV6_ADDR] = '0;
