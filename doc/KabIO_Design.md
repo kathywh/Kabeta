@@ -217,7 +217,7 @@ I/O address is divided into two parts, block address and register address.
 |       Register Name        | Reset Value | Address |   Access   |
 | :------------------------: | :---------: | :-----: | :--------: |
 |      Control Register      | 0x0000_0000 |  0x080  | Read Write |
-|      Status Register       | 0x0000_0000 |  0x084  | Read Clear |
+| Interrupt Status Register  | 0x0000_0000 |  0x084  | Read Clear |
 | Interrupt Control Register | 0x0000_0000 |  0x088  | Read Write |
 |   Transmit Data Register   |    (N/A)    |  0x08C  | Write Only |
 |   Receive Data Register    | 0x0000_0000 |  0x08C  | Read Only  |
@@ -251,7 +251,7 @@ I/O address is divided into two parts, block address and register address.
 
 - All fields except EN must be written when EN = 0, or else it has no effect on transceiver.
 
-#### 4.2.2 Status Register (SR)
+#### 4.2.2 Interrupt Status Register (ISR)
 
 | 31             3 |  2   |  1   |  0   |
 | :--------------: | :--: | :--: | :--: |
@@ -301,11 +301,11 @@ I/O address is divided into two parts, block address and register address.
 
 ### 4.3 Interrupts
 
-| Interrupt Name          | Interrupt Number | Condition               |
-| ----------------------- | ---------------- | ----------------------- |
-| UART Error Interrupt    | 3                | Frame error             |
-| UART Receive Interrupt  | 4                | Data received           |
-| UART Transmit Interrupt | 5                | Data can be transmitted |
+| Interrupt Name          | Interrupt Number | Condition                |
+| ----------------------- | ---------------- | ------------------------ |
+| UART Error Interrupt    | 2                | Frame error/Parity error |
+| UART Receive Interrupt  | 3                | Data received            |
+| UART Transmit Interrupt | 4                | Data can be transmitted  |
 
 ## Appendix A: Document Version History
 
@@ -313,3 +313,4 @@ I/O address is divided into two parts, block address and register address.
 | ------- | --------- | ------ | -------- | ---------------------- |
 | 1.0     | 5/23/2018 | Kathy  | (N/A)    | Initial version.       |
 | 1.0a    | 5/28/2018 | Kathy  | (N/A)    | Add basic key display. |
+| 1.0b    | 5/31/2018 | Kathy  | (N/A)    | Add UART I/O block.    |
