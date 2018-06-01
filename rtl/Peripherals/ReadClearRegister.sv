@@ -30,7 +30,7 @@ module ReadClearRegister
   input logic IO_Reset,
   input logic IO_Clock,
   input logic [DATA_WIDTH-1:0] IO_WrData,
-  input logic [DATA_WIDTH-1:0] IO_WrMask,
+  input logic [DATA_WIDTH-1:0] IO_WrMask,           // each bit: 1 - write, 0 - remain
   input logic IO_WrEn,
   output logic IO_Busy
 );
