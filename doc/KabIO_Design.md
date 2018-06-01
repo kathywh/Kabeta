@@ -1,7 +1,7 @@
 # KabIO Design
 
-**Date:** May 28, 2018  
-**Version:** 1.0c  
+**Date:** June 1, 2018  
+**Version:** 1.0d  
 **Author:** Kathy  
 **Reviewer:** (N/A)  
 
@@ -69,11 +69,11 @@ I/O address is divided into two parts, block address and register address.
 | External Interrupt Controller               | 0             | Interrupt & urgent event control     |
 | Basic Key & Display                         | 1             | Keys, LEDs and seven segment display |
 | Universal Asynchronous Receiver Transmitter | 2             | UART serial communication            |
-| System Timer (Reserved)                     | 3             | A timer for system tick              |
-|                                             | 4             |                                      |
-|                                             | 5             |                                      |
-|                                             | 6             |                                      |
-|                                             | 7             |                                      |
+| System Timer                                | 3             | A timer for system tick              |
+| (Reserved)                                  | 4             | (N/A)                                |
+| (Reserved)                                  | 5             | (N/A)                                |
+| (Reserved)                                  | 6             | (N/A)                                |
+| (Reserved)                                  | 7             | (N/A)                                |
 
 
 
@@ -123,12 +123,12 @@ I/O address is divided into two parts, block address and register address.
 
 | Interrupt Name          | IRQ Number | Interrupt Source    |
 | ----------------------- | ---------- | ------------------- |
-|                         | 0          |                     |
-|                         | 1          |                     |
+| (Reserved)              | 0          | (N/A)               |
+| (Reserved)              | 1          | (N/A)               |
 | UART Error Interrupt    | 2          | UART                |
 | UART Receive Interrupt  | 3          | UART                |
 | UART Transmit Interrupt | 4          | UART                |
-|                         | 5          |                     |
+| (Reserved)              | 5          | (N/A)               |
 | System Tick             | 6          | System Timer        |
 | Key Press Interrupt     | 7          | Basic Key & Display |
 
@@ -217,10 +217,11 @@ I/O address is divided into two parts, block address and register address.
 |       Register Name        | Reset Value | Address |   Access   |
 | :------------------------: | :---------: | :-----: | :--------: |
 |      Control Register      | 0x0000_0000 |  0x080  | Read Write |
-| Interrupt Status Register  | 0x0000_0000 |  0x084  | Read Clear |
+|      Status Regisgter      | 0x0000_0000 |  0x84   | Read Only  |
 | Interrupt Control Register | 0x0000_0000 |  0x088  | Read Write |
-|   Transmit Data Register   |    (N/A)    |  0x08C  | Write Only |
-|   Receive Data Register    | 0x0000_0000 |  0x08C  | Read Only  |
+| Interrupt Status Register  | 0x0000_0000 |  0x08C  | Read Clear |
+|   Transmit Data Register   |    (N/A)    |  0x090  | Write Only |
+|   Receive Data Register    | 0x0000_0000 |  0x090  | Read Only  |
 
 #### 4.2.1 Control Register (CR)
 
@@ -251,21 +252,19 @@ I/O address is divided into two parts, block address and register address.
 
 - All fields except EN must be written when EN = 0, or else it has no effect on transceiver.
 
-#### 4.2.2 Interrupt Status Register (ISR)
+#### 4.2.2 Status Register (SR)
 
 | 31             3 |  2   |  1   |  0   |
 | :--------------: | :--: | :--: | :--: |
-|    (Reserved)    | TIS  | RIS  | EIS  |
+|    (Reserved)    |  PE  |  FE  | BUSY |
 
-- EIS: error interrupt status
-- RIS: receive interrupt status
-- TIS: transmit interrupt status
+- BUSY: transmission or receipt is in progress.
+- FE: frame error.
+- PE: parity error.
 
 **NOTES:**
 
-- For all fields,
-  -  0 indicates the interrupt is not asserted
-  - 1 indicates the interrupt is pending
+- FE and PE are cleared when a byte is received without error.
 
 #### 4.2.3 Interrupt Control Register (ICR)
 
@@ -283,7 +282,21 @@ I/O address is divided into two parts, block address and register address.
   -  write 0 to disable the interrupt
   - write 1 to enable the interrupt
 
-#### 4.2.4 Transmit Data Register (TDR)
+#### 4.2.4 Interrupt Status Register (ISR)
+
+| 31             3 |  2   |  1   |  0   |
+| :--------------: | :--: | :--: | :--: |
+|    (Reserved)    | TIS  | RIS  | EIS  |
+
+- EIS: error status
+- RIS: receive status
+- TIS: transmit status
+
+**NOTES:**
+
+- The status bit will be set even if the interrupt is disabled, for the sake of polling.
+
+#### 4.2.5 Transmit Data Register (TDR)
 
 | 31            8 | 7                  0 |
 | :-------------: | :------------------: |
@@ -293,7 +306,7 @@ I/O address is divided into two parts, block address and register address.
 
 - Write TDR to start transmission.
 
-#### 4.2.5 Receive Data Register (RDR)
+#### 4.2.6 Receive Data Register (RDR)
 
 | 31            8 | 7                  0 |
 | --------------- | -------------------- |
@@ -354,3 +367,4 @@ A 32-bit timer for system tick.
 | 1.0a    | 5/28/2018 | Kathy  | (N/A)    | Add basic key display. |
 | 1.0b    | 5/31/2018 | Kathy  | (N/A)    | Add UART I/O block.    |
 | 1.0c    | 5/31/2018 | Kathy  | (N/A)    | Add system timer.      |
+| 1.0d    | 6/1/2018  | Kathy  | (N/A)    | Modify UART registers. |
