@@ -94,6 +94,9 @@ set_global_assignment -name CYCLONEIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS INPUT TRI-STATED"
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to Keys[0]
+set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "PASSIVE SERIAL"
+set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
 set_global_assignment -name SDC_FILE scripts/SystemChip.sdc
 set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_SysPLL.qip
 set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_InstrMem_4KB.qip
@@ -110,6 +113,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_Interfac
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ExtInterruptCtrl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/BasicKeyDisplay.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/SystemTimer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/UART_Tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/UART_Rx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/UART.sv
 set_global_assignment -name VERILOG_FILE ../../rtl/SystemPLL.v
 set_global_assignment -name VERILOG_FILE ../../rtl/Synchronizer.v
 set_global_assignment -name VERILOG_FILE ../../rtl/ResetSynchronizer.v
@@ -127,7 +133,6 @@ set_global_assignment -name VERILOG_FILE ../../rtl/AddressAdder.v
 set_global_assignment -name VERILOG_FILE ../../rtl/Kabeta.v
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/KabIO.sv
 set_global_assignment -name VERILOG_FILE ../../rtl/SystemChip.v
-set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "PASSIVE SERIAL"
-set_global_assignment -name ENABLE_SIGNALTAP OFF
-set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
+set_location_assignment PIN_M2 -to Rxd
+set_location_assignment PIN_G1 -to Txd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
