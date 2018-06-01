@@ -36,6 +36,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_Interfac
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/ExtInterruptCtrl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/BasicKeyDisplay.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/SystemTimer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/UART_Tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/UART_Rx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/UART.sv
 set_global_assignment -name VERILOG_FILE ../../rtl/SystemPLL.v
 set_global_assignment -name VERILOG_FILE ../../rtl/Synchronizer.v
 set_global_assignment -name VERILOG_FILE ../../rtl/ResetSynchronizer.v
@@ -92,3 +95,7 @@ set_location_assignment	PIN_B3  -to Digital[2]
 set_location_assignment	PIN_A3	-to Digital[3]
 set_location_assignment	PIN_B4	-to Digital[4] 
 set_location_assignment	PIN_A4	-to Digital[5]
+
+# UART
+set_location_assignment	PIN_M2	-to Rxd
+set_location_assignment	PIN_G1	-to Txd

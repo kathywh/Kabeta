@@ -89,6 +89,8 @@ set_false_path -from [get_ports {Keys[*]}]
 set_false_path -to [get_ports {LED[*]}]
 set_false_path -to [get_ports {Segment[*]}]
 set_false_path -to [get_ports {Digital[*]}]
+set_false_path -from [get_ports {Rxd}]
+set_false_path -to [get_ports {Txd}]
 
 
 #**************************************************************
