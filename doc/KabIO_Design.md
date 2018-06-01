@@ -217,7 +217,7 @@ I/O address is divided into two parts, block address and register address.
 |       Register Name        | Reset Value | Address |   Access   |
 | :------------------------: | :---------: | :-----: | :--------: |
 |      Control Register      | 0x0000_0000 |  0x080  | Read Write |
-|      Status Regisgter      | 0x0000_0000 |  0x84   | Read Only  |
+|      Status Regisgter      | 0x0000_0000 |  0x084  | Read Only  |
 | Interrupt Control Register | 0x0000_0000 |  0x088  | Read Write |
 | Interrupt Status Register  | 0x0000_0000 |  0x08C  | Read Clear |
 |   Transmit Data Register   |    (N/A)    |  0x090  | Write Only |
