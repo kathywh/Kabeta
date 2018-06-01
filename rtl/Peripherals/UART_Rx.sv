@@ -3,11 +3,12 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/31/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/31/2018                                                    */
+/*  Edited on:  06/01/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      UART receiver.                                                        */
 /*                                                                            */
+/*      1) If Enable is deasserted, the ongoing receipt will still compelete. */
 /*      1) RxReady is positive pulse to strobe RxData.                        */
 /*      2) If error occurs, then RxParityErr or RxFrameErr is asserted,       */
 /*         RxReady is not asserted and RxData is invalid.                     */
@@ -33,6 +34,7 @@
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/31/2018  Kathy       Unit created.                                 */
+/*      06/01/2018  Kathy       Add enable control.                           */
 /******************************************************************************/
 
 module UART_Rx
@@ -44,6 +46,7 @@ module UART_Rx
   input  logic        ParityEn, 
   input  logic        ParityPolarity,
   input  logic [13:0] BaudLimit,
+  input  logic        Enable,
   output logic        RxReady,
   output logic [7:0]  RxData,
   output logic        RxParityErr,
@@ -194,7 +197,7 @@ module UART_Rx
           case(RxState)
             S_IDLE:
               begin
-                if(RxNegEdge)
+                if(Enable & RxNegEdge)      // ignore neg edge of rxd if not enabled
                   begin
                     RxState <= S_WAIT;
                   end

@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/24/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/31/2018                                                    */
+/*  Edited on:  06/01/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*                                                                            */
@@ -12,6 +12,8 @@
 /*      05/24/2018  Kathy       Unit created.                                 */
 /*      05/26/2018  Kathy       Add parameter to interface.                   */
 /*      05/31/2018  Kathy       Change BKD interrupt number.                  */
+/*                              Add system timer.                             */
+/*      06/01/2018  Kathy       Add UART.                                     */
 /******************************************************************************/
 
 module KabIO
@@ -33,7 +35,11 @@ module KabIO
   output logic [3:0] LED,
   output logic [7:0] Segment,
   output logic [5:0] Digital,
-  input  logic [3:0] Keys
+  input  logic [3:0] Keys,
+
+  // UART pins
+  input  logic Rxd,
+  output logic Txd
 );
 
   import IO_AddressTable::*;
@@ -41,6 +47,7 @@ module KabIO
   // Interrupt signals
   logic BKD_KeyPressInt;
   logic STMR_SysTimerInt;
+  logic UART_RxInt, UART_TxInt, UART_ErrInt;
   logic UrgentReq;
   assign UrgentReq = '0;
   logic [7:0] IntReq;
@@ -49,7 +56,11 @@ module KabIO
   {
     BKD_KeyPressInt,    // IRQ7
     STMR_SysTimerInt,   // IRQ6
-    6'h00
+    1'b0,               // IRQ5
+    UART_TxInt,         // IRQ4
+    UART_RxInt,         // IRQ3
+    UART_ErrInt,        // IRQ2
+    2'b00               // IRQ1, IRQ0
   };
 
   IO_AccessItf#(32) Sys_RegInterface
@@ -107,7 +118,18 @@ module KabIO
     .*
   );
 
-  assign Sys_RegRdData[RESV2_ADDR] = '0;
+  UART UART
+  (
+    .Sys_Interface(Sys_RegInterface),
+    .Sys_RdData(Sys_RegRdData[UART_ADDR]),
+    .Sys_BlockSelect(Sys_BlockSelect[UART_ADDR]),
+    .IO_Interface(IO_LogicInterface),
+    .IO_BlockSelect(IO_BlockSelect[UART_ADDR]),
+    .ErrorInt(UART_ErrInt),
+    .RxInt(UART_RxInt),
+    .TxInt(UART_TxInt),
+    .*
+  );
 
   assign Sys_RegRdData[RESV4_ADDR] = '0;
   assign Sys_RegRdData[RESV5_ADDR] = '0;

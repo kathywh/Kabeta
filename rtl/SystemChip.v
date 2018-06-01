@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/19/2018                                                    */
+/*  Edited on:  06/01/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      System chip.                                                          */
@@ -11,6 +11,8 @@
 /*  Revisions:                                                                */
 /*      05/16/2018  Kathy       Unit created.                                 */
 /*      05/19/2018  Kathy       Add missing port of processor core.           */
+/*      05/28/2018  Kathy       Add BKD pins.                                 */
+/*      06/01/2018  Kathy       Add UART pins.                                */
 /******************************************************************************/
 
 module SystemChip
@@ -23,7 +25,11 @@ module SystemChip
   output [3:0] LED,
   output [7:0] Segment,
   output [5:0] Digital,
-  input  [3:0] Keys
+  input  [3:0] Keys,
+
+  // UART pins
+  input  Rxd,
+  output Txd
 );
 
   wire PLL_Locked;
@@ -93,7 +99,11 @@ module SystemChip
     .LED(LED),
     .Segment(Segment),
     .Digital(Digital),
-    .Keys(Keys)
+    .Keys(Keys),
+
+    // UART pins
+    .Rxd(Rxd),
+    .Txd(Txd)
   );
   
 endmodule
