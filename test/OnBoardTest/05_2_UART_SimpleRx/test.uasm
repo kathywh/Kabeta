@@ -64,7 +64,7 @@ led0_status:
 	STORAGE(1)
 
 | UART rx data
-UARX_CNT = 40
+UARX_CNT = 64
 uarx_offset:
 	STORAGE(1)
 uarx_disp_os:
@@ -194,13 +194,18 @@ irq0_uatx_end:
 	BF(R0, irq0_uarx_end)
 	LD(uarx_offset, R1)			| R1: data offset
 	CMPEQC(R1, UARX_CNT*4, R0)	| boundary check
-	BT(R0, irq0_end)
+	BT(R0, irq0_uarx_rst_os)
+irq0_recv_d:
 	IOR(UART_DR, R0)			| R0: recv data
 	ST(R0, R1, uarx_data)		| store data
 	ADDC(R1, 4, R1)				| store new offset
 	ST(R1, uarx_offset)	
 	BR(irq0_end)
 irq0_uarx_end:
+
+irq0_uarx_rst_os:
+	MOVC(0, R1)
+	BR(irq0_recv_d)
 
 irq0_end:
 	| Restore registers
@@ -423,7 +428,7 @@ clear_uarx_data:
 	IOWAIT()
 
 	| Setup UART
-	MOVC(0x01, R0)
+	MOVC((0x03<<UART_CR_BAUD)+(0x01<<UART_CR_DLEN)+(0x01<<UART_CR_EN), R0)
 	IOW(R0, UART_CR)				| Enable UART, default parameters
 	IOWAIT()
 	MOVC((0x01<<UART_ICR_RIE), R0)
@@ -489,7 +494,12 @@ key_process:
 	MOVC(0, R12)				|   then set offset = 0
 	BR(key2_disp_i)
 key2_add_os:					| else
-	ADDC(R12, 4, R12)			|   R12: current offset
+	CMPLTC(R12, (UARX_CNT-1)*4, R0)	|boundary check
+	BF(R0, key2_rst_os)
+	ADDC(R12, 4, R12)			|     within: R12: compute current offset
+	BR(key2_disp_i)
+key2_rst_os:
+	MOVC(0, R12)				|     out of: R12: wrap offset
 key2_disp_i:
 	MOVC(0, R21)				| display data index
 	SHRC(R12, 2, R13)
@@ -503,6 +513,7 @@ key2_disp_i:
 	CALL(disp_hex, 2)
 	ST(R12, uarx_disp_os)		| store disp offset
 key2_end:
+	
 
 	| Process Key1 events (prev data)
 	ANDC(R1, 0x02, R11)
@@ -513,7 +524,11 @@ key2_end:
 	MOVC(0, R12)				|   then set offset = 0
 	BR(key1_disp_i)
 key1_sub_os:					| else
-	SUBC(R12, 4, R12)			|   R12: current offset
+	BEQ(R12, key1_rst_os)		|   boundary check
+	SUBC(R12, 4, R12)			|     within: R12: compute current offset
+	BR(key1_disp_i)
+key1_rst_os:
+	MOVC((UARX_CNT-1)*4, R12)	|     out of: R12: wrap offset
 key1_disp_i:
 	MOVC(0, R21)				| display data index
 	SHRC(R12, 2, R13)
