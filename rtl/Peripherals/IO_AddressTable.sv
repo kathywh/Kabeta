@@ -12,6 +12,7 @@ package IO_AddressTable;
   parameter [3:0] SSDC_ADDR = 4'h1;
   parameter [3:0] KDIE_ADDR = 4'h2;
   parameter [3:0] KEYS_ADDR = 4'h3;
+  parameter [3:0] SSCR_ADDR = 4'h4;
 
   // UART
   parameter [2:0] UART_ADDR  = 3'h2;

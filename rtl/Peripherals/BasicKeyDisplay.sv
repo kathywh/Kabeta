@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/28/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/29/2018                                                    */
+/*  Edited on:  06/02/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Basic key & display unit.                                             */
@@ -14,6 +14,8 @@
 /*                              Correct LED enable implementation.            */
 /*      05/29/2018  Kathy       Increase SSD scan rate.                       */
 /*                              Add key debounce.                             */
+/*      06/02/2018  Kathy       Add seven segment code register.              */
+/*                              Rename LED_Enable to SSD_Enable (typo).       */
 /******************************************************************************/
 
   /////////////////////////////////////////////////////////////////////////////
@@ -185,7 +187,7 @@ module BasicKeyDisplay
 
   /////////////////////////////////////////////////////////////////////////////
   // i/o logic select
-  logic IO_LEDC_Select, IO_SSDC_Select, IO_KDIE_Select;
+  logic IO_LEDC_Select, IO_SSDC_Select, IO_KDIE_Select, IO_SSCR_Select;
 
   always_comb
     begin
@@ -197,6 +199,7 @@ module BasicKeyDisplay
                 IO_LEDC_Select <= '1;
                 IO_SSDC_Select <= '0;
                 IO_KDIE_Select <= '0;
+                IO_SSCR_Select <= '0;
               end
 
             SSDC_ADDR:
@@ -204,6 +207,7 @@ module BasicKeyDisplay
                 IO_LEDC_Select <= '0;
                 IO_SSDC_Select <= '1;
                 IO_KDIE_Select <= '0;
+                IO_SSCR_Select <= '0;
               end
 
             KDIE_ADDR:
@@ -211,6 +215,15 @@ module BasicKeyDisplay
                 IO_LEDC_Select <= '0;
                 IO_SSDC_Select <= '0;
                 IO_KDIE_Select <= '1;
+                IO_SSCR_Select <= '0;
+              end
+
+            SSCR_ADDR:
+              begin
+                IO_LEDC_Select <= '0;
+                IO_SSDC_Select <= '0;
+                IO_KDIE_Select <= '0;
+                IO_SSCR_Select <= '1;
               end
 
             default:
@@ -218,6 +231,7 @@ module BasicKeyDisplay
                 IO_LEDC_Select <= '0;
                 IO_SSDC_Select <= '0;
                 IO_KDIE_Select <= '0;
+                IO_SSCR_Select <= '0;
               end
           endcase          
         end
@@ -226,6 +240,7 @@ module BasicKeyDisplay
           IO_LEDC_Select <= '0;
           IO_SSDC_Select <= '0;
           IO_KDIE_Select <= '0;
+          IO_SSCR_Select <= '0;
         end
     end
 
@@ -250,7 +265,7 @@ module BasicKeyDisplay
   // seven segment display control (dynamic scan)
   logic [0:5][7:0] SegmentCodeReg;
   logic [0:5][7:0] SegmentCodeIn;
-  logic LED_Enable;
+  logic SSD_Enable;
 
   genvar i;
 
@@ -267,20 +282,35 @@ module BasicKeyDisplay
   endgenerate
 
   // segment code register
+  logic [2:0] SSCR_DigIndex;
+  assign SSCR_DigIndex = IO_Interface.WrData[10:8];      // DI field of SSCR
+
   always_ff @(posedge IO_Interface.Clock or negedge IO_Interface.Reset)
     begin
       if(!IO_Interface.Reset)
         begin
           SegmentCodeReg <= '1;     // all segments off
-          LED_Enable <= '0;         // disable display
+          SSD_Enable <= '0;         // disable display
         end
       else
         begin
-          if(IO_SSDC_Select & IO_Interface.WrEn)
+          if(IO_Interface.WrEn)
             begin
-              SegmentCodeReg <= SegmentCodeIn;
-              LED_Enable <= IO_Interface.WrData[31];
+              if(IO_SSDC_Select)
+                begin
+                  SegmentCodeReg <= SegmentCodeIn;
+                  SSD_Enable <= IO_Interface.WrData[31];
+                end
+              else if(IO_SSCR_Select)
+                begin
+                  if(SSCR_DigIndex < 3'd6)
+                    begin
+                      SegmentCodeReg[SSCR_DigIndex] <= ~IO_Interface.WrData[7:0];
+                      SSD_Enable <= '1;
+                    end
+                end      
             end
+
         end
     end
 
@@ -298,7 +328,7 @@ module BasicKeyDisplay
         end
       else
         begin
-          if(LED_Enable)
+          if(SSD_Enable)
             begin
               if(Counter == 16'd49_999)    // 15MHz->300Hz=50*6Hz
                 begin
@@ -324,9 +354,9 @@ module BasicKeyDisplay
 
   // seven segment display scan signals
   // 0: on, 1: off
-  // LED_Enable=0: all off
+  // SSD_Enable=0: all off
   //            1: normal
-  assign Segment = SegmentCodeReg[DigitIndex] | {8{~LED_Enable}};     
+  assign Segment = SegmentCodeReg[DigitIndex] | {8{~SSD_Enable}};     
 
   /////////////////////////////////////////////////////////////////////////////
   // key & display interrupt enable
