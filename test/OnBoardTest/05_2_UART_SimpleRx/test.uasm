@@ -12,10 +12,11 @@ UART_RX   = 3		| UART: Receipt
 UART_TX   = 4		| UART: Transmission
 
 | SVC function codes
-SVC_FCNT = 3		| SVC function count
+SVC_FCNT = 4		| SVC function count
 SVC_LED  = 0
 SVC_SSD  = 1
 SVC_KEY  = 2
+SVC_SSC  = 3
 
 | I/O register field offset
 UART_CR_EN   = 0
@@ -46,6 +47,10 @@ LOCATE(0)
 | SVC Jump Table
 svc_sub_tab:
 	STORAGE(SVC_FCNT)
+
+| Seg code hex table
+ssc_hex_tab:
+	STORAGE(16)
 
 | Key Event Table
 |  ---------------------
@@ -89,6 +94,8 @@ BKD_KDIE:
 	STORAGE(1)		| 0x048, WO
 BKD_KEYS:
 	STORAGE(1)		| 0x04C, RC
+BKD_SSCR:
+	STORAGE(1)		| 0x050, WO
 
 LOCATE(0x080)
 UART_CR:
@@ -219,6 +226,7 @@ irq0_end:
 	|   Turn on/off LED      0    IN  b3-b0    -           0: off, 1: on            |
 	|   Display in SSD       1    IN  index    IN b4-b0    b4: dp, b3-b0: bcd code  |
 	|   Get key events       2    OUT b3-b0    -           1: pressed, 0: normal    |
+	|   Set 7-seg code       3    IN  index    IN b7-b0    b7~0  0: off, 1: on      |
 	|-------------------------------------------------------------------------------|
 
 svc_esr:
@@ -296,6 +304,15 @@ svc_key:
 	ST(R0, key_event_tab)
 	BR(svc_end)
 
+svc_ssc:
+	ANDC(R1, 0x07, R8)		| Mask and shift DI field
+	SHLC(R8, 8, R8)
+	ANDC(R2, 0xFF, R9)		| Mask SSC field
+	OR(R9, R8, R9)			| Write SSCR register
+	IOW(R9, BKD_SSCR)
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
 svc_end:
 	| Restore registers
 	POP(R10)
@@ -325,12 +342,66 @@ start:
 	LDR(svc_key_addr, R0)			| svc_key
 	ST(R0, R1, 0)
 	ADDC(R1, 4, R1)
+	LDR(svc_ssc_addr, R0)			| svc_ssc
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+
+	| Fill seg code hex table
+	MOVC(0x3F, R0)					| 0's seg code
+	MOVC(0, R1)
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x06, R0)					| 1's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x5B, R0)					| 2's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x4F, R0)					| 3's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x66, R0)					| 4's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x6D, R0)					| 5's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x7D, R0)					| 6's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x07, R0)					| 7's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x7F, R0)					| 8's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x6F, R0)					| 9's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x77, R0)					| A's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x7C, R0)					| b's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+	MOVC(0x39, R0)					| C's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+	MOVC(0x5E, R0)					| d's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+	MOVC(0x79, R0)					| E's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+	MOVC(0x71, R0)					| F's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
 
 	| Clear uart rx data
 	MOVC(0, R1)				| R1: rx data offset
 	ST(R1, uarx_offset)		| clear offset
-	MOVC(-4, R0)
-	ST(R0, uarx_disp_os)	| set disp offset to -4
+	MOVC(-1, R0)
+	ST(R0, uarx_disp_os)	| set disp offset to -1
 	MOVC(0x00, R0)			| R0: rx data
 	MOVC(UARX_CNT, R2)		| R2: rx data count
 clear_uarx_data:
@@ -402,46 +473,58 @@ key_process:
 	MOVC(4, R21)
 	PUSH(R8)
 	PUSH(R21)
-	CALL(disp_bcd, 2)
+	CALL(disp_hex, 2)
 
 	| Get key events
 	MOVC(SVC_KEY, R0)
 	SVC()
 	BNE(R0, key_end)	| Continue if error occurs
 
-	| Process Key2 events
+	| Process Key2 events (next data)
 	ANDC(R1, 0x04, R11)
 	BEQ(R11, key2_end)
 	LD(uarx_disp_os, R12)		| R12: disp offset
-	ADDC(R12, 4, R12)			| R12: current offset
+	CMPLTC(R12, 0, R0)			| If offset < 0,
+	BF(R0, key2_add_os)
+	MOVC(0, R12)				|   then set offset = 0
+	BR(key2_disp_i)
+key2_add_os:					| else
+	ADDC(R12, 4, R12)			|   R12: current offset
+key2_disp_i:
 	MOVC(0, R21)				| display data index
 	SHRC(R12, 2, R13)
 	PUSH(R13)
 	PUSH(R21)
-	CALL(disp_bcd, 2)	
+	CALL(disp_hex, 2)	
 	LD(R12, uarx_data, R13)		| R13: disp data
 	MOVC(2, R21)				| display data
 	PUSH(R13)
 	PUSH(R21)
-	CALL(disp_bcd, 2)
+	CALL(disp_hex, 2)
 	ST(R12, uarx_disp_os)		| store disp offset
 key2_end:
 
-	| Process Key1 events
+	| Process Key1 events (prev data)
 	ANDC(R1, 0x02, R11)
 	BEQ(R11, key1_end)
 	LD(uarx_disp_os, R12)		| R12: disp offset
-	SUBC(R12, 4, R12)			| R12: current offset
+	CMPLTC(R12, 0, R0)			| If offset < 0,
+	BF(R0, key1_sub_os)
+	MOVC(0, R12)				|   then set offset = 0
+	BR(key1_disp_i)
+key1_sub_os:					| else
+	SUBC(R12, 4, R12)			|   R12: current offset
+key1_disp_i:
 	MOVC(0, R21)				| display data index
 	SHRC(R12, 2, R13)
 	PUSH(R13)
 	PUSH(R21)
-	CALL(disp_bcd, 2)	
+	CALL(disp_hex, 2)	
 	LD(R12, uarx_data, R13)		| R13: disp data
 	MOVC(2, R21)				| display data
 	PUSH(R13)
 	PUSH(R21)
-	CALL(disp_bcd, 2)
+	CALL(disp_hex, 2)
 	ST(R12, uarx_disp_os)		| store disp offset
 key1_end:
 
@@ -673,7 +756,7 @@ bcd_dec_end:
     |     1: error, index out of range                                              |
     |   Input:                                                                      |
     |     i:   digit index                                                          |
-    |     bcd: bcd code, A-F turn off digit                                         |
+    |     bcd: 2-digit bcd code, A-F turn off digit                                 |
     |   Output:                                                                     | 
     |     none                                                                      |
     |-------------------------------------------------------------------------------|
@@ -726,6 +809,71 @@ disp_bcd_i_oor:
 	MOVC(1, R0)
 	BR(disp_bcd_end)
 
+    |-------------------------------------------------------------------------------|
+    | Dsipaly hex code with a decimal point.                                        |
+    |                                                                               |
+    |   int disp_hex(i, hex)                                                        |  
+    |   Return:                                                                     |
+    |     0: ok                                                                     |   
+    |     1: error, index out of range                                              |
+    |   Input:                                                                      |
+    |     i:   digit index                                                          |
+    |     hex: 2-digit hex code                                                     |
+    |   Output:                                                                     | 
+    |     none                                                                      |
+    |-------------------------------------------------------------------------------|
+
+ __DH_I   = 0
+ __DH_HEX = 1
+
+ disp_hex:
+ 	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+	PUSH(R3)
+
+	| Check index range
+	GETARG(__DH_I, R1)
+	GETARG(__DH_HEX, R3)		| Load delay slot
+	CMPLTC(R1, 0, R0)
+	BT(R0, disp_hex_i_oor)
+	CMPLEC(R1, 4, R0)
+	BF(R0, disp_hex_i_oor)
+
+	| Display less significant digit
+	ANDC(R3, 0x0F, R2)		| Get lsd (R2)
+	SHLC(R2, 2, R2)			| Get seg code for hex (R2)
+	LD(R2, ssc_hex_tab, R2)
+	ORC(R2, 0x80, R2)		| Turn on dp
+	MOVC(SVC_SSC, R0)
+	SVC()
+
+	| Display more significant digit
+	ADDC(R1, 1, R1)			
+	ANDC(R3, 0xF0, R2)		| Get msd (R2[7:4])
+	SHRC(R2, 2, R2)			| Get seg code for hex (R2)
+	LD(R2, ssc_hex_tab, R2)
+	MOVC(SVC_SSC, R0)
+	SVC()
+
+	| Epilogue to the subroutine
+disp_hex_end:
+	POP(R3)	
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+disp_hex_i_oor:
+	MOVC(1, R0)
+	BR(disp_hex_end)
+
 ||====================================================================================||
 ||                                  Literal  Segment                                  ||
 ||====================================================================================||
@@ -740,6 +888,8 @@ svc_ssd_addr:
 	LONG(svc_ssd+PC_SUPERVISOR)
 svc_key_addr:
 	LONG(svc_key+PC_SUPERVISOR)
+svc_ssc_addr:
+	LONG(svc_ssc+PC_SUPERVISOR)
 
 |--------------------------------------|
 | Program Signature                    |
