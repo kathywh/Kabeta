@@ -3,13 +3,14 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 06/01/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/01/2018                                                    */
+/*  Edited on:  06/02/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      UART of Kabeta I/O.                                                   */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      06/01/2018  Kathy       Unit created.                                 */
+/*      06/02/2018  Kathy       Change tx int source.                         */
 /******************************************************************************/
 
 module UART
@@ -309,10 +310,11 @@ module UART
 
   /////////////////////////////////////////////////////////////////////////////
   // Transmitter/Receiver
-  logic TxStart, TxBusy, RxBusy;
+  logic TxWrEn, TxBusy, RxBusy;/*      06/02/2018  Kathy                                                     */
+
   logic TxIntSrc, RxIntSrc, ErrorIntSrc;    // int signal not masked by ICR
   logic RxFrameErrSrc, RxParityErrSrc;
-  logic RxReady;
+  logic RxReady, TxReady;
   logic [7:0] RxData;
   logic RxParityErr;
   logic RxFrameErr;
@@ -337,7 +339,7 @@ module UART
   assign UART_Busy = TxBusy | RxBusy;
 
   // start transmission on write to DR if UART is enabled
-  assign TxStart = IO_DR_Select & IO_Interface.WrEn & UART_En;      
+  assign TxWrEn = IO_DR_Select & IO_Interface.WrEn & UART_En;      
 
   // assert Rx interrupt and write DR on receipt
   assign RxIntSrc = RxReady & UART_En;
@@ -345,22 +347,8 @@ module UART
   assign IO_DR_WrData = RxData;
   assign IO_DR_WrEn   = RxIntSrc;
 
-  // assert Tx interrupt on transmission complete
-  logic TxBusyLast;
-
-  always_ff @(posedge IO_Interface.Clock or negedge IO_Interface.Reset)
-    begin
-      if(!IO_Interface.Reset)
-        begin
-          TxBusyLast <= '0;
-        end
-      else
-        begin
-          TxBusyLast <= TxBusy;
-        end
-    end
-
-  assign TxIntSrc = (TxBusyLast & ~TxBusy) & UART_En;
+  // assert Tx interrupt on tr buffer empty (i.e. TxReady)
+  assign TxIntSrc = TxReady & UART_En;
   assign TxInt = TxIntSrc & TI_Enable;
 
   // assert error interrupt on error

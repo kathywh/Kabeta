@@ -3,12 +3,14 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/31/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/31/2018                                                    */
+/*  Edited on:  06/02/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
-/*      UART transmitter.                                                     */
+/*      UART transmitter with buffer.                                         */
 /*                                                                            */
-/*      1) TxStart is positive pulse to strobe TxData and start transmission. */
+/*      1) TxWrEn is positive pulse to strobe TxData. Only if tx buffer empty */
+/*         will the data be written into tx buffer.                           */
+/*      2) TxReady is asserted for one cycle when tx buffer is empty.         */
 /*      2) DataLenLimit, StopLenLimit, ParityEn, ParityPolarity and BaudLimit */
 /*         must keep stable during transmission, i.e. TxBusy = 1.             */
 /*      3) UART parameters:                                                   */
@@ -31,29 +33,56 @@
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/31/2018  Kathy       Unit created.                                 */
+/*      06/02/2018  Kathy       Add transmission buffer.                      */
+/*                              Change ports.                                 */
 /******************************************************************************/
 
 module UART_Tx
 (
   input  logic        Clock,
   input  logic        Reset,
-  input  logic        TxStart,
+  input  logic        TxWrEn,
   input  logic [7:0]  TxData,
   input  logic [2:0]  DataLenLimit,
   input  logic        StopLenLimit,
   input  logic        ParityEn, 
   input  logic        ParityPolarity,
   input  logic [13:0] BaudLimit,
+  output logic        TxReady,
   output logic        TxBusy,
   output logic        Txd
 );
 
-  logic TxStop;
+  logic TxStart, TxStop;
 
-
-
-  typedef enum {S_IDLE, S_START, S_DATA, S_PARITY, S_STOP} uart_state_t;
+  typedef enum {S_IDLE, S_INIT, S_START, S_DATA, S_PARITY, S_STOP, S_FINISH} uart_state_t;
   uart_state_t TxState;
+
+  assign TxReady = TxStart;
+
+  // Tx buffer
+  logic [7:0] TxDataReg;
+  logic TxDataEmpty;
+
+  always_ff @(posedge Clock or negedge Reset)
+    begin
+      if(!Reset)
+        begin
+          TxDataEmpty <= '1;
+        end
+      else
+        begin
+          if(TxStart)
+            begin
+              TxDataEmpty <= '1;
+            end
+          else if(TxWrEn & TxDataEmpty)       // write data reg only if empty
+            begin
+              TxDataReg <= TxData;
+              TxDataEmpty <= '0;
+            end
+        end
+    end
 
   // Tx shift register
   logic [7:0] TxShiftReg;
@@ -64,7 +93,7 @@ module UART_Tx
       begin
         if(TxStart)
           begin
-            TxShiftReg <= TxData;
+            TxShiftReg <= TxDataReg;
           end
         else if(TxShiftEn)
           begin
@@ -119,8 +148,7 @@ module UART_Tx
             begin
               TxBaudCntEn <= '0;
             end
-
-          if(TxBaudCntEn)
+          else if(TxBaudCntEn)
             begin
               if(TxBaudCounter == '0)
                 begin
@@ -159,6 +187,7 @@ module UART_Tx
       if(!Reset)
         begin
           TxState <= S_IDLE;
+          TxStart <= '0;
           TxStop <= '0;
         end
       else
@@ -166,15 +195,17 @@ module UART_Tx
           case(TxState)
             S_IDLE:
               begin
-                if(TxStop)
+                if(~TxDataEmpty)
                   begin
-                    TxStop <= '0;
+                    TxState <= S_INIT;
+                    TxStart <= '1;
                   end
+              end
 
-                if(TxStart)
-                  begin
-                    TxState <= S_START;
-                  end
+            S_INIT:
+              begin
+                TxState <= S_START;
+                TxStart <= 0;
               end
           
             S_START:
@@ -223,14 +254,28 @@ module UART_Tx
                   begin
                     if(TxBitIndex == StopLenLimit)
                       begin
-                        TxState <= S_IDLE;
-                        TxStop <= '1;
+                        if(TxDataEmpty)
+                          begin
+                            TxState <= S_FINISH;
+                            TxStop <= '1;                            
+                          end
+                        else 
+                          begin
+                            TxState <= S_INIT;
+                            TxStart <= '1;
+                          end
                       end
                     else 
                       begin
                         TxBitIndex <= TxBitIndex + 3'd1;
                       end
                   end
+              end
+
+            S_FINISH:
+              begin
+                TxStop <= '0;
+                TxState <= S_IDLE;
               end
           endcase
         end
@@ -242,6 +287,11 @@ module UART_Tx
     begin
       case(TxState)
         S_IDLE:
+          begin
+            TxdIn <= '1;
+          end
+
+        S_INIT:
           begin
             TxdIn <= '1;
           end
@@ -262,6 +312,11 @@ module UART_Tx
           end
 
         S_STOP:
+          begin
+            TxdIn <= '1;
+          end
+
+        S_FINISH:
           begin
             TxdIn <= '1;
           end

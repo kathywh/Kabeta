@@ -18,6 +18,12 @@ SVC_SSD  = 1
 SVC_KEY  = 2
 
 | I/O register field offset
+UART_CR_EN   = 0
+UART_CR_DLEN = 1
+UART_CR_SLEN = 2
+UART_CR_PAR  = 3
+UART_CR_BAUD = 5
+
 UART_ICR_TIE = 2
 UART_ICR_RIE = 1
 UART_ICR_EIE = 0
