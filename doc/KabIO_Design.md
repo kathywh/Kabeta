@@ -1,7 +1,7 @@
 # KabIO Design
 
-**Date:** June 1, 2018  
-**Version:** 1.0d  
+**Date:** June 2, 2018  
+**Version:** 1.0e  
 **Author:** Kathy  
 **Reviewer:** (N/A)  
 
@@ -148,6 +148,7 @@ I/O address is divided into two parts, block address and register address.
 | Seven Segment Display Control Register (SSDC) | 0x00FF_FFFF |  0x044  | Read Write |
 |     Key & Display Interrupt Enable (KDIE)     |    (N/A)    |  0x048  | Write Only |
 |          Key Status Register (KEYS)           | 0x0000_0000 |  0x04C  | Read Clear |
+|      Seven Segment Code Register (SSCR)       |    (N/A)    |  0x050  | Write Only |
 
 #### 3.2.1 LED Control Register (LEDC)
 
@@ -196,6 +197,22 @@ I/O address is divided into two parts, block address and register address.
 - KEYn
   - 0: Key not pressed
   - 1: Key pressed
+
+#### 3.2.5 Seven Segment Code Registers (SSCR)
+
+| 31           11 | 10  8 | 7     0 |
+| :-------------: | :---: | :-----: |
+|   (Reserved)    |  DI   |   SSC   |
+
+- SSC: seven segment code
+  - 0: turn off the segment
+  - 1: turn on the segment
+- DI: digit index
+  - 0 is the first digit, MAX is the last digit
+
+**NOTES:**
+
+- Write SSCR will enable the seven segment display.
 
 ### 3.3 Interrupts
 
@@ -368,3 +385,4 @@ A 32-bit timer for system tick.
 | 1.0b    | 5/31/2018 | Kathy  | (N/A)    | Add UART I/O block.    |
 | 1.0c    | 5/31/2018 | Kathy  | (N/A)    | Add system timer.      |
 | 1.0d    | 6/1/2018  | Kathy  | (N/A)    | Modify UART registers. |
+| 1.0e    | 6/2/2018  | Kathy  | (N/A)    | Add SSCR register.     |
