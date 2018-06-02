@@ -3,10 +3,10 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/31/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/01/2018                                                    */
+/*  Edited on:  06/02/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
-/*      UART receiver.                                                        */
+/*      UART receiver with buffer.                                            */
 /*                                                                            */
 /*      1) If Enable is deasserted, the ongoing receipt will still compelete. */
 /*      1) RxReady is positive pulse to strobe RxData.                        */
@@ -35,6 +35,7 @@
 /*  Revisions:                                                                */
 /*      05/31/2018  Kathy       Unit created.                                 */
 /*      06/01/2018  Kathy       Add enable control.                           */
+/*      06/02/2018  Kathy       Change some code style.                       */
 /******************************************************************************/
 
 module UART_Rx
@@ -143,13 +144,11 @@ module UART_Rx
               RxBaudCounter <= {1'b0, BaudLimit[13:1]};
               RxBaudCntEn <= '1;
             end
-          
-          if(RxStop)
+          else if(RxStop)
             begin
               RxBaudCntEn <= '0;
             end
-
-          if(RxBaudCntEn)
+          else if(RxBaudCntEn)
             begin
               if(RxBaudCounter == '0)
                 begin
