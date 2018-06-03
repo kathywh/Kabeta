@@ -64,7 +64,7 @@ led0_status:
 	STORAGE(1)
 
 | UART rx data
-UARX_CNT = 64
+UARX_CNT = 40
 uarx_offset:
 	STORAGE(1)
 uarx_disp_os:
@@ -428,8 +428,16 @@ clear_uarx_data:
 	IOWAIT()
 
 	| Setup UART
-	MOVC((0x03<<UART_CR_BAUD)+(0x01<<UART_CR_DLEN)+(0x01<<UART_CR_EN), R0)
-	IOW(R0, UART_CR)				| Enable UART, default parameters
+|||| 115200, 8N1
+UART_PARAM = (0x03<<UART_CR_BAUD)+(0x01<<UART_CR_DLEN)+(0x01<<UART_CR_EN)
+|||| 115200, 7O1
+||UART_PARAM = (0x03<<UART_CR_BAUD)+(0x03<<UART_CR_PAR)+(0x01<<UART_CR_EN)
+|||| 115200, 7E1
+||UART_PARAM = (0x03<<UART_CR_BAUD)+(0x02<<UART_CR_PAR)+(0x01<<UART_CR_EN)
+|||| 115200, 7N1
+||UART_PARAM = (0x03<<UART_CR_BAUD)+(0x01<<UART_CR_EN)
+	MOVC(UART_PARAM, R0)
+	IOW(R0, UART_CR)				| Enable UART
 	IOWAIT()
 	MOVC((0x01<<UART_ICR_RIE), R0)
 	IOW(R0, UART_ICR)				| Enable UART Rx Interrupt

@@ -19,11 +19,14 @@ program Tester
 )
 ( 
   output logic Reset,
-  output logic [3:0] Keys
+  output logic [3:0] Keys,
+  output logic Rxd,
+  input  logic Txd
 );
 
   wire Sys_Clock = Testbench.DesignTop.Sys_Clock;
   wire IO_Clock  = Testbench.DesignTop.IO_Clock;
+  wire IO_Reset  = Testbench.DesignTop.IO_Reset;
 
   initial
     begin
@@ -44,21 +47,29 @@ program Tester
   initial
     begin
       Keys = '1;
-      // repeat(100)  @(posedge IO_Clock); 
-      // Keys[0] = '0;
-      // repeat(4)  @(posedge IO_Clock);
-      // Keys[1] = '0;
-      // repeat(6)  @(posedge IO_Clock);
-      // Keys[0] = '1;
-      // repeat(6)  @(posedge IO_Clock);
-      // Keys[1] = '1;
-      // repeat(10)  @(posedge IO_Clock);
-      // Keys[2] = '0;
-      // Keys[3] = '0;
-      // repeat(4)  @(posedge IO_Clock);
-      // Keys[2] = '1;
-      // Keys[3] = '1; 
-      repeat(4000)  @(posedge IO_Clock); 
+      Rxd = '1;
+      wait(IO_Reset == '1);
+      repeat(800)  @(posedge IO_Clock);
+
+      // Start bit
+      Rxd = '0;
+      repeat(129)  @(posedge IO_Clock);
+      
+      // D0, D1, ... D6
+      Rxd = '1;
+      repeat(129)  @(posedge IO_Clock);
+      Rxd = '0;
+      repeat(129*6)  @(posedge IO_Clock);
+
+      // Parity bit (Odd)
+      Rxd = '0;
+      repeat(129)  @(posedge IO_Clock);
+      
+      // Stop bit
+      Rxd = '1;
+      repeat(129)  @(posedge IO_Clock);
+
+      repeat(200)  @(posedge IO_Clock); 
     end
 
 endprogram

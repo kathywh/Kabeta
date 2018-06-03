@@ -28,7 +28,7 @@ module Testbench;
   logic [3:0] Keys;
   logic Rxd, Txd;
 
-  assign Rxd = 1'b1;
+  // assign Rxd = 1'b1;
 
   // test environment
   ClockGenerator#(TCLK) ClkGen(.*);
