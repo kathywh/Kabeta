@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/31/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/02/2018                                                    */
+/*  Edited on:  06/03/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      UART receiver with buffer.                                            */
@@ -36,6 +36,7 @@
 /*      05/31/2018  Kathy       Unit created.                                 */
 /*      06/01/2018  Kathy       Add enable control.                           */
 /*      06/02/2018  Kathy       Change some code style.                       */
+/*      06/03/2018  Kathy       Add missing bit index init in STOP state.     */
 /******************************************************************************/
 
 module UART_Rx
@@ -260,6 +261,7 @@ module UART_Rx
                 if(RxChangeState)
                   begin
                     RxState <= S_STOP;
+                    RxBitIndex <= '0;
                   end
               end
 
