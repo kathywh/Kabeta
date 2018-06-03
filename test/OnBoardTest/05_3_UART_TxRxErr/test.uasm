@@ -1,0 +1,1034 @@
+.include ../../../tools/kabeta.uasm
+
+||====================================================================================||
+||                                Constant Definitions                                ||
+||====================================================================================||
+
+| Interrupt Numbers
+IRQ_COUNT = 8		| IRQ count
+
+IRQ_0     = 0
+IRQ_1     = 1
+IRQ_UAERR = 2		| UART: Error
+IRQ_UARX  = 3		| UART: Receipt
+IRQ_UATX  = 4		| UART: Transmission
+IRQ_5     = 5
+IRQ_TICK  = 6		| STMR: Timer Tick
+IRQ_KEY	  = 7		| BKD: Key Press Interrupt
+
+| SVC function codes
+SVC_FCNT = 5		| SVC function count
+
+SVC_LED  = 0
+SVC_SSD  = 1
+SVC_KEY  = 2
+SVC_SSC  = 3
+SVC_UATX = 4
+
+| I/O register field offset
+UART_CR_EN   = 0
+UART_CR_DLEN = 1
+UART_CR_SLEN = 2
+UART_CR_PAR  = 3
+UART_CR_BAUD = 5
+
+UART_ICR_TIE = 2
+UART_ICR_RIE = 1
+UART_ICR_EIE = 0
+
+UART_SR_PE   = 2
+UART_SR_FE   = 1
+UART_SR_BUSY = 0
+
+||====================================================================================||
+||                                 Macro  Definitions                                 ||
+||====================================================================================||
+
+| Wait for I/O completion
+.macro IOWAIT() {
+	NOP()  NOP()  NOP()  NOP()
+	NOP()  NOP()  NOP()  NOP()
+	NOP()  NOP()  NOP()  NOP()}
+
+||====================================================================================||
+||                                    Data Segment                                    ||
+||====================================================================================||
+LOCATE(0)
+
+| SVC Jump Table
+svc_sub_tab:
+	STORAGE(SVC_FCNT)
+
+| IRQ0 Jump Table
+irq_sub_tab:
+	STORAGE(IRQ_COUNT)
+
+| Seg code hex table
+ssc_hex_tab:
+	STORAGE(16)
+
+| Key Event Table
+|  ---------------------
+|  | k3 | k2 | k1 | k0 |
+|  ---------------------
+key_event_tab:
+	STORAGE(1)
+
+| UART tx data
+UATX_CNT = 256
+uatx_offset:
+	STORAGE(1)
+uatx_data:
+	STORAGE(UATX_CNT)
+
+| UART rx data
+UARX_CNT = 40
+uarx_offset:
+	STORAGE(1)
+uarx_disp_os:
+	STORAGE(1)
+uarx_data:
+	STORAGE(UARX_CNT)
+
+| Stack
+stack:
+	STORAGE(256)
+
+||====================================================================================||
+||                                    I/O  Segment                                    ||
+||====================================================================================||
+LOCATE(0x000)
+EIC_IE:	
+	STORAGE(1)		| 0x000, WO
+EIC_IN:
+	STORAGE(1)		| 0x004, RO
+
+LOCATE(0x040)
+BKD_LEDC:
+	STORAGE(1)		| 0x040, RW
+BKD_SSDC:
+	STORAGE(1)		| 0x044, RW
+BKD_KDIE:
+	STORAGE(1)		| 0x048, WO
+BKD_KEYS:
+	STORAGE(1)		| 0x04C, RC
+BKD_SSCR:
+	STORAGE(1)		| 0x050, WO
+
+LOCATE(0x080)
+UART_CR:
+	STORAGE(1)		| 0x080, RW
+UART_SR:
+	STORAGE(1)		| 0x084, RO
+UART_ICR:
+	STORAGE(1)		| 0x088, RW
+UART_ISR:
+	STORAGE(1)		| 0x08C, RC
+UART_DR:
+	STORAGE(1)		| 0x090, WO/RO
+
+LOCATE(0x0C0)
+STMR_CR:
+	STORAGE(1)		| 0x0C0, WO
+STMR_LVR:
+	STORAGE(1)		| 0x0C4, WO
+
+||====================================================================================||
+||                                 Exception  Vectors                                 ||
+||====================================================================================||
+EXCVT()
+
+rst_vec:
+	BR(start)
+svc_vec:
+	BR(svc_esr)
+ill_vec:
+	BR(.)
+inv_op_vec:
+	BR(.)
+inv_da_vec:
+	BR(.)
+inv_ia_vec:
+	BR(.)
+irq_vec:
+	BR(irq_esr)
+urq_vec:
+	BR(.)
+
+||====================================================================================||
+||                                    Code Segment                                    ||
+||====================================================================================||
+LOCATE(0x100)
+
+	|-------------------------------------------------------------------------------|
+	| IRQ Handler                                                                  |
+	|-------------------------------------------------------------------------------|
+irq_esr:
+	| Adjust & save XP
+	SUBC(XP, 4, XP)
+	PUSH(XP)
+
+	| Save registers
+	PUSH(R0)
+	PUSH(R1)
+	PUSH(R2)
+
+	| Get interrupt number
+
+	| Jump to subroutine
+	IOR(EIC_IN, R1)				| R1: interrupt number
+	SHLC(R1, 2, R1)				| Convert IRQ number into offset in jump table
+	LD(R1, irq_sub_tab, R0)		| Load subroutine address
+	JMP(R0)						| Jump to subroutine
+
+irq_key:
+	| read key status
+	IOR(BKD_KEYS, R2)		| Read key status reg
+	ST(R2, key_event_tab)	| Write key event table
+	BR(irq_end)
+
+irq_tick:
+	| sys tick int, toggle LED0
+	IOR(BKD_LEDC, R0)			| Read LEDC register
+	XORC(R0, 0x01, R0)			| Toggle led0 status
+	IOWAIT()
+	IOW(R0, BKD_LEDC)			| Write LEDC register
+	BR(irq_end)
+
+irq_uatx:
+	| uart tx int, send a byte
+	LD(uatx_offset, R1)			| R1: data offset
+	CMPEQC(R1, UATX_CNT*4, R0)	| boundary check
+	BT(R0, irq_end)
+	LD(R1, uatx_data, R0)		| R0: data to send
+	ADDC(R1, 4, R1)				| store new offset
+	ST(R1, uatx_offset)
+	IOW(R0, UART_DR)			| start transmission
+	BR(irq_end)
+
+irq_uarx:
+	| uart rx int, recv a byte
+	LD(uarx_offset, R1)			| R1: data offset
+	CMPEQC(R1, UARX_CNT*4, R0)	| boundary check
+	BT(R0, irq_uarx_rst_os)
+irq_uarecv_data:
+	IOR(UART_DR, R0)			| R0: recv data
+	ST(R0, R1, uarx_data)		| store data
+	ADDC(R1, 4, R1)				| store new offset
+	ST(R1, uarx_offset)
+	IOR(BKD_LEDC, R0)			| turn off LED2/3
+	ANDC(R0, 0xFFF3, R0)
+	IOWAIT()
+	IOW(R0, BKD_LEDC)
+	BR(irq_end)
+
+irq_uarx_rst_os:
+	MOVC(0, R1)
+	BR(irq_uarecv_data)
+
+irq_uaerr:
+	IOR(UART_SR, R1)			| Read UART SR
+	ANDC(R1, 0x01<<UART_SR_PE, R0)	| Check PE
+	BT(R0, irq_ua_pe)
+irq_ua_chk_fe:
+	ANDC(R1, 0x01<<UART_SR_FE, R0)	| Check FE
+	BF(R0, irq_end)
+	IOR(BKD_LEDC, R0)			| Turn on LED2 (FE)
+	ORC(R0, 0x04, R0)
+	IOWAIT()
+	IOW(R0, BKD_LEDC)	
+	BR(irq_end)
+
+irq_ua_pe:						| Turn on LED3 (PE)
+	IOR(BKD_LEDC, R0)
+	ORC(R0, 0x08, R0)
+	IOWAIT()
+	IOW(R0, BKD_LEDC)
+	BR(irq_ua_chk_fe)
+
+irq_end:
+	| Restore registers
+	POP(R2)
+	POP(R1)
+	POP(R0)
+
+	| Restore XP then return
+	POP(XP)
+	JMP(XP)
+
+	|-------------------------------------------------------------------------------|
+	| SVC Handler                                                                   |
+	|                                                                               |
+	|   1) Function code is in register R0.                                         |
+	|   2) Input/Output arguments are in registers, R1, R2, R3, ...                 |
+	|   3) Status code is returned in R0.                                           |
+	|        0: ok                                                                  |
+	|        1: function code out of range                                          |
+	|                                                                               |
+	|   Function            R0    R1           R2          Comment                  |
+	|   ---------------     --    ---------    --------    -----------------------  |
+	|   Turn on/off LED      0    IN  b3-b0    -           0: off, 1: on            |
+	|   Display in SSD       1    IN  index    IN b4-b0    b4: dp, b3-b0: bcd code  |
+	|   Get key events       2    OUT b3-b0    -           1: pressed, 0: normal    |
+	|   Set 7-seg code       3    IN  index    IN b7-b0    b7~0  0: off, 1: on      |
+	|   Send from UART       4    IN  index    -           [index:CNT-1]            |
+	|-------------------------------------------------------------------------------|
+
+svc_esr:
+	| Save XP
+	PUSH(XP)
+
+	| Save registers
+	PUSH(R8)
+	PUSH(R9)
+	PUSH(R10)
+
+	| Function jump
+	CMPLTC(R0, 0, R8)			| If R0 < 0, then go to error handler
+	BT(R8, svc_fc_oor)
+	CMPLEC(R0, SVC_FCNT, R8)	| If R0 > SVC_FCNT, then go to error handler
+	BF(R8, svc_fc_oor)
+	SHLC(R0, 2, R0)				| Convert function code into offset in jump table
+	LD(R0, svc_sub_tab, R8)		| Load subroutine address
+	JMP(R8)
+
+	| Function code out of range
+svc_fc_oor:
+	MOVC(1, R0)
+	BR(svc_end)
+
+svc_led:
+	ANDC(R1, 0x000F, R1)
+	IOW(R1, BKD_LEDC)		| Write LEDC register
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_ssd:
+	| Read SSDC
+	IOR(BKD_SSDC, R8)		| Read SSDC register (R8)
+
+	| BCD code
+	SHLC(R1, 2, R9)			| Get DIGn position (R9)
+	MOVC(0x000F, R10)
+	SHL(R10, R9, R10)		| Get DIGn mask (R10)
+	XORC(R10, 0xFFFF, R10)
+	AND(R8, R10, R8)		| Clear DIGn bits (R8)
+	ANDC(R2, 0x000F, R10)
+	SHL(R10, R9, R10)		| Shift bcd code (R10)
+	OR(R8, R10, R8)			| Set DIGn bits (R8)
+
+	| Decimal point
+	ADDC(R1, 24, R9)		| Get DPn position (R9)
+	MOVC(0x0001, R10)
+	SHL(R10, R9, R10)		| Get DPn mask (R10)
+	XORC(R10, 0xFFFF, R10)
+	AND(R8, R10, R8)		| Clear DPn bit (R8)
+	ANDC(R2, 0x0010, R10)
+	SHRC(R10, 4, R10)
+	SHL(R10, R9, R10)		| Shift dp bit (R10)
+	OR(R8, R10, R8)			| Set DPn bit (R8)
+
+	| SSD enable bit
+	MOVC(0x01, R9)
+	SHLC(R9, 31, R9)
+	OR(R8, R9, R8)
+
+	| Write SSDC
+	IOW(R8, BKD_SSDC)		| Write SSDC register
+
+	| Set status code
+	MOVC(0, R0)				
+	BR(svc_end)
+
+svc_key:
+	| Get key event
+	LD(key_event_tab, R1)
+	
+	| Set status code & Clear key event
+	MOVC(0, R0)
+	ST(R0, key_event_tab)
+	BR(svc_end)
+
+svc_ssc:
+	ANDC(R1, 0x07, R8)		| Mask and shift DI field
+	SHLC(R8, 8, R8)
+	ANDC(R2, 0xFF, R9)		| Mask SSC field
+	OR(R9, R8, R9)			| Write SSCR register
+	IOW(R9, BKD_SSCR)
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_uatx:
+	SHLC(R1, 2, R8)			| R8: first data offset
+	ADDC(R8, 4, R9)			| R9: second data offset
+	LD(R8, uatx_data, R8)	| R8: load first data
+	ST(R9, uatx_offset)
+	IOW(R8, UART_DR)
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_end:
+	| Restore registers
+	POP(R10)
+	POP(R9)
+	POP(R8)
+
+	| Restore XP then return
+	POP(XP)
+	JMP(XP)
+
+start:
+	|-------------------------------------------------------------------------------|
+	| System initialization                                                         |
+	|-------------------------------------------------------------------------------|
+
+	| Set SP
+	MOVC(stack, SP)
+
+	| Fill SVC jump table
+	MOVC(svc_sub_tab, R1)
+	LDR(svc_led_addr, R0)			| 0: svc_led
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(svc_ssd_addr, R0)			| 1: svc_ssd
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(svc_key_addr, R0)			| 2: svc_key
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(svc_ssc_addr, R0)			| 3: svc_ssc
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(svc_uatx_addr, R0)			| 4: svc_uatx
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+
+	| Fill IRQ jump table
+	MOVC(irq_sub_tab, R1)			| R1: IRQ jump base addr
+	LDR(irqx_unused_addr, R0)		| 0, 1, 5: Unused sub, return immediately
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(irq2_uaerr_addr, R0)		| 2: UART err
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(irq3_uarx_addr, R0)			| 3: UART rx
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(irq4_uatx_addr, R0)			| 4: UART tx
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(irqx_unused_addr, R0)
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(irq6_tick_addr, R0)			| 6: Sys tick
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+	LDR(irq7_key_addr, R0)			| 7: Key
+	ST(R0, R1, 0)
+	ADDC(R1, 4, R1)
+
+	| Fill seg code hex table
+	MOVC(0x3F, R0)					| 0's seg code
+	MOVC(0, R1)
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x06, R0)					| 1's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x5B, R0)					| 2's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x4F, R0)					| 3's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x66, R0)					| 4's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x6D, R0)					| 5's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x7D, R0)					| 6's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x07, R0)					| 7's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x7F, R0)					| 8's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x6F, R0)					| 9's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x77, R0)					| A's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)
+	MOVC(0x7C, R0)					| b's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+	MOVC(0x39, R0)					| C's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+	MOVC(0x5E, R0)					| d's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+	MOVC(0x79, R0)					| E's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+	MOVC(0x71, R0)					| F's seg code
+	ST(R0, R1, ssc_hex_tab)
+	ADDC(R1, 4, R1)	
+
+	| Fill uart tx data
+	MOVC(4, R1)
+	ST(R1, uatx_offset)		| store offset
+	MOVC(0, R1)				| R1: tx data offset
+	MOVC(0x00, R0)			| R0: tx data
+	MOVC(UATX_CNT, R2)		| R2: tx data count
+fill_uatx_data:
+	ST(R0, R1, uatx_data)
+	ADDC(R1, 4, R1)
+	ADDC(R0, 1, R0)
+	SUBC(R2, 1, R2)
+	BNE(R2, fill_uatx_data)
+
+	| Clear uart rx data
+	MOVC(0, R1)				| R1: rx data offset
+	ST(R1, uarx_offset)		| clear offset
+	MOVC(-1, R0)
+	ST(R0, uarx_disp_os)	| set disp offset to -1
+	MOVC(0x00, R0)			| R0: rx data
+	MOVC(UARX_CNT, R2)		| R2: rx data count
+clear_uarx_data:
+	ST(R0, R1, uarx_data)
+	ADDC(R1, 4, R1)
+	SUBC(R2, 1, R2)
+	BNE(R2, clear_uarx_data)
+
+	| Setup system timer
+	LDR(sys_tick_lv, R0)
+	IOW(R0, STMR_LVR)
+	MOVC(0x01, R0)
+	IOWAIT()
+	IOW(R0, STMR_CR)
+	
+	| Setup UART
+|||| 115200, 8N1
+||UART_PARAM = (0x03<<UART_CR_BAUD)+(0x01<<UART_CR_DLEN)+(0x01<<UART_CR_EN)
+|||| 115200, 7O1
+UART_PARAM = (0x03<<UART_CR_BAUD)+(0x03<<UART_CR_PAR)+(0x01<<UART_CR_EN)
+|||| 115200, 7E1
+||UART_PARAM = (0x03<<UART_CR_BAUD)+(0x02<<UART_CR_PAR)+(0x01<<UART_CR_EN)
+|||| 115200, 7N1
+||UART_PARAM = (0x03<<UART_CR_BAUD)+(0x01<<UART_CR_EN)
+	MOVC(UART_PARAM, R0)
+	IOWAIT()
+	IOW(R0, UART_CR)				| Enable UART
+	UART_INTEN = (0x01<<UART_ICR_TIE)+(0x01<<UART_ICR_RIE)+(0x01<<UART_ICR_EIE)
+	MOVC(UART_INTEN, R0)
+	IOWAIT()
+	IOW(R0, UART_ICR)				| Enable UART Rx Interrupt
+	
+	| Enable Key Interrupt
+	MOVC(1, R0)
+	IOWAIT()
+	IOW(R0, BKD_KDIE)
+	
+	| Enable interrupt
+	MOVC(1, R0)
+	IOWAIT()
+	IOW(R0, EIC_IE)
+
+	| UART send first byte
+	MOVC(0x00, R0)
+	IOWAIT()
+	IOW(R0, UART_DR)
+
+	| Switch to User Mode
+	MOVC(user_mode%PC_MASK, R0)
+	JMP(R0)
+user_mode:
+
+	|-------------------------------------------------------------------------------|
+	| Recv data display (HEX)                                                       |
+	|                                                                               |
+	|   -------------------------------------                                       |
+	|   | K3H | K3L | K2H | K2L | K1H | K1L |                                       |
+	|   -------------------------------------                                       |
+	|                                                                               |
+	|   (K3H, K3L): data count.                                                     |
+	|                                 Key0: unused                                  |
+	|   (K2H, K2L): data.             Key1: prev data                               |
+	|                                 Key2: next data                               |
+	|   (K1H, K1L): data index        Key3: unused                                  |
+	|-------------------------------------------------------------------------------|
+
+
+key_process:
+
+	| Display data count
+	LD(uarx_offset, R8)
+	SHRC(R8, 2, R8)
+	MOVC(4, R21)
+	PUSH(R8)
+	PUSH(R21)
+	CALL(disp_hex, 2)
+
+	| Get key events
+	MOVC(SVC_KEY, R0)
+	SVC()
+	BNE(R0, key_end)	| Continue if error occurs
+
+	| Key3: send from index to end
+	ANDC(R1, 0x08, R11)
+	BEQ(R11, key3_end)
+	LD(uarx_disp_os, R1)	| R1: display offset
+	SHRC(R1, 2, R1)			| R1: display index, as send index
+	MOVC(SVC_UATX, R0)
+	SVC()
+key3_end:
+
+	| Process Key2 events (next data)
+	ANDC(R1, 0x04, R11)
+	BEQ(R11, key2_end)
+	LD(uarx_disp_os, R12)		| R12: disp offset
+	CMPLTC(R12, 0, R0)			| If offset < 0,
+	BF(R0, key2_add_os)
+	MOVC(0, R12)				|   then set offset = 0
+	BR(key2_disp_i)
+key2_add_os:					| else
+	CMPLTC(R12, (UARX_CNT-1)*4, R0)	|boundary check
+	BF(R0, key2_rst_os)
+	ADDC(R12, 4, R12)			|     within: R12: compute current offset
+	BR(key2_disp_i)
+key2_rst_os:
+	MOVC(0, R12)				|     out of: R12: wrap offset
+key2_disp_i:
+	MOVC(0, R21)				| display data index
+	SHRC(R12, 2, R13)
+	PUSH(R13)
+	PUSH(R21)
+	CALL(disp_hex, 2)	
+	LD(R12, uarx_data, R13)		| R13: disp data
+	MOVC(2, R21)				| display data
+	PUSH(R13)
+	PUSH(R21)
+	CALL(disp_hex, 2)
+	ST(R12, uarx_disp_os)		| store disp offset
+key2_end:
+	
+
+	| Process Key1 events (prev data)
+	ANDC(R1, 0x02, R11)
+	BEQ(R11, key1_end)
+	LD(uarx_disp_os, R12)		| R12: disp offset
+	CMPLTC(R12, 0, R0)			| If offset < 0,
+	BF(R0, key1_sub_os)
+	MOVC(0, R12)				|   then set offset = 0
+	BR(key1_disp_i)
+key1_sub_os:					| else
+	BEQ(R12, key1_rst_os)		|   boundary check
+	SUBC(R12, 4, R12)			|     within: R12: compute current offset
+	BR(key1_disp_i)
+key1_rst_os:
+	MOVC((UARX_CNT-1)*4, R12)	|     out of: R12: wrap offset
+key1_disp_i:
+	MOVC(0, R21)				| display data index
+	SHRC(R12, 2, R13)
+	PUSH(R13)
+	PUSH(R21)
+	CALL(disp_hex, 2)	
+	LD(R12, uarx_data, R13)		| R13: disp data
+	MOVC(2, R21)				| display data
+	PUSH(R13)
+	PUSH(R21)
+	CALL(disp_hex, 2)
+	ST(R12, uarx_disp_os)		| store disp offset
+key1_end:
+
+	| Delay 100ms
+key_delay_100ms:
+	MOVC(100, R0)
+	PUSH(R0)
+	CALL(delay_ms, 1)
+
+	| Loop forever
+key_end:
+	BR(key_process)
+
+end:
+	BR(.)
+
+
+    |-------------------------------------------------------------------------------|
+    | Delay for a while (26 cycles).                                                |
+    |   (CALL=1+2=3 cycles, total 3+4+12+7=26 cycles)                               |
+    |                                                                               |
+    |   void udelay(void)                                                           |   
+    |   Return:                                                                     |
+    |     none                                                                      |
+    |   Input:                                                                      |  
+    |     none                                                                      |
+    |   Output:                                                                     |
+    |     none                                                                      |
+    |-------------------------------------------------------------------------------|
+
+udelay:
+    | Prologue to the subroutine (4 cycles)
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	|PUSH(R1)		| Save registers
+
+	| Delay for a while (3x4=12 cycles)
+	MOVC(3, R0)		| R0: delay count
+	NOP()
+udelay_loop:
+	SUBC(R0, 1, R0)
+	BT(R0, udelay_loop)
+
+	| Epilogue to the subroutine (4+1+2=7 cycles)
+udelay_end:	
+	|POP(R1)		| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()			| Add one cycle for load delay
+
+    |-------------------------------------------------------------------------------|
+    | Delay for milliseconds.                                                       |
+    |                                                                               |
+    |   int delay_ms(n)                                                             |
+    |   1) Input arguments                                                          |
+    |        n: delay for n milliseconds.                                           |
+    |   2) Return value                                                             |
+    |        0: ok                                                                  |
+    |        1: error, n<0                                                          |
+    |   2) Analysis of delay iteration                                              |
+    |      [CODE]                                                                   |
+    |      MOVC(10000, R0)                                                          |
+    |      NOP()                                                                    |
+    |      delay_1ms_loop:                                                          |
+    |          SUBC(R0, 1, R0)                                                      |
+    |          BT(R0, delay_1ms_loop)                                               |
+    |      [END]                                                                    |
+    |      10000 iterations count for 1ms (Fsysclk=40MHz)                           |
+    |        4 cycles per iteration except last one only 2 cycles                   |
+    |        MOVC & NOP compensate for the last iteration                           |
+    |   3) Delay of prologue & epilogue does NOT count.                             |
+    |-------------------------------------------------------------------------------|
+
+__DM_ARG_N = 0
+
+delay_ms:
+	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	
+	| Get and check argument `n'
+	GETARG(__DM_ARG_N, R1)
+	CMPLTC(R1, 0, R0)
+	BT(R0, delay_err_neg_n)
+
+delay_1_ms:
+	| Delay for 1ms
+	MOVC(10000, R0)	| R0: delay count for 1ms (10000=0x2710, MSB=0)
+	NOP()
+delay_1ms_loop:
+	SUBC(R0, 1, R0)
+	BT(R0, delay_1ms_loop)
+
+	SUBC(R1, 1, R1)
+	BNE(R1, delay_1_ms)
+
+	| Epilogue to the subroutine
+delay_ms_end:	
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+delay_err_neg_n:
+	MOVC(1, R0)
+	BR(delay_ms_end)
+
+    |-------------------------------------------------------------------------------|
+    | BCD code increment.                                                           |
+    |                                                                               |
+    |   void bcd_inc(a)                                                             |  
+    |   Return:                                                                     |
+    |     none                                                                      |  
+    |   Input:                                                                      |
+    |     a: bcd code                                                               |
+    |   Output:                                                                     | 
+    |     a: increment result                                                       |
+    |-------------------------------------------------------------------------------|
+
+__BI_ARG_A = 0
+
+bcd_inc:
+	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+
+	| Increment as if it were binary
+	GETARG(__BI_ARG_A, R1)
+	ADDC(R1, 1, R1)
+
+	| Adjust for bcd code
+	ANDC(R1, 0x0F, R2)
+	CMPLTC(R2, 10, R2)
+	BT(R2, bcd_inc_adj_msd)
+	ADDC(R1, 0x06, R1)
+bcd_inc_adj_msd:
+	ANDC(R1, 0xF0, R2)
+	SHRC(R2, 4, R2)
+	CMPLTC(R2, 10, R2)
+	BT(R2, bcd_inc_mask_hi)
+	ADDC(R1, 0x60, R1)
+bcd_inc_mask_hi:
+	MOVC(0x00FF, R2)
+	AND(R1, R2, R1)
+
+	| Save result
+	PUTARG(R1, __BI_ARG_A)
+
+	| Epilogue to the subroutine
+bcd_inc_end:
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+    |-------------------------------------------------------------------------------|
+    | BCD code decrement.                                                           |
+    |                                                                               |
+    |   void bcd_dec(a)                                                             |  
+    |   Return:                                                                     |
+    |     none                                                                      |    
+    |   Input:                                                                      |
+    |     a: bcd code                                                               |
+    |   Output:                                                                     | 
+    |     a: decrement result                                                       |
+    |-------------------------------------------------------------------------------|
+
+__BD_ARG_A = 0
+
+bcd_dec:
+	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+
+	| Increment as if it were binary
+	GETARG(__BD_ARG_A, R1)
+	SUBC(R1, 1, R1)
+
+	| Adjust for bcd code
+	ANDC(R1, 0x0F, R2)
+	CMPLTC(R2, 10, R2)
+	BT(R2, bcd_dec_adj_msd)
+	SUBC(R1, 0x06, R1)
+bcd_dec_adj_msd:
+	ANDC(R1, 0xF0, R2)
+	SHRC(R2, 4, R2)
+	CMPLTC(R2, 10, R2)
+	BT(R2, bcd_dec_mask_hi)
+	SUBC(R1, 0x60, R1)
+bcd_dec_mask_hi:
+	MOVC(0x00FF, R2)
+	AND(R1, R2, R1)
+
+	| Save result
+	PUTARG(R1, __BD_ARG_A)
+
+	| Epilogue to the subroutine
+bcd_dec_end:
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+    |-------------------------------------------------------------------------------|
+    | Dsipaly bcd code with a decimal point.                                        |
+    |                                                                               |
+    |   int disp_bcd(i, bcd)                                                        |  
+    |   Return:                                                                     |
+    |     0: ok                                                                     |   
+    |     1: error, index out of range                                              |
+    |   Input:                                                                      |
+    |     i:   digit index                                                          |
+    |     bcd: 2-digit bcd code, A-F turn off digit                                 |
+    |   Output:                                                                     | 
+    |     none                                                                      |
+    |-------------------------------------------------------------------------------|
+
+ __DB_I   = 0
+ __DB_BCD = 1
+
+ disp_bcd:
+ 	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+	PUSH(R3)
+
+	| Check index range
+	GETARG(__DB_I, R1)
+	GETARG(__DB_BCD, R3)		| Load delay slot
+	CMPLTC(R1, 0, R0)
+	BT(R0, disp_bcd_i_oor)
+	CMPLEC(R1, 4, R0)
+	BF(R0, disp_bcd_i_oor)
+
+	| Display less significant digit
+	ANDC(R3, 0x0F, R2)
+	ORC(R2, 0x10, R2)		| Turn on dp
+	MOVC(SVC_SSD, R0)
+	SVC()
+
+	| Display more significant digit
+	ADDC(R1, 1, R1)
+	ANDC(R3, 0xF0, R2)
+	SHRC(R2, 4, R2)
+	MOVC(SVC_SSD, R0)
+	SVC()
+
+	| Epilogue to the subroutine
+disp_bcd_end:
+	POP(R3)	
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+disp_bcd_i_oor:
+	MOVC(1, R0)
+	BR(disp_bcd_end)
+
+    |-------------------------------------------------------------------------------|
+    | Dsipaly hex code with a decimal point.                                        |
+    |                                                                               |
+    |   int disp_hex(i, hex)                                                        |  
+    |   Return:                                                                     |
+    |     0: ok                                                                     |   
+    |     1: error, index out of range                                              |
+    |   Input:                                                                      |
+    |     i:   digit index                                                          |
+    |     hex: 2-digit hex code                                                     |
+    |   Output:                                                                     | 
+    |     none                                                                      |
+    |-------------------------------------------------------------------------------|
+
+ __DH_I   = 0
+ __DH_HEX = 1
+
+ disp_hex:
+ 	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+	PUSH(R3)
+
+	| Check index range
+	GETARG(__DH_I, R1)
+	GETARG(__DH_HEX, R3)		| Load delay slot
+	CMPLTC(R1, 0, R0)
+	BT(R0, disp_hex_i_oor)
+	CMPLEC(R1, 4, R0)
+	BF(R0, disp_hex_i_oor)
+
+	| Display less significant digit
+	ANDC(R3, 0x0F, R2)		| Get lsd (R2)
+	SHLC(R2, 2, R2)			| Get seg code for hex (R2)
+	LD(R2, ssc_hex_tab, R2)
+	ORC(R2, 0x80, R2)		| Turn on dp
+	MOVC(SVC_SSC, R0)
+	SVC()
+
+	| Display more significant digit
+	ADDC(R1, 1, R1)			
+	ANDC(R3, 0xF0, R2)		| Get msd (R2[7:4])
+	SHRC(R2, 2, R2)			| Get seg code for hex (R2)
+	LD(R2, ssc_hex_tab, R2)
+	MOVC(SVC_SSC, R0)
+	SVC()
+
+	| Epilogue to the subroutine
+disp_hex_end:
+	POP(R3)	
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+disp_hex_i_oor:
+	MOVC(1, R0)
+	BR(disp_hex_end)
+
+||====================================================================================||
+||                                  Literal  Segment                                  ||
+||====================================================================================||
+LITERAL()
+sys_tick_lv:			| system timer load value
+	LONG(14999999)		| 15E+6 - 1
+
+| SVC subroutine address table
+svc_led_addr:
+	LONG(svc_led+PC_SUPERVISOR)
+svc_ssd_addr:
+	LONG(svc_ssd+PC_SUPERVISOR)
+svc_key_addr:
+	LONG(svc_key+PC_SUPERVISOR)
+svc_ssc_addr:
+	LONG(svc_ssc+PC_SUPERVISOR)
+svc_uatx_addr:
+	LONG(svc_uatx+PC_SUPERVISOR)
+
+| IRQ subroutine address table
+irqx_unused_addr:
+	LONG(irq_end+PC_SUPERVISOR)
+irq2_uaerr_addr:
+	LONG(irq_uaerr+PC_SUPERVISOR)
+irq3_uarx_addr:
+	LONG(irq_uarx+PC_SUPERVISOR)
+irq4_uatx_addr:
+	LONG(irq_uatx+PC_SUPERVISOR)
+irq6_tick_addr:
+	LONG(irq_tick+PC_SUPERVISOR)
+irq7_key_addr:
+	LONG(irq_key+PC_SUPERVISOR)
+
+|--------------------------------------|
+| Program Signature                    |
+|--------------------------------------|
+LOCATE(0x0FFC)
+__signature:
+	LONG(0xCA3EBE3A)
