@@ -1,7 +1,7 @@
 # Kabeta Processor Design
 
-**Date:** May 16, 2018  
-**Version:** 1.1F  
+**Date:** June 4, 2018  
+**Version:** 2.1A  
 **Author:** Kathy  
 **Reviewer:** (N/A)  
 
@@ -392,3 +392,4 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | 1.1D    | 5/13/2018 | Kathy  | Dao      | Correct decoder signaling table.                             |
 | 1.1E    | 5/16/2018 | Kathy  | (N/A)    | Change Mem/IO control signals.                               |
 | 1.1F    | 5/20/2018 | Kathy  | (N/A)    | Remove SVC_ID from SVC format.                               |
+| 2.1A    | 6/4/2018  | Kathy  | (N/A)    | Correct stall process for RR & EX stages.                    |
