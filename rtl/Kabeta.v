@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/26/2018                                                    */
+/*  Edited on:  06/04/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      An implementation of pipelined MIT Beta processor.                    */
@@ -15,6 +15,7 @@
 /*                              Add missing port.                             */
 /*      05/21/2018  Kathy       Add core interrupt unit.                      */
 /*      05/26/2018  Kathy       PC replicates from PC_IF_In.                  */
+/*      06/04/2018  Kathy       Correct stall process for RR and EX stages.   */
 /******************************************************************************/
 
 module Kabeta
@@ -53,7 +54,9 @@ module Kabeta
   wire [2:0] ExcCode_IF, ExcCode_RR, ExcCode_EX, ExcCode_MA;
   wire ExcReq_IF, ExcReq_RR, ExcReq_EX, ExcReq_MA;
   wire [4:0] Ra_RR, Rb_RR, Rc_RR;
-  wire RegAddrYSel, ID_RegRdEnX, ID_RegRdEnY;
+  wire [4:0] Ra_EX, Rb_EX, Rc_EX;
+  wire RegAddrYSel_RR, RegAddrYSel_EX;
+  wire ID_RegRdEnX, ID_RegRdEnY;
   wire [1:0] BrCond;
   wire ID_IMAB_En;
   wire ID_MDB_En;
@@ -85,7 +88,8 @@ module Kabeta
 
   // Signals from/to RF
   wire RF_EnX, RF_EnY;
-  wire [4:0] RF_AddrY;
+  wire [4:0] RF_AddrX;
+  wire [4:0] RF_AddrY, RF_AddrY_RR, RF_AddrY_EX;
   wire [31:0] RF_DataX_Out, RF_DataY_Out;
   reg [31:0] RF_DataW_In;
   reg [31:0] RF_ChX_Data, RF_ChY_Data;
@@ -307,7 +311,7 @@ module Kabeta
     .Ra_RR(Ra_RR),
     .Rb_RR(Rb_RR),
     .Rc_RR(Rc_RR),
-    .RegAddrYSel(RegAddrYSel),
+    .RegAddrYSel_RR(RegAddrYSel_RR),
     .RegRdEnX(ID_RegRdEnX),
     .RegRdEnY(ID_RegRdEnY),
     .ExcCode_RR(ExcCode_RR),
@@ -315,6 +319,10 @@ module Kabeta
 
     .InstrWord_EX(IR_EX_Out),
     .ExtLiteral(ExtLiteral),
+    .Ra_EX(Ra_EX),
+    .Rb_EX(Rb_EX),
+    .Rc_EX(Rc_EX),
+    .RegAddrYSel_EX(RegAddrYSel_EX),
     .BrCond(BrCond),
     .InstrMemAddrBufEn(ID_IMAB_En),
     .MemDataBufEn(ID_MDB_En),
@@ -346,9 +354,12 @@ module Kabeta
     .Stall(Sys_Stall)
   );
 
-  assign RF_EnX = ID_RegRdEnX & ~Sys_FlushRR;
-  assign RF_EnY = ID_RegRdEnY & ~Sys_FlushRR;
-  assign RF_AddrY = (RegAddrYSel == `RF_Y_SEL_RB) ? Rb_RR : Rc_RR;
+  assign RF_EnX = Sys_Stall ? (BypassXSel == `BPS_RW) : (ID_RegRdEnX & ~Sys_FlushRR);
+  assign RF_EnY = Sys_Stall ? (BypassYSel == `BPS_RW) : (ID_RegRdEnY & ~Sys_FlushRR);
+  assign RF_AddrX = Sys_Stall ? Ra_EX : Ra_RR;
+  assign RF_AddrY_RR = (RegAddrYSel_RR == `RF_Y_SEL_RB) ? Rb_RR : Rc_RR;
+  assign RF_AddrY_EX = (RegAddrYSel_EX == `RF_Y_SEL_RB) ? Rb_EX : Rc_EX;
+  assign RF_AddrY = Sys_Stall ? RF_AddrY_EX : RF_AddrY_RR;
 
   always @(*)
     begin
@@ -368,7 +379,7 @@ module Kabeta
     .EnX(RF_EnX),
     .EnY(RF_EnY),
     .EnW(RegWen),
-    .AddrX(Ra_RR),
+    .AddrX(RF_AddrX),
     .AddrY(RF_AddrY),
     .AddrW(Rc_WB),
     .DataX(RF_DataX_Out),

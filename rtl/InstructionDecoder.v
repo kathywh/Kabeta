@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/13/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/18/2018                                                    */
+/*  Edited on:  06/04/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Instruction decoders for each stage.                                  */
@@ -15,6 +15,7 @@
 /*                              2) Change Mem/IO control signals.             */
 /*      05/17/2018  Kathy       Correct I/D addr limit check error.           */
 /*      05/18/2018  Kathy       Correct ExcReq_EX drive error.                */
+/*      06/04/2018  Kathy       Add new output ports for EX stage.            */
 /******************************************************************************/
 
 
@@ -52,13 +53,15 @@ module InstructionDecoder
   input [31:0] InstrWord_RR,
   input S_Mode_RR,
   output [4:0] Ra_RR, Rb_RR, Rc_RR,
-  output reg RegAddrYSel,
+  output reg RegAddrYSel_RR,
   output reg RegRdEnX, RegRdEnY,
   output reg [2:0] ExcCode_RR,
   output reg ExcReq_RR,
 
   input [31:0] InstrWord_EX,
   output [31:0] ExtLiteral,
+  output [4:0] Ra_EX, Rb_EX, Rc_EX,
+  output reg RegAddrYSel_EX,
   output reg [1:0] BrCond,
   output InstrMemAddrBufEn,
   output MemDataBufEn,
@@ -114,13 +117,13 @@ module InstructionDecoder
         begin
           RegRdEnX <= `TRUE;
           RegRdEnY <= `TRUE;
-          RegAddrYSel <= `RF_Y_SEL_RB;
+          RegAddrYSel_RR <= `RF_Y_SEL_RB;
         end
       else if(`IS_INSTR_ST(InstrWord_RR) || `IS_INSTR_IOW(InstrWord_RR))
         begin
           RegRdEnX <= `TRUE;
           RegRdEnY <= `TRUE;
-          RegAddrYSel <= `RF_Y_SEL_RC;
+          RegAddrYSel_RR <= `RF_Y_SEL_RC;
         end
       else if(`IS_ICLS_OPC(InstrWord_RR) || `IS_INSTR_JMP(InstrWord_RR)
               || `IS_INSTR_LD(InstrWord_RR) || `IS_INSTR_IOR(InstrWord_RR)
@@ -128,13 +131,13 @@ module InstructionDecoder
         begin
           RegRdEnX <= `TRUE;
           RegRdEnY <= `FALSE;
-          RegAddrYSel <= `RF_Y_SEL_X;
+          RegAddrYSel_RR <= `RF_Y_SEL_X;
         end
       else  /* Including LDR and SVC */
         begin
           RegRdEnX <= `FALSE;
           RegRdEnY <= `FALSE;
-          RegAddrYSel <= `RF_Y_SEL_X;
+          RegAddrYSel_RR <= `RF_Y_SEL_X;
         end
     end
 
@@ -170,10 +173,6 @@ module InstructionDecoder
   /*                     Instruction Decoder of EX Stage                        */
   /******************************************************************************/
 
-  wire [4:0] Ra_EX = `I_RA(InstrWord_EX);
-  wire [4:0] Rb_EX = `I_RB(InstrWord_EX);
-  wire [4:0] Rc_EX = `I_RC(InstrWord_EX);
-
   wire Is_LD_EX = `IS_INSTR_LD(InstrWord_EX);
   wire Is_ST_EX = `IS_INSTR_ST(InstrWord_EX);
   wire Is_IOR_EX = `IS_INSTR_IOR(InstrWord_EX);
@@ -192,6 +191,34 @@ module InstructionDecoder
 
   // Sign-extended Literal
   assign ExtLiteral = {{16{InstrWord_EX[15]}}, InstrWord_EX[15:0]};
+
+  // Register Indices
+  assign Ra_EX = `I_RA(InstrWord_EX);
+  assign Rb_EX = `I_RB(InstrWord_EX);
+  assign Rc_EX = `I_RC(InstrWord_EX);
+
+  // Reg Y index sel
+  always @(*)
+    begin
+      if(`IS_ICLS_OP(InstrWord_EX))
+        begin
+          RegAddrYSel_EX <= `RF_Y_SEL_RB;
+        end
+      else if(`IS_INSTR_ST(InstrWord_EX) || `IS_INSTR_IOW(InstrWord_EX))
+        begin
+          RegAddrYSel_EX <= `RF_Y_SEL_RC;
+        end
+      else if(`IS_ICLS_OPC(InstrWord_EX) || `IS_INSTR_JMP(InstrWord_EX)
+              || `IS_INSTR_LD(InstrWord_EX) || `IS_INSTR_IOR(InstrWord_EX)
+              || `IS_INSTR_BEQ(InstrWord_EX) || `IS_INSTR_BNE(InstrWord_EX))
+        begin
+          RegAddrYSel_EX <= `RF_Y_SEL_X;
+        end
+      else  /* Including LDR and SVC */
+        begin
+          RegAddrYSel_EX <= `RF_Y_SEL_X;
+        end
+    end
 
   // Control Signals
   assign InstrMemAddrBufEn = `IS_INSTR_LDR(InstrWord_EX);
