@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/31/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/03/2018                                                    */
+/*  Edited on:  06/04/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      UART receiver with buffer.                                            */
@@ -37,6 +37,7 @@
 /*      06/01/2018  Kathy       Add enable control.                           */
 /*      06/02/2018  Kathy       Change some code style.                       */
 /*      06/03/2018  Kathy       Add missing bit index init in STOP state.     */
+/*      06/04/2018  Kathy       RxStart controlled by Enable.                 */
 /******************************************************************************/
 
 module UART_Rx
@@ -128,7 +129,7 @@ module UART_Rx
 
   assign RxdEn = (RxBaudCounter == BaudLimit);      // Rx bit sample en, at first cycle of state, middle of each bit
   assign RxChangeState = (RxBaudCounter == '0);     // at the last cycle of each state, the cycle before middle
-  assign RxStart = RxNegEdge & (RxState == S_IDLE);
+  assign RxStart = Enable & RxNegEdge & (RxState == S_IDLE);
   assign RxBusy = RxBaudCntEn;
 
   always_ff @(posedge Clock or negedge Reset)
