@@ -16,6 +16,7 @@
 /*      05/17/2018  Kathy       Correct I/D addr limit check error.           */
 /*      05/18/2018  Kathy       Correct ExcReq_EX drive error.                */
 /*      06/04/2018  Kathy       Add new output ports for EX stage.            */
+/*                              Rename Stall port to StallReq.                */
 /******************************************************************************/
 
 
@@ -88,7 +89,7 @@ module InstructionDecoder
 
   output reg [1:0] BypassXSel,
   output reg [1:0] BypassYSel,
-  output Stall
+  output StallReq
 );
 
   /******************************************************************************/
@@ -507,7 +508,7 @@ module InstructionDecoder
 
   wire IsReadMIO_MA = Is_LD_MA | Is_LDR_MA | Is_IOR_MA;
 
-  assign Stall = 
+  assign StallReq = 
     IsReadMIO_MA 
     &
     (

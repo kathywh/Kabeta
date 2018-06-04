@@ -16,6 +16,7 @@
 /*      05/21/2018  Kathy       Add core interrupt unit.                      */
 /*      05/26/2018  Kathy       PC replicates from PC_IF_In.                  */
 /*      06/04/2018  Kathy       Correct stall process for RR and EX stages.   */
+/*                              Change Stall to StallReq/Sys_Stall pair.      */
 /******************************************************************************/
 
 module Kabeta
@@ -37,7 +38,7 @@ module Kabeta
 );
 
   // System wide signals
-  wire Sys_Stall;
+  wire Sys_Stall, StallReq;
   wire Sys_FlushIF, Sys_ExcAckIF;
   wire Sys_FlushRR, Sys_ExcAckRR;
   wire Sys_FlushEX, Sys_ExcAckEX;
@@ -117,13 +118,9 @@ module Kabeta
   wire KIU_IntId;
   wire KIU_IntAck;
 
-  // Signals common for stage
-  wire StageEn_RR = ~Sys_Stall | Sys_FlushIF;
-  wire StageEn_EX = ~Sys_Stall | Sys_FlushRR;
-
   assign IM_Offset = ExtLiteral << 2;
 
-  assign I_Mem_En_I = StageEn_RR;
+  assign I_Mem_En_I = ~Sys_Stall;
   assign I_Mem_En_D = ID_InstrMemRdEn & ~Sys_FlushMA;
 
   assign IO_Address = ALU_Out[31:2];
@@ -144,7 +141,7 @@ module Kabeta
   (
     .Clock(Sys_Clock),
     .Reset(Sys_Reset),
-    .Enable(StageEn_RR),
+    .Enable(~Sys_Stall),
     .Flush(Sys_FlushIF),
     .ExcAck(Sys_ExcAckIF),
     .InstrIn(I_Mem_Data_I),
@@ -155,7 +152,7 @@ module Kabeta
   (
     .Clock(Sys_Clock),
     .Reset(Sys_Reset),
-    .Enable(StageEn_EX),
+    .Enable(~Sys_Stall),
     .Flush(Sys_FlushRR),
     .ExcAck(Sys_ExcAckRR),
     .InstrIn(IR_RR_Out),
@@ -239,7 +236,7 @@ module Kabeta
   (
     .Clock(Sys_Clock),
     .Reset(Sys_Reset),
-    .Enable(StageEn_RR),
+    .Enable(~Sys_Stall),
     .DataIn(PC_RR_In),
     .DataOut(PC_RR_Out)
   );
@@ -250,7 +247,7 @@ module Kabeta
   (
     .Clock(Sys_Clock),
     .Reset(Sys_Reset),
-    .Enable(StageEn_EX),
+    .Enable(~Sys_Stall),
     .DataIn(PC_EX_In),
     .DataOut(PC_EX_Out)
   );
@@ -351,7 +348,7 @@ module Kabeta
 
     .BypassXSel(BypassXSel),
     .BypassYSel(BypassYSel),
-    .Stall(Sys_Stall)
+    .StallReq(StallReq)
   );
 
   assign RF_EnX = Sys_Stall ? (BypassXSel == `BPS_RW) : (ID_RegRdEnX & ~Sys_FlushRR);
@@ -485,7 +482,8 @@ module Kabeta
     .ExcCodeRR(ExcCode_RR), 
     .ExcCodeEX(ExcCode_EX), 
     .ExcCodeMA(ExcCode_MA),
-    .Stall(Sys_Stall),
+    .StallReq(StallReq),
+    .Sys_Stall(Sys_Stall),
     .IRQ_Int(KIU_IntReq),
     .IID_Sync(KIU_IntId),
     .S_Mode_IF(PC_IF_Out[31]),
