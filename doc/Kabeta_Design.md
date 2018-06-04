@@ -342,21 +342,22 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 
 ### 7.2 Branch and Exception Control Signaling
 
-| Exc.  Req.  &&  Cond. | RST           | ExcReqMA       | ExcReqEX && !Stall | ExcReqRR  && !BrTaken  && !Stall [3] | ExcReqIF  && !BrTaken  && !Stall [3] | IRQ_Int [4]  && (~PC_IF.S) | Stall | BrTaken                                                | (None Assert) |
-| --------------------- | ------------- | -------------- | ------------------ | ------------------------------------ | ------------------------------------ | -------------------------- | ----- | ------------------------------------------------------ | ------------- |
-| Exc.  Code            | (N/A)         | ExcCodeMA      | ExcCodeEX          | ExcCodeRR                            | ExcCodeIF                            | (N/A)                      | (N/A) | (N/A)                                                  |               |
-| Priority              | 0 (Highest)   | 1              | 2                  | 3                                    | 4                                    | 5                          | 6     | 7  (Lowest)                                            |               |
-| **ExcAddr**           | 32’h8000_0000 | EVT[ExcCodeMA] | EVT[ExcCodeEX]     | EVT[ExcCodeRR]                       | EVT[ExcCodeIF]                       | EVT[{2’b11,IID}]           | X     | X                                                      | X             |
-| **PC_Sel [1]**        | EXCA          | EXCA           | EXCA               | EXCA                                 | EXCA                                 | EXCA                       | X     | REGA (AL), PCLIT ((EQ and RaZero) or (NE and !RaZero)) | PCNX          |
-| **FlushIF**           | 0             | 1              | 1                  | 1                                    | 1                                    | 1                          | 0     | 1                                                      | 0             |
-| **ExcAckIF [2]**      | 0             | 0              | 0                  | 0                                    | 1                                    | 1                          | 0     | 0                                                      | 0             |
-| **FlushRR**           | 0             | 1              | 1                  | 1                                    | 0                                    | 0                          | 0     | 1                                                      | 0             |
-| **ExcAckRR [2]**      | 0             | 0              | 0                  | 1                                    | 0                                    | 0                          | 0     | 0                                                      | 0             |
-| **FlushEX**           | 0             | 1              | 1                  | 0                                    | 0                                    | 0                          | 1     | 0                                                      | 0             |
-| **ExcAckEX [2]**      | 0             | 0              | 1                  | 0                                    | 0                                    | 0                          | 0     | 0                                                      | 0             |
-| **FlushMA**           | 0             | 1              | 0                  | 0                                    | 0                                    | 0                          | 0     | 0                                                      | 0             |
-| **ExcAckMA [2]**      | 0             | 1              | 0                  | 0                                    | 0                                    | 0                          | 0     | 0                                                      | 0             |
-| **ReplicatePC**       | 0             | 0              | 0                  | 0                                    | 0                                    | 0                          | 0     | 1                                                      | 0             |
+| Exc.  Req.  &&  Cond. | RESET         | ExcReqMA       | IRQ_Int [4]  & (~PC_IF.S) | ExcReqEX       | Stall | BrTaken [3]                                            | ExcReqRR       | ExcReqIF       | (Default) |
+| --------------------- | ------------- | -------------- | ------------------------- | -------------- | ----- | ------------------------------------------------------ | -------------- | -------------- | --------- |
+| Exc.  Code            | (N/A)         | ExcCodeMA      | (N/A)                     | ExcCodeEX      | (N/A) | (N/A)                                                  | ExcCodeRR      | ExcCodeIF      |           |
+| Priority              | 0 (Highest)   | 1              | 5                         | 2              | 6     | 7  (Lowest)                                            | 3              | 4              |           |
+| **ExcAddr**           | 32’h8000_0000 | EVT[ExcCodeMA] | EVT[{2’b11,IID}]          | EVT[ExcCodeEX] | X     | X                                                      | EVT[ExcCodeRR] | EVT[ExcCodeIF] | X         |
+| **PC_Sel [1]**        | EXCA          | EXCA           | EXCA                      | EXCA           | X     | REGA (AL), PCLIT ((EQ and RaZero) or (NE and !RaZero)) | EXCA           | EXCA           | PCNX      |
+| **FlushIF**           | 0             | 1              | 1                         | 1              | 0     | 1                                                      | 1              | 1              | 0         |
+| **ExcAckIF [2]**      | 0             | 0              | 0                         | 0              | 0     | 0                                                      | 0              | 1              | 0         |
+| **FlushRR**           | 0             | 1              | 1                         | 1              | 0     | 1                                                      | 1              | 0              | 0         |
+| **ExcAckRR [2]**      | 0             | 0              | 0                         | 0              | 0     | 0                                                      | 1              | 0              | 0         |
+| **FlushEX**           | 0             | 1              | 1                         | 1              | 1     | 0                                                      | 0              | 0              | 0         |
+| **ExcAckEX [2]**      | 0             | 0              | 1                         | 1              | 0     | 0                                                      | 0              | 0              | 0         |
+| **FlushMA**           | 0             | 1              | 0                         | 0              | 0     | 0                                                      | 0              | 0              | 0         |
+| **ExcAckMA [2]**      | 0             | 1              | 0                         | 0              | 0     | 0                                                      | 0              | 0              | 0         |
+| **ReplicatePC**       | 0             | 0              | 0                         | 0              | 0     | 1                                                      | 0              | 0              | 0         |
+| **Sys_Stall**         | 0             | 0              | 0                         | 0              | 1     | 0                                                      | 0              | 0              | 0         |
 
 **NOTES:**
 
@@ -392,4 +393,4 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | 1.1D    | 5/13/2018 | Kathy  | Dao      | Correct decoder signaling table.                             |
 | 1.1E    | 5/16/2018 | Kathy  | (N/A)    | Change Mem/IO control signals.                               |
 | 1.1F    | 5/20/2018 | Kathy  | (N/A)    | Remove SVC_ID from SVC format.                               |
-| 2.1A    | 6/4/2018  | Kathy  | (N/A)    | Correct stall process for RR & EX stages.                    |
+| 2.1A    | 6/4/2018  | Kathy  | (N/A)    | 1) Correct stall process for RR & EX stages. 2) Change priorities of faults, interrupts, stall and branch. |
