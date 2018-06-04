@@ -406,28 +406,19 @@ start:
 	| Fill IRQ jump table
 	MOVC(irq_sub_tab, R1)			| R1: IRQ jump base addr
 	LDR(irqx_unused_addr, R0)		| 0, 1, 5: Unused sub, return immediately
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
+	ST(R0, R1, IRQ_0*4)
+	ST(R0, R1, IRQ_1*4)
+	ST(R0, R1, IRQ_5*4)
 	LDR(irq2_uaerr_addr, R0)		| 2: UART err
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
+	ST(R0, R1, IRQ_UAERR*4)
 	LDR(irq3_uarx_addr, R0)			| 3: UART rx
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
+	ST(R0, R1, IRQ_UARX*4)
 	LDR(irq4_uatx_addr, R0)			| 4: UART tx
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-	LDR(irqx_unused_addr, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
+	ST(R0, R1, IRQ_UATX*4)
 	LDR(irq6_tick_addr, R0)			| 6: Sys tick
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
+	ST(R0, R1, IRQ_TICK*4)
 	LDR(irq7_key_addr, R0)			| 7: Key
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
+	ST(R0, R1, IRQ_KEY*4)
 
 	| Fill seg code hex table
 	MOVC(0x3F, R0)					| 0's seg code
