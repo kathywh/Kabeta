@@ -13,18 +13,11 @@
 /******************************************************************************/
 
 
-program Tester
-#(
-  parameter TCLK
-)
-( 
-  output logic Reset,
-  output logic [8:0] Keys
-);
+program Tester;
 
   wire Sys_Clock = Testbench.DesignTop.Sys_Clock;
-  wire IO_Clock  = Testbench.DesignTop.IO_Clock;
-
+  wire Sys_Reset  = Testbench.DesignTop.Sys_Reset;
+  
   initial
     begin
 `ifdef FSDB_DUMP
@@ -36,14 +29,8 @@ program Tester
 
   initial
     begin
-      // Drive reset
-      Reset = 1'b0;
-      #(TCLK/4) Reset = 1'b1;
-    end
-
-  initial
-    begin
-      Keys = '0;
+      // Wait for reset
+      wait(Sys_Reset == '1);
 
       repeat(100)  @(posedge Sys_Clock);      
     end

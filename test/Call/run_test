@@ -33,6 +33,10 @@ set src_files = \
  ../../../rtl/Peripherals/ReadWriteRegister.sv \
  ../../../rtl/Peripherals/ExtInterruptCtrl.sv \
  ../../../rtl/Peripherals/BasicKeyDisplay.sv \
+ ../../../rtl/Peripherals/UART_Rx.sv \
+ ../../../rtl/Peripherals/UART_Tx.sv \
+ ../../../rtl/Peripherals/UART.sv \
+ ../../../rtl/Peripherals/SystemTimer.sv \
  ../../../rtl/Peripherals/KabIO.sv \
  ../../../rtl/SystemChip.v"
 
