@@ -201,9 +201,9 @@ irq_uatx:
 	CMPEQC(R1, UATX_CNT*4, R0)	| boundary check
 	BT(R0, irq_end)
 	LD(R1, uatx_data, R0)		| R0: data to send
-	ADDC(R1, 4, R1)				| store new offset
+	ADDC(R1, 4, R1)				| store next data offset
 	ST(R1, uatx_offset)
-	IOW(R0, UART_DR)			| start transmission
+	IOW(R0, UART_DR)			| write DR to send data
 	BR(irq_end)
 
 irq_uarx:
@@ -362,8 +362,8 @@ svc_uatx:
 	SHLC(R1, 2, R8)			| R8: first data offset
 	ADDC(R8, 4, R9)			| R9: second data offset
 	LD(R8, uatx_data, R8)	| R8: load first data
-	ST(R9, uatx_offset)
-	IOW(R8, UART_DR)
+	ST(R9, uatx_offset)		| Store second data offset
+	IOW(R8, UART_DR)		| Write DR to send first data
 	MOVC(0, R0)				| Set status code
 	BR(svc_end)
 
@@ -531,11 +531,6 @@ UART_PARAM = (0x03<<UART_CR_BAUD)+(0x03<<UART_CR_PAR)+(0x01<<UART_CR_EN)
 	IOWAIT()
 	IOW(R0, EIC_IE)
 
-	| UART send first byte
-	MOVC(0x00, R0)
-	IOWAIT()
-	IOW(R0, UART_DR)
-
 	| Switch to User Mode
 	MOVC(user_mode%PC_MASK, R0)
 	JMP(R0)
@@ -568,16 +563,18 @@ key_process:
 
 	| Get key events
 	MOVC(SVC_KEY, R0)
-	SVC()
-	BNE(R0, key_end)	| Continue if error occurs
+	SVC()						| R1: key event
+	BNE(R0, key_end)			| Continue if error occurs
 
 	| Key3: send from index to end
 	ANDC(R1, 0x08, R11)
 	BEQ(R11, key3_end)
-	LD(uarx_disp_os, R1)	| R1: display offset
-	SHRC(R1, 2, R1)			| R1: display index, as send index
+	LD(uarx_disp_os, R11)		| R11: display offset
+	PUSH(R1)					| Save R1
+	SHRC(R11, 2, R1)			| R1: display index, as send index
 	MOVC(SVC_UATX, R0)
-	SVC()
+	SVC()						| Do SVC
+	POP(R1)						| Store R1
 key3_end:
 
 	| Process Key2 events (next data)
