@@ -12,14 +12,10 @@
 /*      05/18/2018  Kathy       Unit created.                                 */
 /******************************************************************************/
 
-program Tester
-#(
-  parameter TCLK
-)
-( 
-  input Clock,
-  output logic Reset
-);
+program Tester;
+
+  wire Sys_Clock = Testbench.DesignTop.Sys_Clock;
+  wire Sys_Reset  = Testbench.DesignTop.Sys_Reset;
 
   logic [31:0] ReturnPoint[3] =
   '{
@@ -33,9 +29,6 @@ program Tester
       $fsdbDumpfile("SystemChip.fsdb");
       $fsdbDumpvars;
 `endif
-      // Drive reset
-      Reset = 1'b0;
-      #(TCLK/4) Reset = 1'b1;
     end
 
   initial
@@ -47,26 +40,26 @@ program Tester
 
       bit Pass = 1;
 
-      // Wait for reset (2)
-      repeat(2) @(posedge Clock);
+      // Wait for reset
+      wait(Sys_Reset == '1);
 
       // BR @ reset vector (1+2), switch mode (2+2)
       // NOTE: +2 is for branch delay slots
-      repeat(7) @(posedge Clock);
+      repeat(7) @(posedge Sys_Clock);
 
       // Pipline WB-Stage delay (4)
-      repeat(4) @(posedge Clock);
+      repeat(4) @(posedge Sys_Clock);
 
       // CMOVE & OP
       for(int i=0; i<3; i++)
         begin
           // Instruction before branch
-          @(posedge Clock);
+          @(posedge Sys_Clock);
 
           // Branch, check at WB-Stage
-          index = Testbench.DesignTop.KabCore.RF.AddrW;
-          value = Testbench.DesignTop.KabCore.RF.DataW;
-          wen = Testbench.DesignTop.KabCore.RF.EnW;
+          index = Testbench.DesignTop.KAB_CORE.RF.AddrW;
+          value = Testbench.DesignTop.KAB_CORE.RF.DataW;
+          wen = Testbench.DesignTop.KAB_CORE.RF.EnW;
 
           if(~wen)
             begin
@@ -84,17 +77,17 @@ program Tester
               $display(">> ERROR B[%0d]: Incorrect reg value: %x", i, value);
             end
           // Branch + delay (1+2)
-          repeat(3) @(posedge Clock);
+          repeat(3) @(posedge Sys_Clock);
         end
 
       // Instruction before last JMP (4)
-      repeat(4) @(posedge Clock);
+      repeat(4) @(posedge Sys_Clock);
 
       // JMP + delay
-      repeat(3) @(posedge Clock);
+      repeat(3) @(posedge Sys_Clock);
 
       // `end', check at WB-Stage ('h6C+4)
-      addr = Testbench.DesignTop.KabCore.PC_WB.DataOut;
+      addr = Testbench.DesignTop.KAB_CORE.PC_WB.DataOut;
       if(addr !== 32'h0000_0070)
         begin
           Pass = 0;

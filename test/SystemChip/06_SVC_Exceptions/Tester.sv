@@ -12,14 +12,10 @@
 /*      05/18/2018  Kathy       Unit created.                                 */
 /******************************************************************************/
 
-program Tester
-#(
-  parameter TCLK
-)
-( 
-  input Clock,
-  output logic Reset
-);
+program Tester;
+
+  wire Sys_Clock = Testbench.DesignTop.Sys_Clock;
+  wire Sys_Reset  = Testbench.DesignTop.Sys_Reset;
 
   initial
     begin
@@ -28,9 +24,6 @@ program Tester
       $fsdbDumpfile("SystemChip.fsdb");
       $fsdbDumpvars;
 `endif
-      // Drive reset
-      Reset = 1'b0;
-      #(TCLK/4) Reset = 1'b1;
     end
 
   initial
@@ -41,29 +34,29 @@ program Tester
 
       bit Pass = 1;
 
-      // Wait for reset (2)
-      repeat(2) @(posedge Clock);
+      // Wait for reset
+      wait(Sys_Reset == '1);
 
       // BR @ reset vector (1+2)
       // NOTE: +2 is for branch delay slots
-      repeat(3) @(posedge Clock);
+      repeat(3) @(posedge Sys_Clock);
 
       // instructions before SVC in S mode (2)
-      repeat(2) @(posedge Clock);
+      repeat(2) @(posedge Sys_Clock);
 
       // SVC + exc delay + vec delay (1+1+3)
-      repeat(5) @(posedge Clock);
+      repeat(5) @(posedge Sys_Clock);
 
       // SVC handler + return delay (12+2)
-      repeat(14) @(posedge Clock);
+      repeat(14) @(posedge Sys_Clock);
 
       // WB-Stage delay (4)
-      repeat(4) @(posedge Clock);
+      repeat(4) @(posedge Sys_Clock);
 
       // MOV after SVC (S mode)
-      index = Testbench.DesignTop.KabCore.RF.AddrW;
-      value = Testbench.DesignTop.KabCore.RF.DataW;
-      wen = Testbench.DesignTop.KabCore.RF.EnW;
+      index = Testbench.DesignTop.KAB_CORE.RF.AddrW;
+      value = Testbench.DesignTop.KAB_CORE.RF.DataW;
+      wen = Testbench.DesignTop.KAB_CORE.RF.EnW;
 
       if((wen !== 1'b1) || (index !== 5'd20))
         begin
@@ -75,25 +68,25 @@ program Tester
           Pass = 0;
           $display(">> ERROR: SVC (S): Incorrect R0 data.");
         end
-      @(posedge Clock);
+      @(posedge Sys_Clock);
 
       // switch mode (2+2)
       // NOTE: +2 is for branch delay slots
-      repeat(4) @(posedge Clock);
+      repeat(4) @(posedge Sys_Clock);
       
       // instructions before SVC in User mode (4)
-      repeat(4) @(posedge Clock);
+      repeat(4) @(posedge Sys_Clock);
 
       // SVC + exc delay + vec delay (1+1+3)
-      repeat(5) @(posedge Clock);
+      repeat(5) @(posedge Sys_Clock);
 
       // SVC handler + return delay (12+2)
-      repeat(14) @(posedge Clock);
+      repeat(14) @(posedge Sys_Clock);
 
       // MOV after SVC (U mode)
-      index = Testbench.DesignTop.KabCore.RF.AddrW;
-      value = Testbench.DesignTop.KabCore.RF.DataW;
-      wen = Testbench.DesignTop.KabCore.RF.EnW;
+      index = Testbench.DesignTop.KAB_CORE.RF.AddrW;
+      value = Testbench.DesignTop.KAB_CORE.RF.DataW;
+      wen = Testbench.DesignTop.KAB_CORE.RF.EnW;
 
       if((wen !== 1'b1) || (index !== 5'd21))
         begin
@@ -105,7 +98,7 @@ program Tester
           Pass = 0;
           $display(">> ERROR: SVC (U): Incorrect R0 data.");
         end
-      @(posedge Clock);
+      @(posedge Sys_Clock);
 
       // Print status message
       if(Pass)

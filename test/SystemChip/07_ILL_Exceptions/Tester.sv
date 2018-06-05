@@ -12,14 +12,10 @@
 /*      05/18/2018  Kathy       Unit created.                                 */
 /******************************************************************************/
 
-program Tester
-#(
-  parameter TCLK
-)
-( 
-  input Clock,
-  output logic Reset
-);
+program Tester;
+
+  wire Sys_Clock = Testbench.DesignTop.Sys_Clock;
+  wire Sys_Reset  = Testbench.DesignTop.Sys_Reset;
 
   initial
     begin
@@ -28,12 +24,6 @@ program Tester
       $fsdbDumpfile("SystemChip.fsdb");
       $fsdbDumpvars;
 `endif
-      // Drive reset
-      Reset = 1'b0;
-      #(TCLK/4) Reset = 1'b1;
-
-      // Run
-      repeat(200)  @(posedge Clock);
     end
 
   initial
@@ -42,39 +32,39 @@ program Tester
 
       bit Pass = 1;
 
-      // Wait for reset (2)
-      repeat(2) @(posedge Clock);
+      // Wait for reset
+      wait(Sys_Reset == '1);
 
       // BR @ reset vector (1+2)
       // NOTE: +2 is for branch delay slots
-      repeat(3) @(posedge Clock);
+      repeat(3) @(posedge Sys_Clock);
 
       // Set SP
-      @(posedge Clock);
+      @(posedge Sys_Clock);
 
       // switch mode (2+2)
       // NOTE: +2 is for branch delay slots
-      repeat(4) @(posedge Clock);
+      repeat(4) @(posedge Sys_Clock);
 
       // instructions before ILL
-      repeat(3) @(posedge Clock);
+      repeat(3) @(posedge Sys_Clock);
 
       for(int i=0; i<9; i++)
         begin
           // ILL + exc delay (1+1)
-          repeat(2) @(posedge Clock);
+          repeat(2) @(posedge Sys_Clock);
 
           // vec delay (3)
-          PC = Testbench.DesignTop.KabCore.PC_IF.DataOut;
+          PC = Testbench.DesignTop.KAB_CORE.PC_IF.DataOut;
           if(PC !== `EV_ILL)
             begin
               Pass = 0;
               $display(">> ERROR (@%0t): ILL[%0d]: Incorrect exception vector.", $time, i);
             end
-          repeat(3) @(posedge Clock);
+          repeat(3) @(posedge Sys_Clock);
 
           // ILL handler + return delay (13+2)
-          repeat(15) @(posedge Clock);
+          repeat(15) @(posedge Sys_Clock);
         end
 
       // Print status message

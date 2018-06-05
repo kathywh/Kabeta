@@ -12,14 +12,10 @@
 /*      05/18/2018  Kathy       Unit created.                                 */
 /******************************************************************************/
 
-program Tester
-#(
-  parameter TCLK
-)
-( 
-  input Clock,
-  output logic Reset
-);
+program Tester;
+
+  wire Sys_Clock = Testbench.DesignTop.Sys_Clock;
+  wire Sys_Reset  = Testbench.DesignTop.Sys_Reset;
 
   typedef struct
   {
@@ -71,9 +67,6 @@ program Tester
       $fsdbDumpfile("SystemChip.fsdb");
       $fsdbDumpvars;
 `endif
-      // Drive reset
-      Reset = 1'b0;
-      #(TCLK/4) Reset = 1'b1;
     end
 
   initial
@@ -84,22 +77,22 @@ program Tester
 
       bit Pass = 1;
 
-      // Wait for reset (2)
-      repeat(2) @(posedge Clock);
+      // Wait for reset
+      wait(Sys_Reset == '1);
 
       // BR @ reset vector (1+2), switch mode (2+2)
       // NOTE: +2 is for branch delay slots
-      repeat(7) @(posedge Clock);
+      repeat(7) @(posedge Sys_Clock);
 
       // Pipline delay (4)
-      repeat(4) @(posedge Clock);
+      repeat(4) @(posedge Sys_Clock);
 
       // CMOVE & OP
       for(int i=0; i<$size(TestData); i++)
         begin
-          index = Testbench.DesignTop.KabCore.RF.AddrW;
-          value = Testbench.DesignTop.KabCore.RF.DataW;
-          en = Testbench.DesignTop.KabCore.RF.EnW;
+          index = Testbench.DesignTop.KAB_CORE.RF.AddrW;
+          value = Testbench.DesignTop.KAB_CORE.RF.DataW;
+          en = Testbench.DesignTop.KAB_CORE.RF.EnW;
 
           if($isunknown(en))
             begin
@@ -131,7 +124,7 @@ program Tester
               Pass = 0;
               $display(">> ERROR I[%0d]: Incorrect reg value: %x", i, value);
             end
-          @(posedge Clock);
+          @(posedge Sys_Clock);
         end
 
       // Print status message
