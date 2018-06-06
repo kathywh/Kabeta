@@ -19,11 +19,11 @@ module AutoResetUnit
   output AutoRstOut
 );
 
-  localparam AR_DELAY_CNT = 9;
+  localparam [2:0] AR_DELAY_CNT = 3'h7;
 
   reg AutoRstReg = 1'b1;
 
-  reg [31:0] DelayCounter;
+  reg [2:0] DelayCounter;
   reg DelayCounterEn = 1'b0;
   reg AutoRstReqLast = 1'b0;
 
@@ -61,14 +61,14 @@ module AutoResetUnit
             end
           else if(DelayCounterEn)
             begin              
-              if(DelayCounter == 0)
+              if(DelayCounter == 3'd0)
                 begin
                   DelayCounterEn <= 1'b0;
                   AutoRstReg <= 1'b1;
                 end
               else 
                 begin
-                  DelayCounter <= DelayCounter - 32'd1;
+                  DelayCounter <= DelayCounter - 3'd1;
                 end
             end
         end
