@@ -90,25 +90,25 @@ addSignal -h 16 /Testbench/DesignTop/KAB_CORE/RF/EnW
 addSignal -h 16 -UNSIGNED -UDEC -holdScope AddrW[4:0]
 addSignal -h 16 -UNSIGNED -HEX -holdScope DataW[31:0]
 addGroup "RF (R)"
-addSignal -h 16 /Testbench/DesignTop/KAB_CORE/RF/EnX
-addSignal -h 16 -UNSIGNED -HEX -holdScope AddrX[4:0]
-addSignal -h 16 -UNSIGNED -HEX -holdScope DataX[31:0]
-addSignal -h 16 -UNSIGNED -HEX /Testbench/DesignTop/KAB_CORE/BypassXSel[1:0]
-addSignal -h 16 -UNSIGNED -HEX -holdScope RF_ChX_Data[31:0]
-addSignal -h 16 /Testbench/DesignTop/KAB_CORE/RF/EnY
-addSignal -h 16 -UNSIGNED -HEX -holdScope AddrY[4:0]
-addSignal -h 16 -UNSIGNED -HEX /Testbench/DesignTop/KAB_CORE/BypassYSel[1:0]
-addSignal -h 16 -UNSIGNED -HEX /Testbench/DesignTop/KAB_CORE/RF/DataY[31:0]
-addSignal -h 16 -UNSIGNED -HEX /Testbench/DesignTop/KAB_CORE/RF_ChY_Data[31:0]
+addSignal -h 19 /Testbench/DesignTop/KAB_CORE/RF/EnX
+addSignal -h 19 -UNSIGNED -HEX -holdScope AddrX[4:0]
+addSignal -h 19 -UNSIGNED -HEX -holdScope DataX[31:0]
+addSignal -h 19 -UNSIGNED -HEX /Testbench/DesignTop/KAB_CORE/BypassXSel[1:0]
+addSignal -h 19 -UNSIGNED -HEX -holdScope RF_ChX_Data[31:0]
+addSignal -h 19 /Testbench/DesignTop/KAB_CORE/RF/EnY
+addSignal -h 19 -UNSIGNED -HEX -holdScope AddrY[4:0]
+addSignal -h 19 -UNSIGNED -HEX /Testbench/DesignTop/KAB_CORE/BypassYSel[1:0]
+addSignal -h 19 -UNSIGNED -HEX /Testbench/DesignTop/KAB_CORE/RF/DataY[31:0]
+addSignal -h 19 -UNSIGNED -HEX /Testbench/DesignTop/KAB_CORE/RF_ChY_Data[31:0]
 addGroup "IO"
-addSignal -h 15 /Testbench/DesignTop/KAB_CORE/ID_IO_Ren
-addSignal -h 15 -holdScope ID_IO_Wen
+addSignal -h 19 /Testbench/DesignTop/KAB_CORE/ID_IO_Ren
+addSignal -h 19 -holdScope ID_IO_Wen
 addGroup "ARU"
-addSignal -h 15 /Testbench/DesignTop/ARU/AutoRstOut
-addSignal -h 15 -holdScope AutoRstReq
-addSignal -h 15 -holdScope AutoRstReqLast
-addSignal -h 15 -holdScope DelayCounterEn
-addSignal -h 15 -UNSIGNED -HEX -holdScope DelayCounter[31:0]
+addSignal -h 19 /Testbench/DesignTop/ARU/AutoRstOut
+addSignal -h 19 -holdScope AutoRstReq
+addSignal -h 19 -holdScope AutoRstReqLast
+addSignal -h 19 -holdScope DelayCounterEn
+addSignal -h 15 -UNSIGNED -HEX -holdScope DelayCounter[2:0]
 addGroup "G7"
 
 ; getSignalForm Scope Hierarchy Status
