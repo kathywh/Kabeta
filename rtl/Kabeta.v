@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/04/2018                                                    */
+/*  Edited on:  06/06/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      An implementation of pipelined MIT Beta processor.                    */
@@ -17,6 +17,7 @@
 /*      05/26/2018  Kathy       PC replicates from PC_IF_In.                  */
 /*      06/04/2018  Kathy       Correct stall process for RR and EX stages.   */
 /*                              Change Stall to StallReq/Sys_Stall pair.      */
+/*      06/06/2018  Kathy       Add auto reset output when double fault.      */
 /******************************************************************************/
 
 module Kabeta
@@ -34,7 +35,10 @@ module Kabeta
   // Interrupt Signals
   input EIC_IntReq, 
   input EIC_IntId,
-  output EIC_IntAck
+  output EIC_IntAck,
+
+  // Auto reset (from double fault)
+  output AutoRstReq
 );
 
   // System wide signals
@@ -500,6 +504,7 @@ module Kabeta
     .ExcAckRR(Sys_ExcAckRR),
     .ExcAckEX(Sys_ExcAckEX),
     .ExcAckMA(Sys_ExcAckMA),
-    .IntAck(KIU_IntAck)
+    .IntAck(KIU_IntAck),
+    .AutoRstReq(AutoRstReq)
   );
 endmodule
