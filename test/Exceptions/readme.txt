@@ -10,3 +10,4 @@
 05:    Interrupt and pipeline stall (EX-Stage)
 06_1:  Branch (BEQ) and pipeline stall (EX-Stage)
 06_2:  Branch (JMP) and pipeline stall (EX-Stage)
+07:    Double fault
