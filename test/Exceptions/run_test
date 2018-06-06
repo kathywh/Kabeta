@@ -1,0 +1,50 @@
+#!/bin/csh
+
+set lib_files = "../../altera_mf.v"
+set tb_files = "../ClockGenerator.sv Tester.sv ../Testbench.sv"
+
+set src_files = \
+"../../../rtl/IP/Alt_EP4CE_DataMem_16KB.v \
+ ../../../rtl/IP/Alt_EP4CE_InstrMem_4KB.v \
+ ../../../rtl/IP/Alt_EP4CE_SysPLL.v \
+ ../../../rtl/CommonDefinitions.v \
+ ../../../rtl/AddressAdder.v \
+ ../../../rtl/AddressInc.v \
+ ../../../rtl/ArithmeticLogicUnit.v \
+ ../../../rtl/BranchExceptionUnit.v \
+ ../../../rtl/DataMemory.v \
+ ../../../rtl/InstructionDecoder.v \
+ ../../../rtl/InstructionMemory.v \
+ ../../../rtl/InstructionRegister.v \
+ ../../../rtl/RegisterEn.v \
+ ../../../rtl/RegisterRstEn.v \
+ ../../../rtl/RegisterFile.v \
+ ../../../rtl/ResetSynchronizer.v \
+ ../../../rtl/Synchronizer.v \
+ ../../../rtl/CoreInterruptUnit.v \
+ ../../../rtl/SystemPLL.v \
+ ../../../rtl/Kabeta.v \
+ ../../../rtl/Peripherals/Handshaker.v \
+ ../../../rtl/Peripherals/IO_AddressTable.sv \
+ ../../../rtl/Peripherals/IO_AccessItf.sv \
+ ../../../rtl/Peripherals/IO_Interface.sv \
+ ../../../rtl/Peripherals/ReadOnlyRegister.sv \
+ ../../../rtl/Peripherals/ReadClearRegister.sv \
+ ../../../rtl/Peripherals/ReadWriteRegister.sv \
+ ../../../rtl/Peripherals/ExtInterruptCtrl.sv \
+ ../../../rtl/Peripherals/BasicKeyDisplay.sv \
+ ../../../rtl/Peripherals/UART_Rx.sv \
+ ../../../rtl/Peripherals/UART_Tx.sv \
+ ../../../rtl/Peripherals/UART.sv \
+ ../../../rtl/Peripherals/SystemTimer.sv \
+ ../../../rtl/Peripherals/KabIO.sv \
+ ../../../rtl/SystemChip.v"
+
+
+alias open_wave 'nWave -ssf SystemChip.fsdb -sswr SystemChip.rc'
+
+alias start_verdi 'verdi -sv ${lib_files} ${src_files} ${tb_files} -ssf SystemChip.fsdb -sswr SystemChip.rc' 
+
+vlogan -nc -full64 -debug_pp -timescale=1ns/1ps -sverilog +verilog2001ext+.v +define+FSDB_DUMP ${lib_files} ${src_files} ${tb_files}
+
+vcs -nc -full64 -R -LDFLAGS -rdynamic -P ${VERDI_HOME}/share/PLI/VCS/LINUX64/novas.tab ${VERDI_HOME}/share/PLI/VCS/LINUX64/pli.a Testbench
