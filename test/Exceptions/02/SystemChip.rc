@@ -15,8 +15,10 @@ openDirFile -d / "" "/home/kathy/exc_br_stall_test/test/Exceptions/01/SystemChip
 signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
+windowTimeUnit 1ns
+
 ; waveform viewport range
-zoom 0.000000 328250.000000
+zoom 0.000000 580.750000 1n
 cursor 0.000000
 marker 0.000000
 
@@ -25,7 +27,7 @@ marker 0.000000
 ; visible top row signal index
 top 0
 ; marker line index
-markerPos 38
+markerPos 0
 
 ; event list
 ; addEvent event_name event_expression
@@ -62,6 +64,16 @@ addSignal -h 16 -UNSIGNED -HEX -holdScope IR_RR_Out[31:0]
 addSignal -h 16 -UNSIGNED -HEX -holdScope IR_EX_Out[31:0]
 addSignal -h 16 -UNSIGNED -HEX -holdScope IR_MA_Out[31:0]
 addSignal -h 16 -UNSIGNED -HEX -holdScope IR_WB_Out[31:0]
+addSubGroup "SYS-EXC"
+addSignal -h 15 /Testbench/DesignTop/KAB_CORE/ExcReq_IF
+addSignal -h 15 -holdScope ExcReq_RR
+addSignal -h 15 -holdScope ExcReq_EX
+addSignal -h 15 -holdScope ExcReq_MA
+addSignal -h 15 -holdScope Sys_ExcAckIF
+addSignal -h 15 -holdScope Sys_ExcAckRR
+addSignal -h 15 -holdScope Sys_ExcAckEX
+addSignal -h 15 -holdScope Sys_ExcAckMA
+endSubGroup "SYS-EXC"
 addGroup "D-MEM" -e FALSE
 addSignal -h 16 /Testbench/DesignTop/KAB_CORE/DM/Clock
 addSignal -h 16 -UNSIGNED -HEX -holdScope Addr[29:0]
@@ -97,10 +109,6 @@ getSignalForm close
 "/IO_AddressTable"
 "/Testbench"
 "/Testbench/DesignTop"
-"/Testbench/DesignTop/KAB_IO"
-"/Testbench/DesignTop/KAB_IO/IOIF"
-"/Testbench/DesignTop/KAB_IO/UART"
-"/Testbench/DesignTop/KAB_IO/UART/TX"
 
 SCOPE_LIST_BEGIN
 "/IO_AddressTable"

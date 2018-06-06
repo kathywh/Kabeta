@@ -203,7 +203,7 @@ nWaveOpenFsdbDirHistory = "\"/home/kathy/kabeta/test/KabIO/BKD\""
 [Form]
 version = Verdi3_L-2016.06-1
 wave/openWFile.fm = 102,135,823,702
-wave/saveSig.fm = 132,511,723,532
+wave/saveSig.fm = 134,511,723,532
 [General]
 autoSaveSession = FALSE
 TclAutoSource = 
@@ -311,9 +311,9 @@ Show_Cycle_Info = TRUE
 [QtDialog]
 ExpressionDialog = 573,311,778,493
 QwQuestionMsgDlg = 790,471,324,110
-qWaveSignalDialog = 368,290,1188,534
 QwWarnMsgDlg = 668,555,600,250
-QwUserAskDlg = 840,915,324,128
+QwUserAskDlg = 842,915,324,128
+qWaveSignalDialog = 368,290,1188,534
 [Session Cache]
 1 = string (session file name)
 2 = string (session file name)
@@ -772,11 +772,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = TRUE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/kathy/exc_br_stall_test/test/Exceptions/01/SystemChip.fsdb\""
-RecentFile2 = "\"/home/kathy/kabeta/test/OnBoardTest/05_1_UART_SimpleTx/SystemChip.fsdb\""
-RecentFile3 = "\"/home/kathy/kabeta/test/KabIO/BKD/SystemChip.fsdb\""
-RecentFile4 = "\"/home/kathy/kabeta/test/KabIO/CALL/SystemChip.fsdb\""
-RecentFile5 = "\"/home/kathy/kabeta/test/KabIO/EIC/SystemChip.fsdb\""
+RecentFile1 = "\"/home/kathy/exc_br_stall_test/test/Exceptions/02/SystemChip.fsdb\""
+RecentFile2 = "\"/home/kathy/exc_br_stall_test/test/Exceptions/01/SystemChip.fsdb\""
+RecentFile3 = "\"/home/kathy/kabeta/test/OnBoardTest/05_1_UART_SimpleTx/SystemChip.fsdb\""
+RecentFile4 = "\"/home/kathy/kabeta/test/KabIO/BKD/SystemChip.fsdb\""
+RecentFile5 = "\"/home/kathy/kabeta/test/KabIO/CALL/SystemChip.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left

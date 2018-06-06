@@ -18,7 +18,7 @@ program Tester;
       wait(Sys_Reset == '1);
 
       // Wait for running
-      repeat(20) @(posedge Sys_Clock);
+      repeat(30) @(posedge Sys_Clock);
     end
 
 endprogram
