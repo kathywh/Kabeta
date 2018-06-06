@@ -62,9 +62,8 @@ LOCATE(0x100)
 	|-------------------------------------------------------------------------------|
 
 irq_esr:
-	| Adjust & save XP
+	| Adjust XP
 	SUBC(XP, 4, XP)
-	PUSH(XP)
 
 	| Save registers
 	PUSH(R0)
@@ -83,8 +82,7 @@ irq_end:
 	POP(R1)
 	POP(R0)
 
-	| Restore XP then return
-	POP(XP)
+	| Return
 	JMP(XP)
 
 	|-------------------------------------------------------------------------------|
@@ -92,9 +90,6 @@ irq_end:
 	|-------------------------------------------------------------------------------|
 	
 svc_esr:
-	| Save XP
-	PUSH(XP)
-
 	| Save registers
 	PUSH(R1)
 	PUSH(R2)
@@ -109,8 +104,7 @@ svc_end:
 	POP(R2)
 	POP(R1)
 
-	| Restore XP then return
-	POP(XP)
+	| Return
 	JMP(XP)
 
 	|-------------------------------------------------------------------------------|
