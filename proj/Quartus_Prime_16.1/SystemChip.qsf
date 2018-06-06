@@ -95,11 +95,14 @@ set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS R
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS INPUT TRI-STATED"
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to Keys[0]
 set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_location_assignment PIN_M2 -to Rxd
+set_location_assignment PIN_G1 -to Txd
 set_global_assignment -name SDC_FILE scripts/SystemChip.sdc
 set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_SysPLL.qip
 set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_InstrMem_4KB.qip
 set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_DataMem_16KB.qip
 set_global_assignment -name VERILOG_FILE ../../rtl/CommonDefinitions.v
+set_global_assignment -name VERILOG_FILE ../../rtl/AutoResetUnit.v
 set_global_assignment -name VERILOG_FILE ../../rtl/RegisterRstEn.v
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/IO_AddressTable.sv
 set_global_assignment -name VERILOG_FILE ../../rtl/Peripherals/Handshaker.v
@@ -131,6 +134,4 @@ set_global_assignment -name VERILOG_FILE ../../rtl/AddressAdder.v
 set_global_assignment -name VERILOG_FILE ../../rtl/Kabeta.v
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/Peripherals/KabIO.sv
 set_global_assignment -name VERILOG_FILE ../../rtl/SystemChip.v
-set_location_assignment PIN_M2 -to Rxd
-set_location_assignment PIN_G1 -to Txd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/01/2018                                                    */
+/*  Edited on:  06/06/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      System chip.                                                          */
@@ -13,6 +13,7 @@
 /*      05/19/2018  Kathy       Add missing port of processor core.           */
 /*      05/28/2018  Kathy       Add BKD pins.                                 */
 /*      06/01/2018  Kathy       Add UART pins.                                */
+/*      06/06/2018  Kathy       Add ARU unit.                                 */
 /******************************************************************************/
 
 module SystemChip
@@ -40,6 +41,7 @@ module SystemChip
   wire [31:0] IO_DataW, IO_DataR;
   wire [29:0] IO_Address;
   wire EIC_IntAck, EIC_IntReq, EIC_IntId;
+  wire AutoRstReq, AutoRstOut;
 
   SystemPLL PLL
   (
@@ -49,7 +51,7 @@ module SystemChip
     .Locked(PLL_Locked)
   );
 
-  assign AsyncReset = Reset & PLL_Locked;     // extend reset until pll locked
+  assign AsyncReset = Reset & PLL_Locked & AutoRstOut;     // extend reset until pll locked
 
   ResetSynchronizer SYS_RSTSYNC
   (
@@ -65,6 +67,13 @@ module SystemChip
     .SysReset(IO_Reset)
   );
 
+  AutoResetUnit ARU
+  (
+    .Clock(Sys_Clock),
+    .AutoRstReq(AutoRstReq),
+    .AutoRstOut(AutoRstOut)
+  );
+
   Kabeta KAB_CORE
   (
     .Sys_Reset(Sys_Reset),
@@ -76,7 +85,8 @@ module SystemChip
     .IO_DataW(IO_DataW),
     .EIC_IntReq(EIC_IntReq), 
     .EIC_IntId(EIC_IntId),
-    .EIC_IntAck(EIC_IntAck)
+    .EIC_IntAck(EIC_IntAck),
+    .AutoRstReq(AutoRstReq)
   );
 
   KabIO KAB_IO

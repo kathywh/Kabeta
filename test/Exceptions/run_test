@@ -8,6 +8,7 @@ set src_files = \
  ../../../rtl/IP/Alt_EP4CE_InstrMem_4KB.v \
  ../../../rtl/IP/Alt_EP4CE_SysPLL.v \
  ../../../rtl/CommonDefinitions.v \
+ ../../../rtl/AutoResetUnit.v \
  ../../../rtl/AddressAdder.v \
  ../../../rtl/AddressInc.v \
  ../../../rtl/ArithmeticLogicUnit.v \

@@ -1,6 +1,6 @@
 01:    RR-Stage Fault in branch slots
 02_1:  IF-Stage Fault in branch slots (User Mode)
-02_2:  IF-Stage Fault in branch slots (Supervisor Mode)
+02_2:  IF-Stage Fault in branch slots (Supervisor Mode, double fault)
 03_1:  Interrupt when branch at IF-Stage
 03_2:  Interrupt when branch at RR-Stage
 03_3:  Interrupt when branch at EX-Stage
@@ -10,3 +10,4 @@
 05:    Interrupt and pipeline stall (EX-Stage)
 06_1:  Branch (BEQ) and pipeline stall (EX-Stage)
 06_2:  Branch (JMP) and pipeline stall (EX-Stage)
+07:    Double fault

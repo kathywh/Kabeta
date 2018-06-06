@@ -1,7 +1,7 @@
 # Kabeta Processor Design
 
-**Date:** June 4, 2018  
-**Version:** 2.1A  
+**Date:** June 6, 2018  
+**Version:** 2.1B  
 **Author:** Kathy  
 **Reviewer:** (N/A)  
 
@@ -224,7 +224,7 @@ Refer to Section 6. Extensions for Exception Handling in [MIT β Processor Speci
 **NOTES:**
 
 - The MSBs of exception vectors indicate that the exceptionhandlers will executed in the Supervisor Mode.
-- If instructions at multiple stages have causedexceptions simultaneously, only the exception in the highest priority should beprocessed.
+- If instructions at multiple stages have causedexceptions simultaneously, only the exception in the highest priority should be acknowledged.
 - Pay attention to the suppression of exceptions bythe branch instruction in EX-Stage, refer to Section 6.2.
 
 ### 5.3 Exception Conditions
@@ -269,7 +269,7 @@ When a trap or fault occurs:
 - Replace the later instructions in the pipeline with NOP instructions.
 - Jump to the exception handler.
 
-**NOTE:** Traps and Faults could be nested, as long as XP is stored onto stack in the exception handlers.
+**NOTE:** Traps or Faults in the exception handlers will cause **double fault**, which results in system reset.
 
 #### 5.5.3 Interrupt Processing
 
@@ -345,7 +345,7 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | Exc.  Req.  &&  Cond. | RESET         | ExcReqMA       | IRQ_Int [4]  & (~PC_IF.S) | ExcReqEX       | Stall | BrTaken [3]                                            | ExcReqRR       | ExcReqIF       | (Default) |
 | --------------------- | ------------- | -------------- | ------------------------- | -------------- | ----- | ------------------------------------------------------ | -------------- | -------------- | --------- |
 | Exc.  Code            | (N/A)         | ExcCodeMA      | (N/A)                     | ExcCodeEX      | (N/A) | (N/A)                                                  | ExcCodeRR      | ExcCodeIF      |           |
-| Priority              | 0 (Highest)   | 1              | 5                         | 2              | 6     | 7  (Lowest)                                            | 3              | 4              |           |
+| Priority              | 0 (Highest)   | 1              | 2                         | 3              | 4     | 5                                                      | 6              | 7 (Lowest)     |           |
 | **ExcAddr**           | 32’h8000_0000 | EVT[ExcCodeMA] | EVT[{2’b11,IID}]          | EVT[ExcCodeEX] | X     | X                                                      | EVT[ExcCodeRR] | EVT[ExcCodeIF] | X         |
 | **PC_Sel [1]**        | EXCA          | EXCA           | EXCA                      | EXCA           | X     | REGA (AL), PCLIT ((EQ and RaZero) or (NE and !RaZero)) | EXCA           | EXCA           | PCNX      |
 | **FlushIF**           | 0             | 1              | 1                         | 1              | 0     | 1                                                      | 1              | 1              | 0         |
@@ -394,3 +394,4 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | 1.1E    | 5/16/2018 | Kathy  | (N/A)    | Change Mem/IO control signals.                               |
 | 1.1F    | 5/20/2018 | Kathy  | (N/A)    | Remove SVC_ID from SVC format.                               |
 | 2.1A    | 6/4/2018  | Kathy  | (N/A)    | 1) Correct stall process for RR & EX stages. 2) Change priorities of faults, interrupts, stall and branch. |
+| 2.1B    | 6/6/2018  | Kathy  | (N/A)    | Change nested exception to double fault.                     |
