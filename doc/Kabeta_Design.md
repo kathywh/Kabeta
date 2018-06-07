@@ -1,7 +1,7 @@
 # Kabeta Processor Design
 
-**Date:** June 6, 2018  
-**Version:** 2.1B  
+**Date:** June 7, 2018  
+**Version:** 2.1C  
 **Author:** Kathy  
 **Reviewer:** (N/A)  
 
@@ -69,6 +69,14 @@ IO[Reg[Ra] + Sext(Offset)] ← Reg[Rc]
 
 **NOTE:** This is a privileged instruction.
 
+### 2.4 Load Instruction Memory - LDI (1A)
+
+| 31 : 26    | 25 : 21 | 20 : 16 | 15 : 0                    |
+| ---------- | ------- | ------- | ------------------------- |
+| **01**1010 | Rc      | Ra      | Offset (two’s complement) |
+
+Reg[Rc] ← I-Mem[Reg[Ra] + Sext(Offset)]
+
 ## 3 Pipeline Bypass
 
 ### 3.1 Bypass Paths
@@ -84,7 +92,7 @@ _Figure 3. [Bypass Paths](Bypass_Paths.png)_
 
 ```
 ALU_OUT_SELX =
-(IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+(IR_EX.Opcode in {OP, OPC, LD, LDI, ST, JMP, B, IOR, IOW})
 && (IR_EX.Ra != 31) && (IR_EX.Ra == IR_MA.Rc)
 && (IR_MA.Opcode in {OP, OPC})
 ```
@@ -93,7 +101,7 @@ ALU_OUT_SELX =
 
 ```
 NPC_MA_SELX =
-(IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+(IR_EX.Opcode in {OP, OPC, LD, LDI, ST, JMP, B, IOR, IOW})
 && (IR_EX.Ra != 31) && (IR_EX.Ra == IR_MA.Rc)
 && (IR_MA.Opcode in {JMP, B})
 ```
@@ -103,9 +111,9 @@ NPC_MA_SELX =
 ```
 RF_WDATA_SELX =
 (!ALU_OUT_SELX && !NPC_MA_SELX)
-&& (IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+&& (IR_EX.Opcode in {OP, OPC, LD, LDI, ST, JMP, B, IOR, IOW})
 && (IR_EX.Ra != 31) && (IR_EX.Ra == IR_WB.Rc)
-&& (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR})
+&& (IR_WB.Opcode in {OP, OPC, LD, LDI, LDR, JMP, B, IOR})
 ```
 
 #### 3.2.2 Port Y
@@ -152,13 +160,13 @@ RF_WDATA_SELY =
   ( /* Read Rb */
     (IR_EX.Opcode in {OP})
     && (IR_EX.Rb != 31) && (IR_EX.Rb == IR_WB.Rc)
-    && (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR})
+    && (IR_WB.Opcode in {OP, OPC, LD, LDR, LDI, JMP, B, IOR})
   )
   ||
   ( /* Read Rc */
     (IR_EX.Opcode in {ST, IOW})
     && (IR_EX.Rc != 31) && (IR_EX.Rc == IR_WB.Rc)
-    && (IR_WB.Opcode in {OP, OPC, LD, LDR, JMP, B, IOR})
+    && (IR_WB.Opcode in {OP, OPC, LD, LDR, LDI, JMP, B, IOR})
   )
 )
 ```
@@ -172,21 +180,21 @@ Stall the pipeline when one of the source registers of the instruction at EX-Sta
 ```
 Stall =
 ( /* Read Ra */
-  (IR_EX.Opcode in {OP, OPC, LD, ST, JMP, B, IOR, IOW})
+  (IR_EX.Opcode in {OP, OPC, LD, LDI, ST, JMP, B, IOR, IOW})
   && (IR_EX.Ra != 31) && (IR_EX.Ra == IR_MA.Rc)
-  && (IR_MA.Opcode in {LD, LDR, IOR})
+  && (IR_MA.Opcode in {LD, LDI, LDR, IOR})
 )
 ||
 ( /* Read Rb */
   (IR_EX.Opcode in {OP})
   && (IR_EX.Rb != 31) && (IR_EX.Rb == IR_MA.Rc)
-  && (IR_MA.OpCode in {LD, LDR, IOR})
+  && (IR_MA.OpCode in {LD, LDI, LDR, IOR})
 )
 ||
 ( /* Read Rc */
   (IR_EX.Opcode in {ST, IOW})
   && (IR_EX.Rc != 31) && (IR_EX.Rc == IR_MA.Rc)
-  && (IR_MA.Opcode in {LD, LDR, IOR})
+  && (IR_MA.Opcode in {LD, LDI, LDR, IOR})
 )
 ```
 
@@ -235,11 +243,15 @@ Refer to Section 6. Extensions for Exception Handling in [MIT β Processor Speci
 | System Service      | SVC instruction                                              |
 | Illegal Instruction | Undefined opcodes (6’b010_xxx, 6’b011_010) in both modes,  privileged opcodes (6’b00x_xxx) in User Mode,  or undefined privileged opcodes in Supervisor Mode. |
 | Invalid Operation   | Undefined Operate Class Opcodes, MUL/MULC, or DIV/DIVC       |
-| Invalid D-Address   | Out of data memory address range                             |
-| Invalid I-Address   | Out of instruction memory address range                      |
+| Invalid D-Address   | Out of data memory address range, or access to supervisory data space in user mode. |
+| Invalid I-Address   | Out of instruction memory address range, or access to supervisory instruction space in user mode. |
 | Interrupt 0/1       | External interrupt signal                                    |
 
-### 5.4 Interrupt Request and Acknowledge
+### 5.4 Supervisory Space Protection (SSP)
+
+Preserve the lower parts of both instruction and data memory for supervisor program. Access in user mode will cause Invalid I/D-Address fault.
+
+### 5.5 Interrupt Request and Acknowledge
 
 - External interrupts are level triggered.
 - Interrupt number is read from IID pin.
@@ -250,11 +262,11 @@ Refer to Section 6. Extensions for Exception Handling in [MIT β Processor Speci
 ![](Interrupt_Req_Ack_Timing_Diagram.png)
 _Figure 4. [Interrupt Request and Acknowledge Timing Diagram](Interrupt_Req_Ack_Timing_Diagram.png)_
 
-### 5.5 Implementation
+### 5.6 Implementation
 
 When BNE(R31,0,XP) instruction arrives at WB-Stage, write register XP <= PC_WB, which is the instruction address plus 4.
 
-#### 5.5.1 Reset Processing
+#### 5.6.1 Reset Processing
 
 - Reset all Instruction Registers (i.e. load NOPs).
 - Reset all Program Counters (i.e. load 32’h0000_0000 address).
@@ -262,7 +274,7 @@ When BNE(R31,0,XP) instruction arrives at WB-Stage, write register XP <= PC_WB, 
 
 **NOTE:** Synchronization of external RST signal is necessary.
 
-####  5.5.2 Trap and Fault Processing
+####  5.6.2 Trap and Fault Processing
 
 When a trap or fault occurs:
 - Replace the instruction which has caused the exception with BNE(R31,0,XP) instruction.
@@ -271,7 +283,7 @@ When a trap or fault occurs:
 
 **NOTE:** Traps or Faults in the exception handlers will cause **double fault**, which results in system reset.
 
-#### 5.5.3 Interrupt Processing
+#### 5.6.3 Interrupt Processing
 
 When an interrupt occurs:
 - Wait until Supervisor bit is cleared (i.e. PC_IF.S == 0).
@@ -298,26 +310,27 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 
 ### 7.1 Instruction Decoder Signaling
 
-| Stage | Signal            | OP     | OPC    | LD   | IOR  | ST   | IOW  | JMP  | BEQ  | BNE  | LDR  | SVC  |
-| ----- | ----------------- | ------ | ------ | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
-| IF    | (N/A)             |        |        |      |      |      |      |      |      |      |      |      |
-| RR    | RegAddrYSel       | RB     | X      | X    | X    | RC   | RC   | X    | X    | X    | X    | X    |
-|       | RegRdEnX          | 1      | 1      | 1    | 1    | 1    | 1    | 1    | 1    | 1    | 0    | 0    |
-|       | RegRdEnY          | 1      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
-| EX    | BrCond [1]        | NV     | NV     | NV   | NV   | NV   | NV   | AL   | EQ   | NE   | NV   | NV   |
-|       | InstrMemAddrBufEn | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    |
-|       | ALU_DataYSel [2]  | REG    | LIT    | LIT  | LIT  | LIT  | LIT  | X    | X    | X    | X    | X    |
-|       | MemDataBufEn      | 0      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
-|       | ALU_Op            | ALU_Op | ALU_Op | ADD  | ADD  | ADD  | ADD  | X    | X    | X    | X    | X    |
-|       | ALU_En            | 1      | 1      | 1    | 1    | 1    | 1    | 0    | 0    | 0    | 0    | 0    |
-| MA    | InstrMemRdEn      | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    |
-|       | Mem_Ren           | 0      | 0      | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
-|       | Mem_Wen           | 0      | 0      | 0    | 0    | 1    | 0    | 0    | 0    | 0    | 0    | 0    |
-|       | IO_Ren            | 0      | 0      | 0    | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
-|       | IO_Wen            | 0      | 0      | 0    | 0    | 0    | 1    | 0    | 0    | 0    | 0    | 0    |
-|       | ALU_DataBufEn     | 1      | 1      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
-| WB    | RegDataWSel [3]   | ALU    | ALU    | MEM  | IO   | X    | X    | PC   | PC   | PC   | IM   | X    |
-|       | RegWen            | 1      | 1      | 1    | 1    | 0    | 0    | 1    | 1    | 1    | 1    | 0    |
+| Stage | Signal            | OP     | OPC    | LD   | IOR  | ST   | IOW  | JMP  | BEQ  | BNE  | LDR  | LDI  | SVC  |
+| ----- | ----------------- | ------ | ------ | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| IF    | (N/A)             |        |        |      |      |      |      |      |      |      |      |      |      |
+| RR    | RegAddrYSel       | RB     | X      | X    | X    | RC   | RC   | X    | X    | X    | X    | X    | X    |
+|       | RegRdEnX          | 1      | 1      | 1    | 1    | 1    | 1    | 1    | 1    | 1    | 0    | 1    | 0    |
+|       | RegRdEnY          | 1      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    | 0    |
+| EX    | BrCond [1]        | NV     | NV     | NV   | NV   | NV   | NV   | AL   | EQ   | NE   | NV   | NV   | NV   |
+|       | InstrMemAddrBufEn | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    | 0    |
+|       | ALU_DataYSel [2]  | REG    | LIT    | LIT  | LIT  | LIT  | LIT  | X    | X    | X    | X    | LIT  | X    |
+|       | MemDataBufEn      | 0      | 0      | 0    | 0    | 1    | 1    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | ALU_Op            | ALU_Op | ALU_Op | ADD  | ADD  | ADD  | ADD  | X    | X    | X    | X    | ADD  | X    |
+|       | ALU_En            | 1      | 1      | 1    | 1    | 1    | 1    | 0    | 0    | 0    | 0    | 1    | 0    |
+| MA    | InstrMemRdEn      | 0      | 0      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 1    | 0    |
+|       | InstrMemAddrSel   | X      | X      | X    | X    | X    | X    | X    | X    | X    | BUF  | ALU  | X    |
+|       | Mem_Ren           | 0      | 0      | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | Mem_Wen           | 0      | 0      | 0    | 0    | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | IO_Ren            | 0      | 0      | 0    | 1    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | IO_Wen            | 0      | 0      | 0    | 0    | 0    | 1    | 0    | 0    | 0    | 0    | 0    | 0    |
+|       | ALU_DataBufEn     | 1      | 1      | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+| WB    | RegDataWSel [3]   | ALU    | ALU    | MEM  | IO   | X    | X    | PC   | PC   | PC   | IM   | IM   | X    |
+|       | RegWen            | 1      | 1      | 1    | 1    | 0    | 0    | 1    | 1    | 1    | 1    | 1    | 0    |
 
 **NOTES:**
 
@@ -339,6 +352,9 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
    - MEM – Data Memory
    - IO – IO Registers
    - IM – Instruction Memory
+4. InstrMemAddrSel:
+   - BUF - I-Mem Address Buffer
+   - ALU - ALU Output
 
 ### 7.2 Branch and Exception Control Signaling
 
@@ -395,3 +411,4 @@ Only the JMP instruction is allowed to clear the Supervisor bit but not set it, 
 | 1.1F    | 5/20/2018 | Kathy  | (N/A)    | Remove SVC_ID from SVC format.                               |
 | 2.1A    | 6/4/2018  | Kathy  | (N/A)    | 1) Correct stall process for RR & EX stages. 2) Change priorities of faults, interrupts, stall and branch. |
 | 2.1B    | 6/6/2018  | Kathy  | (N/A)    | Change nested exception to double fault.                     |
+| 2.1C    | 6/7/2018  | Kathy  | (N/A)    | Add supervisory space protection and LDI instruction.        |
