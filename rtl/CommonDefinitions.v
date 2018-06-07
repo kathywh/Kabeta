@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/13/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  05/21/2018                                                    */
+/*  Edited on:  06/07/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Common definitions of macros.                                         */
@@ -12,6 +12,7 @@
 /*      05/13/2018  Kathy       Unit created.                                 */
 /*      05/15/2018  Kathy       Add more definitions.                         */
 /*      05/21/2018  Kathy       Make some comments more clear.                */
+/*      06/07/2018  Kathy       Add address limit for SSP.                    */
 /******************************************************************************/
 
 
@@ -25,11 +26,13 @@
 
 // Instruction Address Range
 // NOTE: This number must be UNSIGNED
-`define INSTR_ADDR_LIMIT  32'h0000_1000     /* 4K Bytes (1K Words) */
+`define INSTR_ADDR_LIMIT  32'h0000_1000       /* 4K Bytes (1024 Words) */
+`define INSTR_SSP_LIMIT   32'h0000_0800       /* 2K Bytes ( 512 Words) */
 
 // Data Address Range
 // NOTE: This number must be UNSIGNED
-`define DATA_ADDR_LIMIT   31'h0000_4000     /* 16K Bytes (4K Words) */
+`define DATA_ADDR_LIMIT   31'h0000_1000       /* 4K Bytes (1024 Words) */
+`define DATA_SSP_LIMIT    31'h0000_0800       /* 2K Bytes ( 512 Words) */
 
 /******************************************************************************/
 /*                              Definitions                                   */
@@ -74,6 +77,11 @@
 `define RF_W_SEL_MEM  3'b010     /* Data Memory */
 `define RF_W_SEL_IO   3'b011     /* IO Registers */
 `define RF_W_SEL_IM   3'b100     /* Instruction Memory */
+
+// Instruction Memory Address Selection
+`define IMA_X    1'bx   /* Don't Care */
+`define IMA_BUF  1'b0   /* I-Mem Addr Buffer */
+`define IMA_ALU  1'b1   /* ALU Out */
 
 // Zero Register Index
 `define IDX_ZR  5'd31      /* R31 always reads zero and the writes are ignored  */

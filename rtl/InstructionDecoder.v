@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/13/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/04/2018                                                    */
+/*  Edited on:  06/07/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      Instruction decoders for each stage.                                  */
@@ -17,6 +17,8 @@
 /*      05/18/2018  Kathy       Correct ExcReq_EX drive error.                */
 /*      06/04/2018  Kathy       Add new output ports for EX stage.            */
 /*                              Rename Stall port to StallReq.                */
+/*      06/07/2018  Kathy       Add SSP check.                                */
+/*                              Add LDI instruction.                          */
 /******************************************************************************/
 
 
@@ -35,6 +37,7 @@
 `define IS_ICLS_OPC(InstrWord)    (`OP_CLASS(InstrWord) == 2'b11)
 `define IS_INSTR_LD(InstrWord)    (`OP_CODE(InstrWord) == 6'b011_000)
 `define IS_INSTR_ST(InstrWord)    (`OP_CODE(InstrWord) == 6'b011_001)
+`define IS_INSTR_LDI(InstrWord)   (`OP_CODE(InstrWord) == 6'b011_010)
 `define IS_INSTR_JMP(InstrWord)   (`OP_CODE(InstrWord) == 6'b011_011)
 `define IS_INSTR_SVC(InstrWord)   (`OP_CODE(InstrWord) == 6'b011_100)
 `define IS_INSTR_BEQ(InstrWord)   (`OP_CODE(InstrWord) == 6'b011_101)
@@ -48,6 +51,7 @@ module InstructionDecoder
 (
   input [31:0] InstrWord_IF,
   input [30:0] InstrAddr_IF,
+  input S_Mode_IF,
   output [2:0] ExcCode_IF,
   output ExcReq_IF,
 
@@ -74,11 +78,13 @@ module InstructionDecoder
 
   input [31:0] InstrWord_MA,
   input [31:0] DataAddress,
+  input S_Mode_MA,
   input [30:0] IMemAddress,
   output InstrMemRdEn,
   output reg Mem_Ren, Mem_Wen,
   output reg IO_Ren, IO_Wen,
   output ALU_DataBufEn,
+  output reg IMemAddrSel,
   output reg [2:0] ExcCode_MA,
   output reg ExcReq_MA,
 
@@ -97,7 +103,7 @@ module InstructionDecoder
   /******************************************************************************/
 
   // Exception Process
-  assign ExcReq_IF = (InstrAddr_IF >= `INSTR_ADDR_LIMIT);
+  assign ExcReq_IF = (InstrAddr_IF >= `INSTR_ADDR_LIMIT) | (~S_Mode_IF & (InstrAddr_IF < `INSTR_SSP_LIMIT));
   assign ExcCode_IF = ExcReq_IF ? `EC_INV_IA : 3'b000;
   
   /******************************************************************************/
@@ -128,7 +134,8 @@ module InstructionDecoder
         end
       else if(`IS_ICLS_OPC(InstrWord_RR) || `IS_INSTR_JMP(InstrWord_RR)
               || `IS_INSTR_LD(InstrWord_RR) || `IS_INSTR_IOR(InstrWord_RR)
-              || `IS_INSTR_BEQ(InstrWord_RR) || `IS_INSTR_BNE(InstrWord_RR))
+              || `IS_INSTR_BEQ(InstrWord_RR) || `IS_INSTR_BNE(InstrWord_RR)
+              || `IS_INSTR_LDI(InstrWord_RR))
         begin
           RegRdEnX <= `TRUE;
           RegRdEnY <= `FALSE;
@@ -144,7 +151,7 @@ module InstructionDecoder
 
   // Exception Process
   /* undefined user mode opcodes (excluding undefined ALU opcodes) */
-  assign UndefUserOpcode = (InstrWord_RR[31:29] == 3'b010) | (InstrWord_RR[31:26] == 6'b011_010);
+  assign UndefUserOpcode = (InstrWord_RR[31:29] == 3'b010);
   /* undefined privileged opcodes */
   assign UndefPrivOpcode = (InstrWord_RR[31:29] == 3'b000) 
                            | ((InstrWord_RR[31:29] == 3'b001) & (InstrWord_RR[28:27] != 2'b00));
@@ -175,6 +182,7 @@ module InstructionDecoder
   /******************************************************************************/
 
   wire Is_LD_EX = `IS_INSTR_LD(InstrWord_EX);
+  wire Is_LDI_EX = `IS_INSTR_LDI(InstrWord_EX);
   wire Is_ST_EX = `IS_INSTR_ST(InstrWord_EX);
   wire Is_IOR_EX = `IS_INSTR_IOR(InstrWord_EX);
   wire Is_IOW_EX = `IS_INSTR_IOW(InstrWord_EX);
@@ -183,9 +191,9 @@ module InstructionDecoder
   wire Is_JMP_EX = `IS_INSTR_JMP(InstrWord_EX);
   wire Is_BEQ_EX = `IS_INSTR_BEQ(InstrWord_EX);
   wire Is_BNE_EX = `IS_INSTR_BNE(InstrWord_EX);
-  wire Is_ST_IOW_EX = Is_ST_EX | Is_IOW_EX;
-  wire Is_LD_ST_IOR_IOW_EX = Is_LD_EX | Is_ST_EX | Is_IOR_EX | Is_IOW_EX;
-  wire Is_OP_OPC_EX = Is_OP_EX | Is_OPC_EX;
+  wire Is_ST_IOW_EX = Is_ST_EX | Is_IOW_EX;     // Read Rc & write mem data buffer
+  wire Is_LD_LDI_ST_IOR_IOW_EX = Is_LD_EX | Is_LDI_EX | Is_ST_EX | Is_IOR_EX | Is_IOW_EX;     // Use ALU to compute access address
+  wire Is_OP_OPC_EX = Is_OP_EX | Is_OPC_EX;     // Use ALU to do general computation
   wire Is_OP_OPC_JMP_B_EX = Is_OP_OPC_EX | Is_JMP_EX | Is_BEQ_EX | Is_BNE_EX;
 
   wire [3:0] ALU_Code_EX = `ALU_CODE(InstrWord_EX);
@@ -209,13 +217,7 @@ module InstructionDecoder
         begin
           RegAddrYSel_EX <= `RF_Y_SEL_RC;
         end
-      else if(`IS_ICLS_OPC(InstrWord_EX) || `IS_INSTR_JMP(InstrWord_EX)
-              || `IS_INSTR_LD(InstrWord_EX) || `IS_INSTR_IOR(InstrWord_EX)
-              || `IS_INSTR_BEQ(InstrWord_EX) || `IS_INSTR_BNE(InstrWord_EX))
-        begin
-          RegAddrYSel_EX <= `RF_Y_SEL_X;
-        end
-      else  /* Including LDR and SVC */
+      else
         begin
           RegAddrYSel_EX <= `RF_Y_SEL_X;
         end
@@ -241,7 +243,7 @@ module InstructionDecoder
     begin
       if(Is_OP_EX)
         ALU_DataYSel <= `ALU_Y_SEL_REG;
-      else if(Is_OPC_EX | Is_LD_ST_IOR_IOW_EX)
+      else if(Is_OPC_EX | Is_LD_LDI_ST_IOR_IOW_EX)
         ALU_DataYSel <= `ALU_Y_SEL_LIT;
       else
         ALU_DataYSel <= `ALU_Y_SEL_X;
@@ -254,7 +256,7 @@ module InstructionDecoder
           ALU_Opcode <= ALU_Code_EX;
           ALU_En <= `TRUE;
         end
-      else if(Is_LD_ST_IOR_IOW_EX)
+      else if(Is_LD_LDI_ST_IOR_IOW_EX)
         begin
           ALU_Opcode <= `ALU_ADD;
           ALU_En <= `TRUE;
@@ -299,6 +301,7 @@ module InstructionDecoder
 
   wire Is_LD_MA = `IS_INSTR_LD(InstrWord_MA);
   wire Is_LDR_MA = `IS_INSTR_LDR(InstrWord_MA);
+  wire Is_LDI_MA = `IS_INSTR_LDI(InstrWord_MA);
   wire Is_ST_MA = `IS_INSTR_ST(InstrWord_MA);
   wire Is_IOR_MA = `IS_INSTR_IOR(InstrWord_MA);
   wire Is_IOW_MA = `IS_INSTR_IOW(InstrWord_MA);
@@ -307,7 +310,7 @@ module InstructionDecoder
                      | `IS_INSTR_JMP(InstrWord_MA);
 
   // Control Signals
-  assign InstrMemRdEn = Is_LDR_MA;
+  assign InstrMemRdEn = Is_LDR_MA | Is_LDI_MA;
   assign ALU_DataBufEn = Is_OP_OPC_MA;
 
   always @(*)
@@ -318,6 +321,7 @@ module InstructionDecoder
           Mem_Wen <= `FALSE;
           IO_Ren <= `FALSE;
           IO_Wen <= `FALSE;
+          IMemAddrSel <= `IMA_X;
         end
       else if(Is_ST_MA)
         begin
@@ -325,13 +329,31 @@ module InstructionDecoder
           Mem_Wen <= `TRUE;
           IO_Ren <= `FALSE;
           IO_Wen <= `FALSE;
+          IMemAddrSel <= `IMA_X;
         end
+      else if(Is_LDI_MA)
+        begin
+          Mem_Ren <= `FALSE;
+          Mem_Wen <= `FALSE;
+          IO_Ren <= `FALSE;
+          IO_Wen <= `FALSE;
+          IMemAddrSel <= `IMA_ALU;
+        end
+      else if(Is_LDR_MA)
+        begin
+          Mem_Ren <= `FALSE;
+          Mem_Wen <= `FALSE;
+          IO_Ren <= `FALSE;
+          IO_Wen <= `FALSE;
+          IMemAddrSel <= `IMA_BUF;
+        end      
       else if(Is_IOR_MA)
         begin
           Mem_Ren <= `FALSE;
           Mem_Wen <= `FALSE;
           IO_Ren <= `TRUE;
           IO_Wen <= `FALSE;
+          IMemAddrSel <= `IMA_X;
         end        
       else if(Is_IOW_MA)
         begin
@@ -339,6 +361,7 @@ module InstructionDecoder
           Mem_Wen <= `FALSE;
           IO_Ren <= `FALSE;
           IO_Wen <= `TRUE;
+          IMemAddrSel <= `IMA_X;
         end
       else
         begin
@@ -346,18 +369,19 @@ module InstructionDecoder
           Mem_Wen <= `FALSE;
           IO_Ren <= `FALSE;
           IO_Wen <= `FALSE;
+          IMemAddrSel <= `IMA_X;
         end
     end
 
   // Exception Process
   always @(*)
     begin
-      if((Is_LD_MA | Is_ST_MA) & (DataAddress >= `DATA_ADDR_LIMIT))
+      if((Is_LD_MA | Is_ST_MA) & ((DataAddress >= `DATA_ADDR_LIMIT) | (~S_Mode_MA & (DataAddress < `DATA_SSP_LIMIT))))
         begin
           ExcReq_MA <= `TRUE;
           ExcCode_MA <= `EC_INV_DA;
         end
-      else if(Is_LDR_MA & (IMemAddress >= `INSTR_ADDR_LIMIT))
+      else if((Is_LDR_MA | Is_LDI_MA) & ((IMemAddress >= `INSTR_ADDR_LIMIT) | (~S_Mode_MA & (IMemAddress < `INSTR_SSP_LIMIT))))
         begin
           ExcReq_MA <= `TRUE;
           ExcCode_MA <= `EC_INV_IA;
@@ -376,11 +400,13 @@ module InstructionDecoder
   wire Is_OP_OPC_WB = `IS_ICLS_OP(InstrWord_WB) | `IS_ICLS_OPC(InstrWord_WB);
   wire Is_LD_WB = `IS_INSTR_LD(InstrWord_WB);
   wire Is_LDR_WB = `IS_INSTR_LDR(InstrWord_WB);
+  wire Is_LDI_WB = `IS_INSTR_LDI(InstrWord_WB);
   wire Is_IOR_WB = `IS_INSTR_IOR(InstrWord_WB);
   wire Is_JMP_WB = `IS_INSTR_JMP(InstrWord_WB);
   wire Is_BEQ_WB = `IS_INSTR_BEQ(InstrWord_WB);
   wire Is_BNE_WB = `IS_INSTR_BNE(InstrWord_WB);
   wire Is_JMP_B_WB = Is_JMP_WB | Is_BEQ_WB | Is_BNE_WB;  
+  wire Is_LDR_LDI_WB = Is_LDR_WB | Is_LDI_WB;
 
   // Register Index
   assign Rc_WB = `I_RC(InstrWord_WB);
@@ -408,7 +434,7 @@ module InstructionDecoder
           RegDataWSel <= `RF_W_SEL_PC;
           RegWen <= `TRUE;
         end
-      else if(Is_LDR_WB)
+      else if(Is_LDR_LDI_WB)
         begin
           RegDataWSel <= `RF_W_SEL_IM;
           RegWen <= `TRUE;
@@ -435,10 +461,10 @@ module InstructionDecoder
   wire RbNotZR_EX = (Rb_EX != `IDX_ZR);
   wire RcNotZR_EX = (Rc_EX != `IDX_ZR);
 
-  wire IsReadRa_EX = (Is_LD_ST_IOR_IOW_EX | Is_OP_OPC_JMP_B_EX) & RaNotZR_EX;
+  wire IsReadRa_EX = (Is_LD_LDI_ST_IOR_IOW_EX | Is_OP_OPC_JMP_B_EX) & RaNotZR_EX;
   wire IsReadRb_EX = Is_OP_EX & RbNotZR_EX;
   wire IsReadRc_EX = Is_ST_IOW_EX & RcNotZR_EX;
-  wire IsWriteR_WB = Is_OP_OPC_WB | Is_JMP_B_WB | Is_LDR_WB | Is_LD_WB | Is_IOR_WB;
+  wire IsWriteR_WB = Is_OP_OPC_WB | Is_JMP_B_WB | Is_LDR_LDI_WB | Is_LD_WB | Is_IOR_WB;
 
   /******************************************************************************/
   /*                         Bypass Logic of Channel X                          */
@@ -506,7 +532,7 @@ module InstructionDecoder
   /*                                 Stall Logic                                */
   /******************************************************************************/
 
-  wire IsReadMIO_MA = Is_LD_MA | Is_LDR_MA | Is_IOR_MA;
+  wire IsReadMIO_MA = Is_LD_MA | Is_LDR_MA | Is_LDI_MA | Is_IOR_MA;
 
   assign StallReq = 
     IsReadMIO_MA 
