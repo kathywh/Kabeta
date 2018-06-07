@@ -1,11 +1,12 @@
 .include ../../../tools/kabeta.uasm
 
 ||====================================================================================||
-||                                 User Data Segment                                  ||
+||                                    I/O  Segment                                    ||
 ||====================================================================================||
-LOCATE(0x0800)
-data:
-	STORAGE(1)
+LOCATE(0x100)
+
+ioport:
+	STORAGE(4)
 
 ||====================================================================================||
 ||                                 Exception  Vectors                                 ||
@@ -32,49 +33,56 @@ urq_vec:
 ||====================================================================================||
 ||                              Supervisor Code Segment                               ||
 ||====================================================================================||
-LOCATE(0x0080)
+LOCATE(0x0020)
 
 start:
-	| Switch to User Mode
-	MOVC(user_start%PC_MASK, R0)
-	JMP(R0)
 
-||====================================================================================||
-||                                  User Code Segment                                 ||
-||====================================================================================||
-LOCATE(0x0800)
-user_start:
+	| Load literal (in I-Mem)
+	LDR(const1, R1)
+	LDR(const2, R2)
+	LDI(const3, R3)
+	LDI(const4, R4)
 
-	MOVC(0x5A03, R0)
-	ST(R0, data)	
-	MOVC(0x5A00, R21)
-	MOVC(1, R22)	
+	| I/O read
+	MOVC(0, R0)
+	IOR(R0, ioport, R10)
+	ADDC(R0, 4, R0)
+	IOR(R0, ioport, R11)
+	ADDC(R0, 4, R0)
+	IOR(R0, ioport, R12)
+	ADDC(R0, 4, R0)
+	IOR(R0, ioport, R13)
 
-	|--------------------------------
-	| Bypass from WB-Stage, preceding by 2 instructions (including stall cycle)
-
-	LD(data, R1)
-	MOV(R1, R2)
-
-	LDR(literal, R1)
-	MOV(R1, R2)
-
-	LDI(const, R1)
-	MOV(R1, R2)
+	| I/O write
+	MOVC(0, R0)
+	IOW(R1, R0, ioport)
+	ADDC(R0, 4, R0)
+	IOW(R2, R0, ioport)
+	ADDC(R0, 4, R0)
+	IOW(R3, R0, ioport)
+	ADDC(R0, 4, R0)
+	IOW(R4, R0, ioport)
 
 end:
 	BR(.)
 
 ||====================================================================================||
-||                               User Literal  Segment                                ||
+||                            Supervisor Literal  Segment                             ||
 ||====================================================================================||
 LITERAL()
 
-literal:
-	LONG(0x5A04)
-
-const:
-	LONG(0x5A05)
+const1:
+	LONG(0x12345678)
+space1:
+	STORAGE(2)
+const2:
+	LONG(0xABCDEF89)
+const3:
+	LONG(0x3C9A172E)
+space2:
+	STORAGE(5)
+const4:
+	LONG(0xE219C43B)
 
 |--------------------------------------|
 | Program Signature                    |

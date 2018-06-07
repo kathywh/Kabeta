@@ -1,6 +1,15 @@
 .include ../../../tools/kabeta.uasm
 
 ||====================================================================================||
+||                                 User Data Segment                                  ||
+||====================================================================================||
+LOCATE(0x0800)
+
+| stack
+stack:
+	STORAGE(256)
+
+||====================================================================================||
 ||                                 Exception  Vectors                                 ||
 ||====================================================================================||
 EXCVT()
@@ -16,7 +25,7 @@ inv_op_vec:
 inv_da_vec:
 	BR(.)
 inv_ia_vec:
-	BR(.)
+	BR(inv_ia_esr)
 irq_vec:
 	BR(.)
 urq_vec:
@@ -25,9 +34,29 @@ urq_vec:
 ||====================================================================================||
 ||                              Supervisor Code Segment                               ||
 ||====================================================================================||
-LOCATE(0x0080)
+LOCATE(0x0020)
 
+	| Invalid Instruction Address Handler
+	|   Halt for test, impossible to return
+	|   since XP contains invalid address
+inv_ia_esr:
+	PUSH(XP)
+	PUSH(R0)
+	PUSH(R1)
+	| Process illegal in fault here,
+	| assuming R0 & R1 will be used.
+	BR(.)
+	POP(R1)
+	POP(R0)
+	POP(XP)
+	JMP(XP)	
+
+	| Reset vector jump here
 start:
+
+	| Set SP
+	MOVC(stack, SP)
+
 	| Switch to User Mode
 	MOVC(user_start%PC_MASK, R0)
 	JMP(R0)
@@ -38,39 +67,12 @@ start:
 LOCATE(0x0800)
 user_start:
 
-	| Set init values of registers
-	CMOVE(0x59C1, R0)
-	CMOVE(0x59C2, R1)
-	CMOVE(0x59C3, R2)
-	CMOVE(0x59C4, R3)
-	CMOVE(0x59C5, R4)
-	CMOVE(0x59C6, R5)
-	CMOVE(0x59C7, R6)
-	CMOVE(0x59C8, R7)
-	CMOVE(0x59C9, R8)
-	CMOVE(0x8010, R9)
-	CMOVE(0x9011, R10)
-	CMOVE(0xA212, R11)
-	CMOVE(0xB713, R12)
-	CMOVE(0xCA14, R13)
-	CMOVE(0xFE15, R14)
+	MOVC(0x59C1, R0)
+	MOVC(0x59C2, R1)
+	MOVC(0x59C3, R2)
 
-	| Run OP instructions
-	ADDC(R0, 0x59C2, R15)
-	SUBC(R2, 0xFFFFFE15, R16)
-	ANDC(R3, 0xFFFFCA14, R17)
-	ORC(R4, 0xFFFFB713, R18)
-	XORC(R5, 0xFFFFA212, R19)
-	SHLC(R10, 0x59C7, R20)
-	SHRC(R9, 0x59C8, R21)
-	SRAC(R11, 0x59C5, R22)
-	CMPEQC(R8, 0xFFFFCA14, R23)
-	CMPEQC(R10, 0xFFFF9011, R24)
-	CMPLTC(R13, 0x59C5, R25)
-	CMPLTC(R14, 0xFFFFA212, R26)
-	CMPLEC(R13, 0x59C5, R27)
-	CMPLEC(R14, 0xFFFFA212, R28)
-	CMPLEC(R12, 0xFFFFB713, R29)
+	| Invalid instruction address
+	BR(svc_vec)			| br to svc_vec, SSP
 
 end:
 	BR(.)

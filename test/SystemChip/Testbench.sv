@@ -33,7 +33,7 @@ module Testbench;
 
   // test environment
   ClockGenerator#(TCLK) ClkGen(.*);
-  Tester#(TCLK) Tester(.*);
+  Tester Tester(.*);
 
   // design under test
   SystemChip DesignTop(.*);

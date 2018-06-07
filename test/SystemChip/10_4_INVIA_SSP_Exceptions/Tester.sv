@@ -46,44 +46,23 @@ program Tester;
       // NOTE: +2 is for branch delay slots
       repeat(4) @(posedge Sys_Clock);
 
-      // instructions before INV DA
+      // instructions before INV IA (4)
+      repeat(4) @(posedge Sys_Clock);
+
+      // INV IA (JMP) + branch delay (1+2)
       repeat(3) @(posedge Sys_Clock);
 
-      for(int i=0; i<4; i++)
+      // Invalid instruction, cause INV IA exception at IF-Stage
+      @(posedge Sys_Clock);
+
+      // vec delay (3)
+      PC = Testbench.DesignTop.KAB_CORE.PC_IF.DataOut;
+      if(PC !== `EV_INV_IA)
         begin
-          // INV DA + exc delay (1+3)
-          repeat(4) @(posedge Sys_Clock);
-
-          // vec delay (3)
-          PC = Testbench.DesignTop.KAB_CORE.PC_IF.DataOut;
-          if(PC !== `EV_INV_DA)
-            begin
-              Pass = 0;
-              $display(">> ERROR (@%0t): INV DA[%0d]: Incorrect exception vector.",$time, i);
-            end
-          repeat(3) @(posedge Sys_Clock);
-
-          // INV DA handler + return delay (13+2)
-          repeat(15) @(posedge Sys_Clock);
+          Pass = 0;
+          $display(">> ERROR (@%0t): INV IA: Incorrect exception vector.",$time);
         end
-
-        repeat(2)
-          begin
-            // INV IA + exc delay (1+3)
-            repeat(4) @(posedge Sys_Clock);
-
-            // vec delay (3)
-            PC = Testbench.DesignTop.KAB_CORE.PC_IF.DataOut;
-            if(PC !== `EV_INV_IA)
-              begin
-                Pass = 0;
-                $display(">> ERROR (@%0t): INV IA: Incorrect exception vector.",$time);
-              end
-            repeat(3) @(posedge Sys_Clock);
-
-            // INV IA handler + return delay (13+2)
-            repeat(15) @(posedge Sys_Clock);
-          end
+      repeat(3) @(posedge Sys_Clock);
 
       // Print status message
       if(Pass)

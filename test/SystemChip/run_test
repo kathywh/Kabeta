@@ -8,6 +8,7 @@ set src_files = \
  ../../../rtl/IP/Alt_EP4CE_InstrMem_4KB.v \
  ../../../rtl/IP/Alt_EP4CE_SysPLL.v \
  ../../../rtl/CommonDefinitions.v \
+ ../../../rtl/AutoResetUnit.v \
  ../../../rtl/AddressAdder.v \
  ../../../rtl/AddressInc.v \
  ../../../rtl/ArithmeticLogicUnit.v \
@@ -41,9 +42,9 @@ set src_files = \
  ../../../rtl/SystemChip.v"
 
 
-alias openwv 'nWave -ssf SystemChip.fsdb -sswr SystemChip.rc'
+alias open_wave 'nWave -ssf SystemChip.fsdb -sswr SystemChip.rc'
 
-alias startvd 'verdi -sv ${lib_files} ${src_files} ${tb_files} -ssf SystemChip.fsdb -sswr SystemChip.rc' 
+alias start_verdi 'verdi -sv ${lib_files} ${src_files} ${tb_files} -ssf SystemChip.fsdb -sswr SystemChip.rc' 
 
 vlogan -nc -full64 -debug_pp -timescale=1ns/1ps -sverilog +verilog2001ext+.v +define+FSDB_DUMP ${lib_files} ${src_files} ${tb_files}
 

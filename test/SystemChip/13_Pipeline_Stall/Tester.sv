@@ -20,7 +20,8 @@ program Tester;
   logic [31:0] TestData[] =
   '{
       32'h0000_5A03,
-      32'h0000_5A04
+      32'h0000_5A04,
+      32'h0000_5A05
   };
 
   initial

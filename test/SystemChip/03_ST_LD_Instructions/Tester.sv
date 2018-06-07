@@ -18,7 +18,7 @@ program Tester;
   wire Sys_Reset  = Testbench.DesignTop.Sys_Reset;
 
   const int ARR_SIZE = 10;
-  const int BASE = 32'h0x55AA3700;
+  const int BASE = 32'h55AA3700;
 
   initial
     begin
@@ -68,7 +68,7 @@ program Tester;
               Pass = 0;
               $display(">> ERROR ST[%0d]: Incorrect ren: %b", i, ren);
             end
-          if(addr !== i)
+          if(addr !== 32'h0200 + i)
             begin
               Pass = 0;
               $display(">> ERROR ST[%0d]: Incorrect addr: %x", i, addr);
@@ -111,7 +111,7 @@ program Tester;
               Pass = 0;
               $display(">> ERROR LD[%0d]: Incorrect ren: %b", i, ren);
             end
-          if(addr !== i)
+          if(addr !== 32'h0200 + i)
             begin
               Pass = 0;
               $display(">> ERROR LD[%0d]: Incorrect addr: %x", i, addr);
@@ -128,6 +128,49 @@ program Tester;
           @(posedge Sys_Clock);
 
           // following instructions (3-1+2) except the one after LD
+          // NOTE: +2 is for branch delay slots
+          repeat(4) @(posedge Sys_Clock);
+        end
+
+      // BEQ after last iteration of LD
+      repeat(3) @(posedge Sys_Clock);
+
+      // before ldi loop (2)
+      repeat(2) @(posedge Sys_Clock);
+
+      // LDI loop
+      for(int i=0; i<8; i++)
+        begin
+          // instructions before LDI (1), 
+          // branch not taken, so no delay slots
+          repeat(1) @(posedge Sys_Clock);
+
+          // LDI instruction
+          addr = Testbench.DesignTop.KAB_CORE.IM.Addr_D;
+          ren = Testbench.DesignTop.KAB_CORE.IM.En_D;
+
+          if(ren !== 1'b1)
+            begin
+              Pass = 0;
+              $display(">> ERROR LDI[%0d]: Incorrect ren: %b", i, ren);
+            end
+          if(addr !== 32'h0300 + i)
+            begin
+              Pass = 0;
+              $display(">> ERROR LDI[%0d]: Incorrect addr: %x", i, addr);
+            end
+          @(posedge Sys_Clock);
+
+          // following one cycle, data ready
+          data = Testbench.DesignTop.KAB_CORE.IM.Data_D;
+          if(data !== 32'hABCD1290 + i)
+            begin
+              Pass = 0;
+              $display(">> ERROR LDI[%0d]: Incorrect data: %x", i, data);
+            end
+          @(posedge Sys_Clock);
+
+          // following instructions (3-1+2) except the one after LDI
           // NOTE: +2 is for branch delay slots
           repeat(4) @(posedge Sys_Clock);
         end
