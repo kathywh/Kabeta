@@ -40,10 +40,6 @@ svc_sub_tab:
 ||============================================================================||
 LOCATE(0x0800)
 
-| LED pattern table
-led_pat_tab:
-	STORAGE(LED_PAT_COUNT)
-
 | Stack
 stack:
 	STORAGE(256)
@@ -217,17 +213,15 @@ start:
 	| Set SP
 	MOVC(stack, SP)
 
-	| Fill SVC jump table
-	MOVC(svc_sub_tab, R1)
-	LDR(svc_led_addr, R0)			| svc_led
-	ST(R0, R1, 0)
+	| Load SVC jump table
+	MOVC(0, R1)
+	MOVC(SVC_FCNT, R3)
+load_svc_tab:
+	LDI(R1, svc_sub_tab_init, R0)
+	ST(R0, R1, svc_sub_tab)
 	ADDC(R1, 4, R1)
-	LDR(svc_ssd_addr, R0)			| svc_ssd
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-	LDR(svc_key_addr, R0)			| svc_key
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
+	SUBC(R3, 1, R3)
+	BNE(R3, load_svc_tab)
 
 	| Enable Key Interrupt
 	MOVC(1, R0)
@@ -243,6 +237,17 @@ start:
 	JMP(R0)
 
 ||============================================================================||
+||                        Supervisor Literal  Segment                         ||
+||============================================================================||
+LITERAL()
+
+| SVC subroutine address table
+svc_sub_tab_init:
+	LONG(svc_led+PC_SUPERVISOR)
+	LONG(svc_ssd+PC_SUPERVISOR)
+	LONG(svc_key+PC_SUPERVISOR)
+
+||============================================================================||
 ||                              User Code Segment                             ||
 ||============================================================================||
 LOCATE(0x0800)
@@ -253,64 +258,13 @@ user_start:
 	| Blink LED                                                                     |
 	|-------------------------------------------------------------------------------|
 
-	| Fill led pattern table
-	MOVC(led_pat_tab, R1)
-led_p_0001:
-	MOVC(0x01, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0010:
-	MOVC(0x02, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p0100:
-	MOVC(0x04, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1000:
-	MOVC(0x08, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0000:
-	MOVC(0x00, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0011:
-	MOVC(0x03, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0110:
-	MOVC(0x06, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1010:
-	MOVC(0x0A, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_0101:
-	MOVC(0x05, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1110:
-	MOVC(0x0E, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1011:
-	MOVC(0x0B, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-led_p_1111:
-	MOVC(0x0F, R0)
-	ST(R0, R1, 0)
-	ADDC(R1, 4, R1)
-
 blink_led:
 	MOVC(LED_PAT_COUNT, R8)		| R8: led count
 	MOVC(led_pat_tab, R9)		| R9: pattern table address
 
 blink_one:
 	| Turn on/off leds
-	LD(R9, 0, R1)				| Load pattern
+	LDI(R9, 0, R1)				| Load pattern
 	MOVC(SVC_LED, R0)
 	SVC()						| Do SVC
 
@@ -320,7 +274,7 @@ blink_one:
 	| Increase pattern address
 	ADDC(R9, 4, R9)				
 	SUBC(R8, 1, R8)
-	BT(R8, blink_one)
+	BNE(R8, blink_one)
 
 	| Loop forever
 	BR(blink_led)
@@ -363,13 +317,20 @@ LITERAL()
 delay_1s_cnt:				| led blink delay count
 	LONG(0x00989680)		| 1E+7
 
-| SVC subroutine address table
-svc_led_addr:
-	LONG(svc_led+PC_SUPERVISOR)
-svc_ssd_addr:
-	LONG(svc_ssd+PC_SUPERVISOR)
-svc_key_addr:
-	LONG(svc_key+PC_SUPERVISOR)
+| LED pattern table
+led_pat_tab:
+	LONG(0x01)
+	LONG(0x02)
+	LONG(0x04)
+	LONG(0x08)
+	LONG(0x00)
+	LONG(0x03)
+	LONG(0x06)
+	LONG(0x0A)
+	LONG(0x05)
+	LONG(0x0E)
+	LONG(0x0B)
+	LONG(0x0F)
 
     |----------------------------------------------------------------------|
     | Program Signature                                                    |
