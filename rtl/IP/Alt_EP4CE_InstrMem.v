@@ -230,10 +230,10 @@ endmodule
 // Retrieval info: CONNECT: @wren_b 0 0 0 0 GND 0 0 0 0
 // Retrieval info: CONNECT: q_a 0 0 32 0 @q_a 0 0 32 0
 // Retrieval info: CONNECT: q_b 0 0 32 0 @q_b 0 0 32 0
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem_4KB.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem_4KB.inc FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem_4KB.cmp FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem_4KB.bsf FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem_4KB_inst.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem_4KB_bb.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem.bsf FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL Alt_EP4CE_InstrMem_bb.v FALSE
 // Retrieval info: LIB_FILE: altera_mf
