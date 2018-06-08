@@ -41,34 +41,8 @@ program Tester;
       // NOTE: +2 is for branch delay slots
       repeat(3) @(posedge Sys_Clock);
 
-      // instructions before SVC in S mode (2)
-      repeat(2) @(posedge Sys_Clock);
-
-      // SVC + exc delay + vec delay (1+1+3)
-      repeat(5) @(posedge Sys_Clock);
-
-      // SVC handler + return delay (12+2)
-      repeat(14) @(posedge Sys_Clock);
-
-      // WB-Stage delay (4)
+      // MOVC+NOP instructions
       repeat(4) @(posedge Sys_Clock);
-
-      // MOV after SVC (S mode)
-      index = Testbench.DesignTop.KAB_CORE.RF.AddrW;
-      value = Testbench.DesignTop.KAB_CORE.RF.DataW;
-      wen = Testbench.DesignTop.KAB_CORE.RF.EnW;
-
-      if((wen !== 1'b1) || (index !== 5'd20))
-        begin
-          Pass = 0;
-          $display(">> ERROR: SVC (S): Incorrect wen or index, maybe wrong cycle.");
-        end
-      if(value != 32'h80003CBA)
-        begin
-          Pass = 0;
-          $display(">> ERROR: SVC (S): Incorrect R0 data.");
-        end
-      @(posedge Sys_Clock);
 
       // switch mode (2+2)
       // NOTE: +2 is for branch delay slots
@@ -82,6 +56,9 @@ program Tester;
 
       // SVC handler + return delay (12+2)
       repeat(14) @(posedge Sys_Clock);
+
+      // WB-Stage delay (4)
+      repeat(4) @(posedge Sys_Clock);
 
       // MOV after SVC (U mode)
       index = Testbench.DesignTop.KAB_CORE.RF.AddrW;

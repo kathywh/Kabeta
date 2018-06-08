@@ -98,9 +98,9 @@ set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_location_assignment PIN_M2 -to Rxd
 set_location_assignment PIN_G1 -to Txd
 set_global_assignment -name SDC_FILE scripts/SystemChip.sdc
+set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_InstrMem.qip
+set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_DataMem.qip
 set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_SysPLL.qip
-set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_InstrMem_4KB.qip
-set_global_assignment -name QIP_FILE ../../rtl/IP/Alt_EP4CE_DataMem_16KB.qip
 set_global_assignment -name VERILOG_FILE ../../rtl/CommonDefinitions.v
 set_global_assignment -name VERILOG_FILE ../../rtl/AutoResetUnit.v
 set_global_assignment -name VERILOG_FILE ../../rtl/RegisterRstEn.v

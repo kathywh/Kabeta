@@ -49,7 +49,7 @@ program Tester;
       // instructions before ILL
       repeat(3) @(posedge Sys_Clock);
 
-      for(int i=0; i<9; i++)
+      for(int i=0; i<8; i++)
         begin
           // ILL + exc delay (1+1)
           repeat(2) @(posedge Sys_Clock);

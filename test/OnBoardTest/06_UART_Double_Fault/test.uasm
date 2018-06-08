@@ -1,8 +1,8 @@
 .include ../../../tools/kabeta.uasm
 
-||====================================================================================||
-||                                Constant Definitions                                ||
-||====================================================================================||
+||============================================================================||
+||                            Constant Definitions                            ||
+||============================================================================||
 
 | Interrupt Numbers
 IRQ_COUNT = 8		| IRQ count
@@ -40,9 +40,9 @@ UART_SR_PE   = 2
 UART_SR_FE   = 1
 UART_SR_BUSY = 0
 
-||====================================================================================||
-||                                 Macro  Definitions                                 ||
-||====================================================================================||
+||============================================================================||
+||                             Macro  Definitions                             ||
+||============================================================================||
 
 | Wait for I/O completion
 .macro IOWAIT() {
@@ -50,10 +50,10 @@ UART_SR_BUSY = 0
 	NOP()  NOP()  NOP()  NOP()
 	NOP()  NOP()  NOP()  NOP()}
 
-||====================================================================================||
-||                                    Data Segment                                    ||
-||====================================================================================||
-LOCATE(0)
+||============================================================================||
+||                          Supervisor Data Segment                           ||
+||============================================================================||
+LOCATE(0x0000)
 
 | SVC Jump Table
 svc_sub_tab:
@@ -62,10 +62,6 @@ svc_sub_tab:
 | IRQ0 Jump Table
 irq_sub_tab:
 	STORAGE(IRQ_COUNT)
-
-| Seg code hex table
-ssc_hex_tab:
-	STORAGE(16)
 
 | Key Event Table
 |  ---------------------
@@ -81,6 +77,15 @@ uatx_offset:
 uatx_data:
 	STORAGE(UATX_CNT)
 
+||============================================================================||
+||                             User Data Segment                              ||
+||============================================================================||
+LOCATE(0x0800)
+
+| Seg code hex table
+ssc_hex_tab:
+	STORAGE(16)
+
 | UART rx data
 UARX_CNT = 40
 uarx_offset:
@@ -94,9 +99,9 @@ uarx_data:
 stack:
 	STORAGE(256)
 
-||====================================================================================||
-||                                    I/O  Segment                                    ||
-||====================================================================================||
+||============================================================================||
+||                                I/O  Segment                                ||
+||============================================================================||
 LOCATE(0x000)
 EIC_IE:	
 	STORAGE(1)		| 0x000, WO
@@ -133,9 +138,9 @@ STMR_CR:
 STMR_LVR:
 	STORAGE(1)		| 0x0C4, WO
 
-||====================================================================================||
-||                                 Exception  Vectors                                 ||
-||====================================================================================||
+||============================================================================||
+||                             Exception  Vectors                             ||
+||============================================================================||
 EXCVT()
 
 rst_vec:
@@ -155,14 +160,14 @@ irq_vec:
 urq_vec:
 	BR(.)
 
-||====================================================================================||
-||                                    Code Segment                                    ||
-||====================================================================================||
-LOCATE(0x100)
+||============================================================================||
+||                          Supervisor Code Segment                           ||
+||============================================================================||
+LOCATE(0x0080)
 
-	|-------------------------------------------------------------------------------|
-	| IRQ Handler                                                                   |
-	|-------------------------------------------------------------------------------|
+	|----------------------------------------------------------------------|
+	| IRQ Handler                                                          |
+	|----------------------------------------------------------------------|
 irq_esr:
 	| Adjust XP
 	SUBC(XP, 4, XP)
@@ -258,23 +263,23 @@ irq_end:
 	| Return
 	JMP(XP)
 
-	|-------------------------------------------------------------------------------|
-	| SVC Handler                                                                   |
-	|                                                                               |
-	|   1) Function code is in register R0.                                         |
-	|   2) Input/Output arguments are in registers, R1, R2, R3, ...                 |
-	|   3) Status code is returned in R0.                                           |
-	|        0: ok                                                                  |
-	|        1: function code out of range                                          |
-	|                                                                               |
-	|   Function            R0    R1           R2          Comment                  |
-	|   ---------------     --    ---------    --------    -----------------------  |
-	|   Turn on/off LED      0    IN  b3-b0    -           0: off, 1: on            |
-	|   Display in SSD       1    IN  index    IN b4-b0    b4: dp, b3-b0: bcd code  |
-	|   Get key events       2    OUT b3-b0    -           1: pressed, 0: normal    |
-	|   Set 7-seg code       3    IN  index    IN b7-b0    b7~0  0: off, 1: on      |
-	|   Send from UART       4    IN  index    -           [index:CNT-1]            |
-	|-------------------------------------------------------------------------------|
+	|----------------------------------------------------------------------|
+	| SVC Handler                                                          |
+	|                                                                      |
+	|   1) Function code is in register R0.                                |
+	|   2) Input/Output arguments are in registers, R1, R2, R3, ...        |
+	|   3) Status code is returned in R0.                                  |
+	|        0: ok                                                         |
+	|        1: function code out of range                                 |
+	|                                                                      |
+	|   Function         R0  R1         R2        Comment                  |
+	|   ---------------  --  ---------  --------  -----------------------  |
+	|   Turn on/off LED   0  IN  b3-b0  -         0: off, 1: on            |
+	|   Display in SSD    1  IN  index  IN b4-b0  b4: dp, b3-b0: bcd code  |
+	|   Get key events    2  OUT b3-b0  -         1: pressed, 0: normal    |
+	|   Set 7-seg code    3  IN  index  IN b7-b0  b7~0  0: off, 1: on      |
+	|   Send from UART    4  IN  index  -         [index:CNT-1]            |
+	|----------------------------------------------------------------------|
 
 svc_esr:
 	| Save registers
@@ -376,9 +381,9 @@ svc_end:
 	JMP(XP)
 
 start:
-	|-------------------------------------------------------------------------------|
-	| System initialization                                                         |
-	|-------------------------------------------------------------------------------|
+	|----------------------------------------------------------------------|
+	| System initialization                                                |
+	|----------------------------------------------------------------------|
 
 	| Set SP
 	MOVC(stack, SP)
@@ -530,23 +535,61 @@ UART_PARAM = (0x03<<UART_CR_BAUD)+(0x03<<UART_CR_PAR)+(0x01<<UART_CR_EN)
 	IOW(R0, EIC_IE)
 
 	| Switch to User Mode
-	MOVC(user_mode%PC_MASK, R0)
+	MOVC(user_start%PC_MASK, R0)
 	JMP(R0)
-user_mode:
 
-	|-------------------------------------------------------------------------------|
-	| Recv data display (HEX)                                                       |
-	|                                                                               |
-	|   -------------------------------------                                       |
-	|   | K3H | K3L | K2H | K2L | K1H | K1L |                                       |
-	|   -------------------------------------                                       |
-	|                                                                               |
-	|   (K3H, K3L): data count.                                                     |
-	|                                 Key0: unused                                  |
-	|   (K2H, K2L): data.             Key1: prev data                               |
-	|                                 Key2: next data                               |
-	|   (K1H, K1L): data index        Key3: unused                                  |
-	|-------------------------------------------------------------------------------|
+||============================================================================||
+||                        Supervisor Literal  Segment                         ||
+||============================================================================||
+LITERAL()
+sys_tick_lv:			| system timer load value
+	LONG(14999999)		| 15E+6 - 1
+
+| SVC subroutine address table
+svc_led_addr:
+	LONG(svc_led+PC_SUPERVISOR)
+svc_ssd_addr:
+	LONG(svc_ssd+PC_SUPERVISOR)
+svc_key_addr:
+	LONG(svc_key+PC_SUPERVISOR)
+svc_ssc_addr:
+	LONG(svc_ssc+PC_SUPERVISOR)
+svc_uatx_addr:
+	LONG(svc_uatx+PC_SUPERVISOR)
+
+| IRQ subroutine address table
+irqx_unused_addr:
+	LONG(irq_end+PC_SUPERVISOR)
+irq2_uaerr_addr:
+	LONG(irq_uaerr+PC_SUPERVISOR)
+irq3_uarx_addr:
+	LONG(irq_uarx+PC_SUPERVISOR)
+irq4_uatx_addr:
+	LONG(irq_uatx+PC_SUPERVISOR)
+irq6_tick_addr:
+	LONG(irq_tick+PC_SUPERVISOR)
+irq7_key_addr:
+	LONG(irq_key+PC_SUPERVISOR)
+
+||============================================================================||
+||                              User Code Segment                             ||
+||============================================================================||
+LOCATE(0x0800)
+user_start:
+
+	|----------------------------------------------------------------------|
+	| Recv data display (HEX)                                              |
+	|                                                                      |
+	|   -------------------------------------                              |
+	|   | K3H | K3L | K2H | K2L | K1H | K1L |                              |
+	|   -------------------------------------                              |
+	|                                                                      |
+	|   (K3H, K3L): data count.                                            |
+	|                                 Key0: unused                         |
+	|   (K2H, K2L): data.             Key1: prev data                      |
+	|                                 Key2: next data                      |
+	|   (K1H, K1L): data index        Key3: unused                         |
+	|----------------------------------------------------------------------|
 
 
 key_process:
@@ -647,18 +690,18 @@ end:
 	BR(.)
 
 
-    |-------------------------------------------------------------------------------|
-    | Delay for a while (26 cycles).                                                |
-    |   (CALL=1+2=3 cycles, total 3+4+12+7=26 cycles)                               |
-    |                                                                               |
-    |   void udelay(void)                                                           |   
-    |   Return:                                                                     |
-    |     none                                                                      |
-    |   Input:                                                                      |  
-    |     none                                                                      |
-    |   Output:                                                                     |
-    |     none                                                                      |
-    |-------------------------------------------------------------------------------|
+    |----------------------------------------------------------------------|
+    | Delay for a while (26 cycles).                                       |
+    |   (CALL=1+2=3 cycles, total 3+4+12+7=26 cycles)                      |
+    |                                                                      |
+    |   void udelay(void)                                                  |   
+    |   Return:                                                            |
+    |     none                                                             |
+    |   Input:                                                             |  
+    |     none                                                             |
+    |   Output:                                                            |
+    |     none                                                             |
+    |----------------------------------------------------------------------|
 
 udelay:
     | Prologue to the subroutine (4 cycles)
@@ -683,28 +726,28 @@ udelay_end:
 	POP(LP)
 	RTN()			| Add one cycle for load delay
 
-    |-------------------------------------------------------------------------------|
-    | Delay for milliseconds.                                                       |
-    |                                                                               |
-    |   int delay_ms(n)                                                             |
-    |   1) Input arguments                                                          |
-    |        n: delay for n milliseconds.                                           |
-    |   2) Return value                                                             |
-    |        0: ok                                                                  |
-    |        1: error, n<0                                                          |
-    |   2) Analysis of delay iteration                                              |
-    |      [CODE]                                                                   |
-    |      MOVC(10000, R0)                                                          |
-    |      NOP()                                                                    |
-    |      delay_1ms_loop:                                                          |
-    |          SUBC(R0, 1, R0)                                                      |
-    |          BT(R0, delay_1ms_loop)                                               |
-    |      [END]                                                                    |
-    |      10000 iterations count for 1ms (Fsysclk=40MHz)                           |
-    |        4 cycles per iteration except last one only 2 cycles                   |
-    |        MOVC & NOP compensate for the last iteration                           |
-    |   3) Delay of prologue & epilogue does NOT count.                             |
-    |-------------------------------------------------------------------------------|
+    |----------------------------------------------------------------------|
+    | Delay for milliseconds.                                              |
+    |                                                                      |
+    |   int delay_ms(n)                                                    |
+    |   1) Input arguments                                                 |
+    |        n: delay for n milliseconds.                                  |
+    |   2) Return value                                                    |
+    |        0: ok                                                         |
+    |        1: error, n<0                                                 |
+    |   2) Analysis of delay iteration                                     |
+    |      [CODE]                                                          |
+    |      MOVC(10000, R0)                                                 |
+    |      NOP()                                                           |
+    |      delay_1ms_loop:                                                 |
+    |          SUBC(R0, 1, R0)                                             |
+    |          BT(R0, delay_1ms_loop)                                      |
+    |      [END]                                                           |
+    |      10000 iterations count for 1ms (Fsysclk=40MHz)                  |
+    |        4 cycles per iteration except last one only 2 cycles          |
+    |        MOVC & NOP compensate for the last iteration                  |
+    |   3) Delay of prologue & epilogue does NOT count.                    |
+    |----------------------------------------------------------------------|
 
 __DM_ARG_N = 0
 
@@ -744,17 +787,17 @@ delay_err_neg_n:
 	MOVC(1, R0)
 	BR(delay_ms_end)
 
-    |-------------------------------------------------------------------------------|
-    | BCD code increment.                                                           |
-    |                                                                               |
-    |   void bcd_inc(a)                                                             |  
-    |   Return:                                                                     |
-    |     none                                                                      |  
-    |   Input:                                                                      |
-    |     a: bcd code                                                               |
-    |   Output:                                                                     | 
-    |     a: increment result                                                       |
-    |-------------------------------------------------------------------------------|
+    |----------------------------------------------------------------------|
+    | BCD code increment.                                                  |
+    |                                                                      |
+    |   void bcd_inc(a)                                                    |  
+    |   Return:                                                            |
+    |     none                                                             |  
+    |   Input:                                                             |
+    |     a: bcd code                                                      |
+    |   Output:                                                            | 
+    |     a: increment result                                              |
+    |----------------------------------------------------------------------|
 
 __BI_ARG_A = 0
 
@@ -798,17 +841,17 @@ bcd_inc_end:
 	POP(LP)
 	RTN()
 
-    |-------------------------------------------------------------------------------|
-    | BCD code decrement.                                                           |
-    |                                                                               |
-    |   void bcd_dec(a)                                                             |  
-    |   Return:                                                                     |
-    |     none                                                                      |    
-    |   Input:                                                                      |
-    |     a: bcd code                                                               |
-    |   Output:                                                                     | 
-    |     a: decrement result                                                       |
-    |-------------------------------------------------------------------------------|
+    |----------------------------------------------------------------------|
+    | BCD code decrement.                                                  |
+    |                                                                      |
+    |   void bcd_dec(a)                                                    |  
+    |   Return:                                                            |
+    |     none                                                             |    
+    |   Input:                                                             |
+    |     a: bcd code                                                      |
+    |   Output:                                                            | 
+    |     a: decrement result                                              |
+    |----------------------------------------------------------------------|
 
 __BD_ARG_A = 0
 
@@ -852,19 +895,19 @@ bcd_dec_end:
 	POP(LP)
 	RTN()
 
-    |-------------------------------------------------------------------------------|
-    | Dsipaly bcd code with a decimal point.                                        |
-    |                                                                               |
-    |   int disp_bcd(i, bcd)                                                        |  
-    |   Return:                                                                     |
-    |     0: ok                                                                     |   
-    |     1: error, index out of range                                              |
-    |   Input:                                                                      |
-    |     i:   digit index                                                          |
-    |     bcd: 2-digit bcd code, A-F turn off digit                                 |
-    |   Output:                                                                     | 
-    |     none                                                                      |
-    |-------------------------------------------------------------------------------|
+    |----------------------------------------------------------------------|
+    | Dsipaly bcd code with a decimal point.                               |
+    |                                                                      |
+    |   int disp_bcd(i, bcd)                                               |  
+    |   Return:                                                            |
+    |     0: ok                                                            |   
+    |     1: error, index out of range                                     |
+    |   Input:                                                             |
+    |     i:   digit index                                                 |
+    |     bcd: 2-digit bcd code, A-F turn off digit                        |
+    |   Output:                                                            | 
+    |     none                                                             |
+    |----------------------------------------------------------------------|
 
  __DB_I   = 0
  __DB_BCD = 1
@@ -914,19 +957,19 @@ disp_bcd_i_oor:
 	MOVC(1, R0)
 	BR(disp_bcd_end)
 
-    |-------------------------------------------------------------------------------|
-    | Dsipaly hex code with a decimal point.                                        |
-    |                                                                               |
-    |   int disp_hex(i, hex)                                                        |  
-    |   Return:                                                                     |
-    |     0: ok                                                                     |   
-    |     1: error, index out of range                                              |
-    |   Input:                                                                      |
-    |     i:   digit index                                                          |
-    |     hex: 2-digit hex code                                                     |
-    |   Output:                                                                     | 
-    |     none                                                                      |
-    |-------------------------------------------------------------------------------|
+    |----------------------------------------------------------------------|
+    | Dsipaly hex code with a decimal point.                               |
+    |                                                                      |
+    |   int disp_hex(i, hex)                                               |  
+    |   Return:                                                            |
+    |     0: ok                                                            |   
+    |     1: error, index out of range                                     |
+    |   Input:                                                             |
+    |     i:   digit index                                                 |
+    |     hex: 2-digit hex code                                            |
+    |   Output:                                                            | 
+    |     none                                                             |
+    |----------------------------------------------------------------------|
 
  __DH_I   = 0
  __DH_HEX = 1
@@ -979,42 +1022,14 @@ disp_hex_i_oor:
 	MOVC(1, R0)
 	BR(disp_hex_end)
 
-||====================================================================================||
-||                                  Literal  Segment                                  ||
-||====================================================================================||
+||============================================================================||
+||                           User Literal  Segment                            ||
+||============================================================================||
 LITERAL()
-sys_tick_lv:			| system timer load value
-	LONG(14999999)		| 15E+6 - 1
 
-| SVC subroutine address table
-svc_led_addr:
-	LONG(svc_led+PC_SUPERVISOR)
-svc_ssd_addr:
-	LONG(svc_ssd+PC_SUPERVISOR)
-svc_key_addr:
-	LONG(svc_key+PC_SUPERVISOR)
-svc_ssc_addr:
-	LONG(svc_ssc+PC_SUPERVISOR)
-svc_uatx_addr:
-	LONG(svc_uatx+PC_SUPERVISOR)
-
-| IRQ subroutine address table
-irqx_unused_addr:
-	LONG(irq_end+PC_SUPERVISOR)
-irq2_uaerr_addr:
-	LONG(irq_uaerr+PC_SUPERVISOR)
-irq3_uarx_addr:
-	LONG(irq_uarx+PC_SUPERVISOR)
-irq4_uatx_addr:
-	LONG(irq_uatx+PC_SUPERVISOR)
-irq6_tick_addr:
-	LONG(irq_tick+PC_SUPERVISOR)
-irq7_key_addr:
-	LONG(irq_key+PC_SUPERVISOR)
-
-|--------------------------------------|
-| Program Signature                    |
-|--------------------------------------|
+    |----------------------------------------------------------------------|
+    | Program Signature                                                    |
+    |----------------------------------------------------------------------|
 LOCATE(0x0FFC)
 __signature:
 	LONG(0xCA3EBE3A)

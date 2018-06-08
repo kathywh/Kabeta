@@ -55,9 +55,11 @@
 
 | LD(RA, CC, RC)	| RC <- <<RA>+CC>
 | LD(CC, RC)		| RC <- <CC>
+| LDI(RA, CC, RC)	| RC <- IMem<<RA>+CC>
+| LDI(CC, RC)		| RC <- IMem<CC>
 | ST(RC, RA, CC)	| <RA>+CC <- <RC>
 | ST(RC, CC)		| CC <- <RC>
-| LDR(CC, RC)		| RC <- <CC> (PC-relative addressing)
+| LDR(CC, RC)		| RC <- IMem<CC> (PC-relative addressing)
 
 | MOVE(RA, RC)		| RC <- <RA>
 | CMOVE(CC, RC)		| RC <- CC
@@ -256,6 +258,8 @@ SP = sp
 
 .macro LD(RA, CC, RC)		betaopc(0x18,RA,CC,RC)
 .macro LD(CC, RC)		betaopc(0x18,R31,CC,RC)
+.macro LDI(RA, CC, RC)		betaopc(0x1A,RA,CC,RC)
+.macro LDI(CC, RC)		betaopc(0x1A,R31,CC,RC)
 .macro IOR(RA, CC, RC)		betaopc(0x08,RA,CC,RC)
 .macro IOR(CC, RC)		betaopc(0x08,R31,CC,RC)
 .macro ST(RC, RA, CC)		betaopc(0x19,RA,CC,RC)
@@ -328,6 +332,7 @@ SP = sp
 | SVC calls; used for OS extensions
 
 .macro SVC()		betaopc(0x1c,0,0,0)
+.macro SVC(ID)		betaopc(0x1c,0,ID,0)
 
 | constant for the supervisor bit in the PC
 PC_SUPERVISOR	   = 0x80000000		| the bit itself

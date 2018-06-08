@@ -4,10 +4,11 @@ set lib_files = "../../altera_mf.v"
 set tb_files = "../ClockGenerator.sv Tester.sv ../Testbench.sv"
 
 set src_files = \
-"../../../rtl/IP/Alt_EP4CE_DataMem_16KB.v \
- ../../../rtl/IP/Alt_EP4CE_InstrMem_4KB.v \
+"../../../rtl/IP/Alt_EP4CE_DataMem.v \
+ ../../../rtl/IP/Alt_EP4CE_InstrMem.v \
  ../../../rtl/IP/Alt_EP4CE_SysPLL.v \
  ../../../rtl/CommonDefinitions.v \
+ ../../../rtl/AutoResetUnit.v \
  ../../../rtl/AddressAdder.v \
  ../../../rtl/AddressInc.v \
  ../../../rtl/ArithmeticLogicUnit.v \

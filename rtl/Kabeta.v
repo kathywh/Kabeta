@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/06/2018                                                    */
+/*  Edited on:  06/08/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      An implementation of pipelined MIT Beta processor.                    */
@@ -18,6 +18,8 @@
 /*      06/04/2018  Kathy       Correct stall process for RR and EX stages.   */
 /*                              Change Stall to StallReq/Sys_Stall pair.      */
 /*      06/06/2018  Kathy       Add auto reset output when double fault.      */
+/*      06/07/2018  Kathy       Add I-Mem address mux.                        */
+/*      06/08/2018  Kathy       Read R31 when RR-Stage fault/trap ack.        */
 /******************************************************************************/
 
 module Kabeta
@@ -69,6 +71,7 @@ module Kabeta
   wire [3:0] ALU_Opcode;
   wire ID_ALU_En;
   wire ID_InstrMemRdEn;
+  wire ID_IMemAddrSel;
   wire ID_Mem_Ren, ID_Mem_Wen;
   wire ID_IO_Ren, ID_IO_Wen;
   wire ID_ADB_En;
@@ -79,6 +82,7 @@ module Kabeta
   // Signals from/to IM
   wire I_Mem_En_I, I_Mem_En_D;
   wire [31:0] I_Mem_Data_I, I_Mem_Data_D;
+  wire [30:0] I_Mem_Addr_D;
 
   // Signals from/to IRs & PCs
   wire [31:0] IR_RR_Out, IR_EX_Out, IR_MA_Out, IR_WB_Out;
@@ -136,7 +140,7 @@ module Kabeta
     .En_I(I_Mem_En_I),
     .En_D(I_Mem_En_D),
     .Addr_I(PC_IF_In[30:2]),
-    .Addr_D(IMAB_Address[30:2]),
+    .Addr_D(I_Mem_Addr_D[30:2]),
     .Data_I(I_Mem_Data_I),
     .Data_D(I_Mem_Data_D)
   );
@@ -292,6 +296,9 @@ module Kabeta
   // Instruction Memory Address Buffer
   assign IMAB_En = ID_IMAB_En & ~Sys_FlushEX;
 
+  // Instruction Memory Address MUX
+  assign I_Mem_Addr_D = (ID_IMemAddrSel == `IMA_BUF) ? IMAB_Address : ALU_Out[30:0];
+
   RegisterEn#(31) IMAB
   (
     .Clock(Sys_Clock),
@@ -304,6 +311,7 @@ module Kabeta
   (
     .InstrWord_IF(I_Mem_Data_I),
     .InstrAddr_IF(PC_IF_Out[30:0]),
+    .S_Mode_IF(PC_IF_Out[31]),
     .ExcCode_IF(ExcCode_IF),
     .ExcReq_IF(ExcReq_IF),
 
@@ -335,13 +343,15 @@ module Kabeta
 
     .InstrWord_MA(IR_MA_Out),
     .DataAddress(ALU_Out),
-    .IMemAddress(IMAB_Address),
+    .S_Mode_MA(PC_MA_Out[31]),
+    .IMemAddress(I_Mem_Addr_D),
     .InstrMemRdEn(ID_InstrMemRdEn),
     .Mem_Ren(ID_Mem_Ren),
     .Mem_Wen(ID_Mem_Wen),    
     .IO_Ren(ID_IO_Ren),
     .IO_Wen(ID_IO_Wen),
     .ALU_DataBufEn(ID_ADB_En),
+    .IMemAddrSel(ID_IMemAddrSel),
     .ExcCode_MA(ExcCode_MA),
     .ExcReq_MA(ExcReq_MA),
 
@@ -355,9 +365,12 @@ module Kabeta
     .StallReq(StallReq)
   );
 
-  assign RF_EnX = Sys_Stall ? (BypassXSel == `BPS_RW) : (ID_RegRdEnX & ~Sys_FlushRR);
+  // If stall & bypass from RW-stage, reg should be read again (obtain it thru reg file pass-thru),
+  // or else the data would be lost
+  // If exception at RR-stage, R31 should be read since BNE at EX-stage at next cycle need it
+  assign RF_EnX = Sys_Stall ? (BypassXSel == `BPS_RW) : ((ID_RegRdEnX & ~Sys_FlushRR) | Sys_ExcAckRR);
   assign RF_EnY = Sys_Stall ? (BypassYSel == `BPS_RW) : (ID_RegRdEnY & ~Sys_FlushRR);
-  assign RF_AddrX = Sys_Stall ? Ra_EX : Ra_RR;
+  assign RF_AddrX = Sys_Stall ? Ra_EX : (Ra_RR | {5{Sys_ExcAckRR}});      
   assign RF_AddrY_RR = (RegAddrYSel_RR == `RF_Y_SEL_RB) ? Rb_RR : Rc_RR;
   assign RF_AddrY_EX = (RegAddrYSel_EX == `RF_Y_SEL_RB) ? Rb_EX : Rc_EX;
   assign RF_AddrY = Sys_Stall ? RF_AddrY_EX : RF_AddrY_RR;

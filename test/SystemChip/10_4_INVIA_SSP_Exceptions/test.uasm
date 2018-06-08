@@ -1,11 +1,11 @@
 .include ../../../tools/kabeta.uasm
 
 ||====================================================================================||
-||                                    Data Segment                                    ||
+||                                 User Data Segment                                  ||
 ||====================================================================================||
-LOCATE(0)
+LOCATE(0x0800)
 
-| Stack
+| stack
 stack:
 	STORAGE(256)
 
@@ -25,39 +25,58 @@ inv_op_vec:
 inv_da_vec:
 	BR(.)
 inv_ia_vec:
-	BR(.)
+	BR(inv_ia_esr)
 irq_vec:
 	BR(.)
 urq_vec:
 	BR(.)
 
 ||====================================================================================||
-||                                    Code Segment                                    ||
+||                              Supervisor Code Segment                               ||
 ||====================================================================================||
-LOCATE(0x100)
+LOCATE(0x0020)
 
+	| Invalid Instruction Address Handler
+	|   Halt for test, impossible to return
+	|   since XP contains invalid address
+inv_ia_esr:
+	PUSH(XP)
+	PUSH(R0)
+	PUSH(R1)
+	| Process illegal in fault here,
+	| assuming R0 & R1 will be used.
+	BR(.)
+	POP(R1)
+	POP(R0)
+	POP(XP)
+	JMP(XP)	
+
+	| Reset vector jump here
 start:
 
 	| Set SP
 	MOVC(stack, SP)
 
 	| Switch to User Mode
-	MOVC(user_mode%PC_MASK, R0)
+	MOVC(user_start%PC_MASK, R0)
 	JMP(R0)
-user_mode:
-	NOP()
-	NOP()
-	LD(0xA0, R0)
-	ADDC(R0, 1, R31)
-	LONG(0)				| Illegal instruction
-	MOVC(0xA1, R1)
-	MOVC(0xA2, R2)
-	MOVC(0xA3, R3)
-	BR(.)
 
 ||====================================================================================||
-||                                  Literal  Segment                                  ||
+||                                  User Code Segment                                 ||
 ||====================================================================================||
+LOCATE(0x0800)
+user_start:
+
+	MOVC(0x59C1, R0)
+	MOVC(0x59C2, R1)
+	MOVC(0x59C3, R2)
+
+	| Invalid instruction address
+	MOVC(svc_vec, R0)
+	JMP(R0)					| jmp to svc_vec, SSP
+
+end:
+	BR(.)
 
 |--------------------------------------|
 | Program Signature                    |

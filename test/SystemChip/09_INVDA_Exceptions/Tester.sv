@@ -49,7 +49,7 @@ program Tester;
       // instructions before INV DA
       repeat(3) @(posedge Sys_Clock);
 
-      for(int i=0; i<2; i++)
+      for(int i=0; i<4; i++)
         begin
           // INV DA + exc delay (1+3)
           repeat(4) @(posedge Sys_Clock);
@@ -67,17 +67,23 @@ program Tester;
           repeat(15) @(posedge Sys_Clock);
         end
 
-        // INV IA + exc delay (1+3)
-        repeat(4) @(posedge Sys_Clock);
-
-        // vec delay (3)
-        PC = Testbench.DesignTop.KAB_CORE.PC_IF.DataOut;
-        if(PC !== `EV_INV_IA)
+        repeat(2)
           begin
-            Pass = 0;
-            $display(">> ERROR (@%0t): INV IA: Incorrect exception vector.",$time);
+            // INV IA + exc delay (1+3)
+            repeat(4) @(posedge Sys_Clock);
+
+            // vec delay (3)
+            PC = Testbench.DesignTop.KAB_CORE.PC_IF.DataOut;
+            if(PC !== `EV_INV_IA)
+              begin
+                Pass = 0;
+                $display(">> ERROR (@%0t): INV IA: Incorrect exception vector.",$time);
+              end
+            repeat(3) @(posedge Sys_Clock);
+
+            // INV IA handler + return delay (13+2)
+            repeat(15) @(posedge Sys_Clock);
           end
-        repeat(3) @(posedge Sys_Clock);
 
       // Print status message
       if(Pass)

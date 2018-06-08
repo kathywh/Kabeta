@@ -19,7 +19,7 @@ program Tester;
 
   logic [31:0] ReturnPoint[3] =
   '{
-      32'h0000_0030, 32'h0000_0040, 32'h0000_0050
+      32'h0000_0808, 32'h0000_0818, 32'h0000_0828
   };
 
   initial
@@ -86,9 +86,9 @@ program Tester;
       // JMP + delay
       repeat(3) @(posedge Sys_Clock);
 
-      // `end', check at WB-Stage ('h6C+4)
+      // `end', check at WB-Stage ('h844+4)
       addr = Testbench.DesignTop.KAB_CORE.PC_WB.DataOut;
-      if(addr !== 32'h0000_0070)
+      if(addr !== 32'h0000_0848)
         begin
           Pass = 0;
           $display(">> ERROR JMP: Incorrect jmp target addr: %x", addr);
