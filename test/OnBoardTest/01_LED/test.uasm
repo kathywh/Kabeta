@@ -1,8 +1,8 @@
 .include ../../../tools/kabeta.uasm
 
-|--------------------------------------
-| const definitions
-|--------------------------------------
+||============================================================================||
+||                            Constant Definitions                            ||
+||============================================================================||
 
 | Interrupt Numbers
 BKD_KPI	= 1			| BKD: Key Press Interrupt
@@ -16,14 +16,29 @@ SVC_KEY  = 2
 | LED pattern count
 LED_PAT_COUNT = 12
 
-|--------------------------------------
-| data segment
-|--------------------------------------
-LOCATE(0)
+||============================================================================||
+||                             Macro  Definitions                             ||
+||============================================================================||
+
+| Wait for I/O completion
+.macro IOWAIT() {
+	NOP()  NOP()  NOP()  NOP()
+	NOP()  NOP()  NOP()  NOP()
+	NOP()  NOP()  NOP()  NOP()}
+
+||============================================================================||
+||                          Supervisor Data Segment                           ||
+||============================================================================||
+LOCATE(0x0000)
 
 | SVC jump table
 svc_sub_tab:
 	STORAGE(SVC_FCNT)
+
+||============================================================================||
+||                             User Data Segment                              ||
+||============================================================================||
+LOCATE(0x0800)
 
 | LED pattern table
 led_pat_tab:
@@ -33,9 +48,10 @@ led_pat_tab:
 stack:
 	STORAGE(256)
 
-|--------------------------------------
-| I/O segment
-|--------------------------------------
+||============================================================================||
+||                                I/O  Segment                                ||
+||============================================================================||
+LOCATE(0x000)
 LOCATE(0)
 EIC_IE:	
 	STORAGE(1)		| 0x000, WO
@@ -52,9 +68,9 @@ BKD_KDIE:
 BKD_KEYS:
 	STORAGE(1)		| 0x04C, RC
 
-|--------------------------------------
-| exception vectors
-|--------------------------------------
+||============================================================================||
+||                             Exception  Vectors                             ||
+||============================================================================||
 EXCVT()
 
 rst_vec:
@@ -74,18 +90,17 @@ irq0_vec:
 irq1_vec:
 	BR(.)
 
-|--------------------------------------
-| code segment
-|--------------------------------------
-LOCATE(0x100)
+||============================================================================||
+||                          Supervisor Code Segment                           ||
+||============================================================================||
+LOCATE(0x0080)
 
-	|-------------------------------------------------------------------------------|
-	| IRQ0 Handler                                                                  |
-	|-------------------------------------------------------------------------------|
+	|----------------------------------------------------------------------|
+	| IRQ Handler                                                          |
+	|----------------------------------------------------------------------|
 irq0_esr:
-	| Adjust & save XP
+	| Adjust XP
 	SUBC(XP, 4, XP)
-	PUSH(XP)
 
 	| Save registers
 	PUSH(R0)
@@ -109,28 +124,26 @@ irq0_end:
 	POP(R1)
 	POP(R0)
 
-	| Restore XP then return
-	POP(XP)
+	| Return
 	JMP(XP)
 
-	|-------------------------------------------------------------------------------|
-	| SVC Handler                                                                   |
-	|                                                                               |
-	|   1) Function code is in register R0.                                         |
-	|   2) Input/Output arguments are in registers, R1, R2, R3, ...                 |
-	|   3) Status code is returned in R0.                                           |
-	|                                                                               |
-	|   Function            R0    R1           R2          Comment                  |
-	|   ---------------     --    ---------    --------    -----------------------  |
-	|   Turn on/off LED      0    IN  b3-b0    -           0: off, 1: on            |
-	|   Display in SSD       1    IN  index    IN b4-b0    b4: dp, b3-b0: bcd code  |
-	|   Get key status       2    OUT b3-b0    -           0: pressed, 1: normal    |
-	|-------------------------------------------------------------------------------|
+	|----------------------------------------------------------------------|
+	| SVC Handler                                                          |
+	|                                                                      |
+	|   1) Function code is in register R0.                                |
+	|   2) Input/Output arguments are in registers, R1, R2, R3, ...        |
+	|   3) Status code is returned in R0.                                  |
+	|        0: ok                                                         |
+	|        1: function code out of range                                 |
+	|                                                                      |
+	|   Function         R0  R1         R2        Comment                  |
+	|   ---------------  --  ---------  --------  -----------------------  |
+	|   Turn on/off LED   0  IN  b3-b0  -         0: off, 1: on            |
+	|   Display in SSD    1  IN  index  IN b4-b0  b4: dp, b3-b0: bcd code  |
+	|   Get key events    2  OUT b3-b0  -         1: pressed, 0: normal    |
+	|----------------------------------------------------------------------|
 
 svc_esr:
-	| Save XP
-	PUSH(XP)
-
 	| Save registers
 	PUSH(R8)
 	PUSH(R9)
@@ -193,14 +206,13 @@ svc_end:
 	POP(R9)
 	POP(R8)
 
-	| Restore XP then return
-	POP(XP)
+	| Return
 	JMP(XP)
 
 start:
-	|-------------------------------------------------------------------------------|
-	| System initialization                                                         |
-	|-------------------------------------------------------------------------------|
+	|----------------------------------------------------------------------|
+	| System initialization                                                |
+	|----------------------------------------------------------------------|
 
 	| Set SP
 	MOVC(stack, SP)
@@ -220,21 +232,22 @@ start:
 	| Enable Key Interrupt
 	MOVC(1, R0)
 	IOW(R0, BKD_KDIE)
-
-	| Delay between IOW
-	MOVC(3, R0)	| R0: delay count
-en_int_delay:
-	SUBC(R0, 1, R0)
-	BT(R0, en_int_delay)
-
+	
 	| Enable interrupt
 	MOVC(1, R0)
+	IOWAIT()
 	IOW(R0, EIC_IE)
 
 	| Switch to User Mode
-	MOVC(user_mode%PC_MASK, R0)
+	MOVC(user_start%PC_MASK, R0)
 	JMP(R0)
-user_mode:
+
+||============================================================================||
+||                              User Code Segment                             ||
+||============================================================================||
+LOCATE(0x0800)
+
+user_start:
 
 	|-------------------------------------------------------------------------------|
 	| Blink LED                                                                     |
@@ -312,18 +325,15 @@ blink_one:
 	| Loop forever
 	BR(blink_led)
 
-end:
-	BR(.)
-
-|-------------------------------------------------------------------------------|
-| Delay for 1 second                                                            |
-|                                                                               |
-|   1) No arguments. No return value.                                           |
-|   2) Delay for delay_1s_cnt iterations                                        |
-|        4 cycles per iteration                                                 |
-|        except last one only 2 cycles                                          |
-|   3) Delay of prologue & epilogue does NOT count.                             |
-|-------------------------------------------------------------------------------|
+    |----------------------------------------------------------------------|
+    | Delay for 1 second                                                   |
+    |                                                                      |
+    |   1) No arguments. No return value.                                  |
+    |   2) Delay for delay_1s_cnt iterations                               |
+    |        4 cycles per iteration                                        |
+    |        except last one only 2 cycles                                 |
+    |   3) Delay of prologue & epilogue does NOT count.                    |
+    |----------------------------------------------------------------------|
 
 delay_1s:
 	| Prologue to the subroutine
@@ -345,10 +355,11 @@ delay_1s_loop:
 	POP(LP)
 	RTN()
 
-|--------------------------------------
-| literal segment
-|--------------------------------------
+||============================================================================||
+||                           User Literal  Segment                            ||
+||============================================================================||
 LITERAL()
+
 delay_1s_cnt:				| led blink delay count
 	LONG(0x00989680)		| 1E+7
 
@@ -360,12 +371,9 @@ svc_ssd_addr:
 svc_key_addr:
 	LONG(svc_key+PC_SUPERVISOR)
 
-
-
-
-|--------------------------------------
-| signature
-|--------------------------------------
+    |----------------------------------------------------------------------|
+    | Program Signature                                                    |
+    |----------------------------------------------------------------------|
 LOCATE(0x0FFC)
 __signature:
 	LONG(0xCA3EBE3A)
