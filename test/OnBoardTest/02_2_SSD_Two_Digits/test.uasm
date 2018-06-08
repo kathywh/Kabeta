@@ -1,0 +1,379 @@
+.include ../../../tools/kabeta.uasm
+
+||============================================================================||
+||                            Constant Definitions                            ||
+||============================================================================||
+
+| Interrupt Numbers
+BKD_KPI	= 1			| BKD: Key Press Interrupt
+
+| SVC function codes
+SVC_FCNT = 3		| SVC function count
+SVC_LED  = 0
+SVC_SSD  = 1
+SVC_KEY  = 2
+
+||============================================================================||
+||                             Macro  Definitions                             ||
+||============================================================================||
+
+| Wait for I/O completion
+.macro IOWAIT() {
+	NOP()  NOP()  NOP()  NOP()
+	NOP()  NOP()  NOP()  NOP()
+	NOP()  NOP()  NOP()  NOP()}
+
+||============================================================================||
+||                             User Data Segment                              ||
+||============================================================================||
+LOCATE(0x0800)
+
+| Stack
+stack:
+	STORAGE(32)
+
+||============================================================================||
+||                                I/O  Segment                                ||
+||============================================================================||
+LOCATE(0x000)
+EIC_IE:	
+	STORAGE(1)		| 0x000, WO
+EIC_IN:
+	STORAGE(1)		| 0x004, RO
+
+LOCATE(0x040)
+BKD_LEDC:
+	STORAGE(1)		| 0x040, RW
+BKD_SSDC:
+	STORAGE(1)		| 0x044, RW
+BKD_KDIE:
+	STORAGE(1)		| 0x048, WO
+BKD_KEYS:
+	STORAGE(1)		| 0x04C, RC
+
+||============================================================================||
+||                             Exception  Vectors                             ||
+||============================================================================||
+EXCVT()
+
+rst_vec:
+	BR(start)
+svc_vec:
+	BR(svc_esr)
+ill_vec:
+	BR(.)
+inv_op_vec:
+	BR(.)
+inv_da_vec:
+	BR(.)
+inv_ia_vec:
+	BR(.)
+irq0_vec:
+	BR(irq0_esr)
+irq1_vec:
+	BR(.)
+
+||============================================================================||
+||                          Supervisor Code Segment                           ||
+||============================================================================||
+LOCATE(0x0080)
+
+	|----------------------------------------------------------------------|
+	| IRQ Handler                                                          |
+	|----------------------------------------------------------------------|
+irq0_esr:
+	| Adjust XP
+	SUBC(XP, 4, XP)
+
+	| Save registers
+	PUSH(R0)
+	PUSH(R1)
+	PUSH(R2)
+
+	| Get interrupt number
+	IOR(EIC_IN, R1)			| R1: interrupt number
+
+	| If key int, read key status
+	CMPEQC(R1, BKD_KPI, R0)
+	BF(R0, irq0_rks_end)
+	IOR(BKD_KEYS, R2)		| Read key status reg
+	IOR(BKD_KEYS, R2)		| Read again, check if cleared
+	BR(irq0_end)
+irq0_rks_end:
+
+irq0_end:
+	| Restore registers
+	POP(R2)
+	POP(R1)
+	POP(R0)
+
+	| Return
+	JMP(XP)
+
+	|----------------------------------------------------------------------|
+	| SVC Handler                                                          |
+	|                                                                      |
+	|   1) Function code is in register R0.                                |
+	|   2) Input/Output arguments are in registers, R1, R2, R3, ...        |
+	|   3) Status code is returned in R0.                                  |
+	|        0: ok                                                         |
+	|        1: function code out of range                                 |
+	|                                                                      |
+	|   Function         R0  R1         R2        Comment                  |
+	|   ---------------  --  ---------  --------  -----------------------  |
+	|   Turn on/off LED   0  IN  b3-b0  -         0: off, 1: on            |
+	|   Display in SSD    1  IN  index  IN b4-b0  b4: dp, b3-b0: bcd code  |
+	|   Get key events    2  OUT b3-b0  -         1: pressed, 0: normal    |
+	|----------------------------------------------------------------------|
+
+svc_esr:
+	| Save registers
+	PUSH(R8)
+	PUSH(R9)
+	PUSH(R10)
+
+	| Function jump
+	CMPLTC(R0, 0, R8)			| If R0 < 0, then go to error handler
+	BT(R8, svc_fc_oor)
+	CMPLEC(R0, SVC_FCNT, R8)	| If R0 > SVC_FCNT, then go to error handler
+	BF(R8, svc_fc_oor)
+	SHLC(R0, 2, R0)				| Convert function code into offset in jump table
+	LDI(R0, svc_sub_tab, R8)	| Load subroutine address
+	JMP(R8)
+
+	| Function code out of range
+svc_fc_oor:
+	MOVC(1, R0)
+	BR(svc_end)
+
+svc_led:
+	ANDC(R1, 0x000F, R1)
+	IOW(R1, BKD_LEDC)		| Write LEDC register
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_ssd:
+	| Read SSDC
+	IOR(BKD_SSDC, R8)		| Read SSDC register (R8)
+
+	| BCD code
+	SHLC(R1, 2, R9)			| Get DIGn position (R9)
+	MOVC(0x000F, R10)
+	SHL(R10, R9, R10)		| Get DIGn mask (R10)
+	XORC(R10, 0xFFFF, R10)
+	AND(R8, R10, R8)		| Clear DIGn bits (R8)
+	ANDC(R2, 0x000F, R10)
+	SHL(R10, R9, R10)		| Shift bcd code (R10)
+	OR(R8, R10, R8)			| Set DIGn bits (R8)
+
+	| Decimal point
+	ADDC(R1, 24, R9)		| Get DPn position (R9)
+	MOVC(0x0001, R10)
+	SHL(R10, R9, R10)		| Get DPn mask (R10)
+	XORC(R10, 0xFFFF, R10)
+	AND(R8, R10, R8)		| Clear DPn bit (R8)
+	ANDC(R2, 0x0010, R10)
+	SHRC(R10, 4, R10)
+	SHL(R10, R9, R10)		| Shift dp bit (R10)
+	OR(R8, R10, R8)			| Set DPn bit (R8)
+
+	| SSD enable bit
+	MOVC(0x01, R9)
+	SHLC(R9, 31, R9)
+	OR(R8, R9, R8)
+
+	| Write SSDC
+	IOW(R8, BKD_SSDC)		| Write SSDC register
+
+	| Set status code
+	MOVC(0, R0)				
+	BR(svc_end)
+
+svc_key:
+	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_end:
+	| Restore registers
+	POP(R10)
+	POP(R9)
+	POP(R8)
+
+	| Return
+	JMP(XP)
+
+start:
+	|----------------------------------------------------------------------|
+	| System initialization                                                |
+	|----------------------------------------------------------------------|
+
+	| Set SP
+	MOVC(stack, SP)
+
+	| Enable Key Interrupt
+	MOVC(1, R0)
+	IOW(R0, BKD_KDIE)
+
+	| Enable interrupt
+	MOVC(1, R0)
+	IOWAIT()
+	IOW(R0, EIC_IE)
+
+	| Switch to User Mode
+	MOVC(user_start%PC_MASK, R0)
+	JMP(R0)
+
+||============================================================================||
+||                        Supervisor Literal  Segment                         ||
+||============================================================================||
+LITERAL()
+
+| SVC Jump Table
+svc_sub_tab:
+	LONG(svc_led+PC_SUPERVISOR)
+	LONG(svc_ssd+PC_SUPERVISOR)
+	LONG(svc_key+PC_SUPERVISOR)
+
+||============================================================================||
+||                              User Code Segment                             ||
+||============================================================================||
+LOCATE(0x0800)
+
+user_start:
+
+	|----------------------------------------------------------------------|
+	| Seven Segment Display Test                                           |
+	|----------------------------------------------------------------------|
+	
+disp_ssd:
+	MOVC(3, R8)		| R8: Group count of digits
+	MOVC(0, R10)	| R10: Index of first digit
+
+disp_group:
+	MOVC(101, R9)	| R9: Number count
+	MOVC(0, R11)	| R11: BCD code of less significant digit
+	MOVC(0, R12)	| R12: BCD code of more significant digit
+
+disp_digit:
+	| Display lsd
+	MOV(R10, R1)
+	MOV(R11, R2)
+	MOVC(SVC_SSD, R0)
+	SVC()
+
+	| Display msd
+	ADDC(R10, 1, R1)
+	MOV(R12, R2)
+	MOVC(SVC_SSD, R0)
+	SVC()
+
+	| Delay a half second
+	MOVC(500, R3)			| R3: delay ms
+	PUSH(R3)
+	CALL(delay_ms, 1)
+
+	| Increse BCD code (R12, R11)
+	ADDC(R11, 1, R11)
+	CMPLTC(R11, 10, R21)
+	BT(R21, disp_inc_bcd_end)
+	MOVC(0, R11)
+	ADDC(R12, 1, R12)
+disp_inc_bcd_end:
+
+	| Display two dp at last
+	CMPEQC(R12, 10, R21)
+	BF(R21, disp_set_dp_end)
+	MOVC(0x1F, R11)
+	MOVC(0x1F, R12)
+disp_set_dp_end:
+
+	ADDC(R9, -1, R9)
+	BNE(R9, disp_digit)
+	
+	| Increase digit index
+	ADDC(10, 2, R10)
+
+	ADDC(R8, -1, R8)
+	BNE(R8, disp_group)
+
+	| Loop forever
+	BR(disp_ssd)
+
+end:
+	BR(.)
+
+	|----------------------------------------------------------------------|
+	| Delay for milliseconds.                                              |
+	|                                                                      |
+	|   int delay_ms(n)                                                    |
+	|   1) Input arguments                                                 |
+	|        n: delay for n milliseconds.                                  |
+	|   2) Return value                                                    |
+	|        0: ok                                                         |
+	|        1: error, n<0                                                 |
+	|   2) Analysis of delay iteration                                     |
+	|      [CODE]                                                          |
+	|      MOVC(10000, R0)                                                 |
+	|      NOP()                                                           |
+	|      delay_1ms_loop:                                                 |
+	|          SUBC(R0, 1, R0)                                             |
+	|          BT(R0, delay_1ms_loop)                                      |
+	|      [END]                                                           |
+	|      10000 iterations count for 1ms (Fsysclk=40MHz)                  |
+	|        4 cycles per iteration except last one only 2 cycles          |
+	|        MOVC & NOP compensate for the last iteration                  |
+	|   3) Delay of prologue & epilogue does NOT count.                    |
+	|----------------------------------------------------------------------|
+
+__DM_ARG_N = 0
+
+delay_ms:
+	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	
+	| Get and check argument `n'
+	GETARG(__DM_ARG_N, R1)
+	CMPLTC(R1, 0, R0)
+	BT(R0, delay_err_neg_n)
+
+delay_1_ms:
+	| Delay for 1ms
+	MOVC(10000, R0)	| R0: delay count for 1ms (10000=0x2710, MSB=0)
+	NOP()
+delay_1ms_loop:
+	SUBC(R0, 1, R0)
+	BT(R0, delay_1ms_loop)
+
+	SUBC(R1, 1, R1)
+	BNE(R1, delay_1_ms)
+
+	| Epilogue to the subroutine
+delay_ms_end:	
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+delay_err_neg_n:
+	MOVC(1, R0)
+	BR(delay_ms_end)
+
+||============================================================================||
+||                           User Literal  Segment                            ||
+||============================================================================||
+LITERAL()
+
+delay_1s_cnt:				| led blink delay count
+	LONG(0x00989680)		| 1E+7
+
+    |----------------------------------------------------------------------|
+    | Program Signature                                                    |
+    |----------------------------------------------------------------------|
+LOCATE(0x0FFC)
+__signature:
+	LONG(0xCA3EBE3A)
