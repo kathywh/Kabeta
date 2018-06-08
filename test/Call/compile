@@ -1,4 +1,4 @@
 #!/bin/csh
 
 java -jar ../../../tools/bsim.jar test.uasm
-gawk -v size=1024 -f ../../../tools/coe2mif.awk test.coe > Alt_EP4CE_InstrMem_4KB.mif
+gawk -v size=1024 -f ../../../tools/coe2mif.awk test.coe > Alt_EP4CE_InstrMem.mif
