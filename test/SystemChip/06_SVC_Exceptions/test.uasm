@@ -74,7 +74,7 @@ user_start:
 
 	| SVC in User Mode
 	MOVC(0x1234, R0)
-	SVC()
+	SVC(0xABCD)
 
 	| Here R0 shoud be 0x80001234
 	MOV(R0, R21)

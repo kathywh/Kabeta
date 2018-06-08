@@ -12,12 +12,11 @@
 /*      05/18/2018  Kathy       Unit created.                                 */
 /******************************************************************************/
 
-
 program Tester;
 
   wire Sys_Clock = Testbench.DesignTop.Sys_Clock;
   wire Sys_Reset  = Testbench.DesignTop.Sys_Reset;
-  
+
   initial
     begin
 `ifdef FSDB_DUMP
@@ -32,7 +31,7 @@ program Tester;
       // Wait for reset
       wait(Sys_Reset == '1);
 
-      repeat(100)  @(posedge Sys_Clock);      
+      repeat(100) @(posedge Sys_Clock);
     end
 
 endprogram

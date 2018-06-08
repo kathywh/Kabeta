@@ -28,12 +28,12 @@ module Testbench;
   logic [3:0] Keys;
   logic Rxd, Txd;
 
-  assign Rxd = '1;
   assign Keys = '1;
+  assign Rxd = '1;
 
   // test environment
   ClockGenerator#(TCLK) ClkGen(.*);
-  Tester#(TCLK) Tester(.*);
+  Tester Tester(.*);
 
   // design under test
   SystemChip DesignTop(.*);
