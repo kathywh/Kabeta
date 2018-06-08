@@ -29,7 +29,7 @@ module InstructionMemory
 `ifdef ALT_EP4CE
   // Port a - I
   // Port b - D
-  Alt_EP4CE_InstrMem_4KB I_Mem
+  Alt_EP4CE_InstrMem I_Mem
   (
     .address_a(Addr_I[9:0]),
     .address_b(Addr_D[9:0]),

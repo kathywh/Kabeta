@@ -37,7 +37,7 @@
 // synopsys translate_off
 `timescale 1 ps / 1 ps
 // synopsys translate_on
-module Alt_EP4CE_DataMem_16KB (
+module Alt_EP4CE_DataMem (
 	address,
 	clock,
 	data,
