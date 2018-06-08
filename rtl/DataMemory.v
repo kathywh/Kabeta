@@ -25,7 +25,7 @@ module DataMemory
 `ifdef ALT_EP4CE
   Alt_EP4CE_DataMem_16KB D_Mem
   (
-    .address(Addr[11:0]),
+    .address(Addr[9:0]),
     .clock(Clock),
     .data(Data_W),
     .rden(En_R),

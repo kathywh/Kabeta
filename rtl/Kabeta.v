@@ -3,7 +3,7 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/16/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/07/2018                                                    */
+/*  Edited on:  06/08/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
 /*      An implementation of pipelined MIT Beta processor.                    */
@@ -19,6 +19,7 @@
 /*                              Change Stall to StallReq/Sys_Stall pair.      */
 /*      06/06/2018  Kathy       Add auto reset output when double fault.      */
 /*      06/07/2018  Kathy       Add I-Mem address mux.                        */
+/*      06/08/2018  Kathy       Read R31 when RR-Stage fault/trap ack.        */
 /******************************************************************************/
 
 module Kabeta
@@ -364,9 +365,12 @@ module Kabeta
     .StallReq(StallReq)
   );
 
-  assign RF_EnX = Sys_Stall ? (BypassXSel == `BPS_RW) : (ID_RegRdEnX & ~Sys_FlushRR);
+  // If stall & bypass from RW-stage, reg should be read again (obtain it thru reg file pass-thru),
+  // or else the data would be lost
+  // If exception at RR-stage, R31 should be read since BNE at EX-stage at next cycle need it
+  assign RF_EnX = Sys_Stall ? (BypassXSel == `BPS_RW) : ((ID_RegRdEnX & ~Sys_FlushRR) | Sys_ExcAckRR);
   assign RF_EnY = Sys_Stall ? (BypassYSel == `BPS_RW) : (ID_RegRdEnY & ~Sys_FlushRR);
-  assign RF_AddrX = Sys_Stall ? Ra_EX : Ra_RR;
+  assign RF_AddrX = Sys_Stall ? Ra_EX : (Ra_RR | {5{Sys_ExcAckRR}});      
   assign RF_AddrY_RR = (RegAddrYSel_RR == `RF_Y_SEL_RB) ? Rb_RR : Rc_RR;
   assign RF_AddrY_EX = (RegAddrYSel_EX == `RF_Y_SEL_RB) ? Rb_EX : Rc_EX;
   assign RF_AddrY = Sys_Stall ? RF_AddrY_EX : RF_AddrY_RR;
