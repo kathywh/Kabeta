@@ -195,6 +195,9 @@ LOCATE(0x0080)
 	| IRQ Handler                                                          |
 	|----------------------------------------------------------------------|
 irq_esr:
+	| Adjust XP
+	SUBC(XP, 4, XP)
+
 	| Save registers
 	PUSH(R0)
 	PUSH(R1)
@@ -358,7 +361,6 @@ irq_end:
 	POP(R0)
 
 	| Return
-	SUBC(XP, 4, XP)				| Adjust XP
 	JMP(XP)
 
 	|----------------------------------------------------------------------|
