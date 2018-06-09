@@ -8,11 +8,13 @@
 FCLKSYS = 40000000	| 40MHz
 FCLKIO  = 15000000	| 15MHz
 
-| Time slice count per second
-FSLICE  = 33		| Tslice = (1/33)s = 30ms
+| Sys tick & time slice settings
+FTICK   = 100		| Ttick = (1/100)s = 10ms
+NSLICE  = 3			| Tslice = (10*3)ms = 30ms
 
 | Task settings
-MAX_TASKS = 4
+TASK_COUNT    = 4	| Tasks count
+TASK_STK_SIZE = 32	| Task stack size in words
 
 | Interrupt Numbers
 IRQ_COUNT = 8		| IRQ count
@@ -50,13 +52,28 @@ UART_SR_PE   = 2
 UART_SR_FE   = 1
 UART_SR_BUSY = 0
 
-| Task agent field offset
-TASK_SIZE = 132
-TASK_GR   = 0		| R0~R28
-TASK_SP   = 116		| SP
-TASK_PC   = 120		| PC
-TASK_NEXT = 124		| Pointer to next task
-TASK_PREV = 128		| Pointer to previous task
+| Task agent size & field offset
+TASK_SIZE  = 140		| Size of task agent in bytes
+TASK_GR    = 0			| R0~R28
+TASK_SP    = 116		| SP
+TASK_PC    = 120		| PC
+TASK_NEXT  = 124		| Pointer to next task
+TASK_PREV  = 128		| Pointer to previous task
+TASK_STATE = 132		| Task state
+TASK_TICKS = 136		| Remaining ticks for time slice for event wait
+
+| Task state
+TASK_S_READY = 0
+TASK_S_WAIT  = 1
+
+| Task init size & field offset
+TINIT_SIZE  = 24	| Size of task init in bytes
+TINIT_ADDR  = 0		| Task routine address
+TINIT_STACK = 4		| Task stack address
+TINIT_ARG0  = 8		| Task argument 0
+TINIT_ARG1  = 12	| Task argument 1
+TINIT_ARG2  = 16	| Task argument 2
+TINIT_ARG3  = 20	| Task argument 3
 
 | LED pattern count
 LED_PAT_COUNT = 12
@@ -78,7 +95,7 @@ LOCATE(0x0000)
 
 | Task agents
 task_agents:
-	STORAGE((TASK_SIZE/4)*MAX_TASKS)
+	STORAGE((TASK_SIZE/4)*TASK_COUNT)
 
 | Ready task agent list
 task_ready:
@@ -120,10 +137,14 @@ uarx_data:
 	STORAGE(UARX_CNT)
 
 | Stack
-stack_ssd:
-	STORAGE(32)
+stack_ssd_1:
+	STORAGE(TASK_STK_SIZE)
+stack_ssd_2:
+	STORAGE(TASK_STK_SIZE)
+stack_ssd_3:
+	STORAGE(TASK_STK_SIZE)
 stack_led:
-	STORAGE(32)
+	STORAGE(TASK_STK_SIZE)
 
 ||============================================================================||
 ||                                I/O  Segment                                ||
@@ -223,15 +244,28 @@ irq_key_st:
 
 irq_tick:
 	| sys tick int
-	| save current task
+
+	| get current task agent address
 	LD(task_running, R1)	| R1: current task agent address
+
+	| If time slice end, switch to next task
+	LD(R1, TASK_TICKS, R0)	| R0: current task time slice
+	SUBC(R0, 1, R0)			| Consume one tick
+	ST(R0, R1, TASK_TICKS)	| Update ticks in agent
+	BNE(R0, irq_end)		| If time slice not end, return to current task
+
+	| Reset current task time slice
+	MOVC(NSLICE, R0)
+	ST(R0, R1, TASK_TICKS)
+
+	| save current task
 	LD(SP, -3*4, R0)		| R0: load R0 from stack
-	ST(R0, R1, 0*4)
+	ST(R0, R1, 0*4)			| Save R0 to agent
 	LD(SP, -2*4, R0)		| R0: load R1 from stack
-	ST(R0, R1, 1*4)
+	ST(R0, R1, 1*4)			| Save R1 to agent
 	LD(SP, -1*4, R0)		| R0: load R2 from stack
-	ST(R0, R1, 2*4)
-	ST(R3, R1, 3*4)
+	ST(R0, R1, 2*4)			| Save R2 to agent
+	ST(R3, R1, 3*4)			| Save R3~R28 to agent
 	ST(R4, R1, 4*4)
 	ST(R5, R1, 5*4)
 	ST(R6, R1, 6*4)
@@ -257,18 +291,18 @@ irq_tick:
 	ST(R26, R1, 26*4)
 	ST(R27, R1, 27*4)
 	ST(R28, R1, 28*4)
-	ADDC(SP, -3*4, R0)		| Save SP
+	ADDC(SP, -3*4, R0)		| Save SP to agent (discard saved registers)
 	ST(R0, R1, TASK_SP)
-	ST(XP, R1, TASK_PC)		| Save PC	
+	ST(XP, R1, TASK_PC)		| Save PC to agent
 
 	| get next task
-	LD(R1, TASK_NEXT, XP)
-	ST(XP, task_running)
+	LD(R1, TASK_NEXT, XP)	| XP: next task agent address in ready list
+	ST(XP, task_running)	| Save next task agent address to 'task_running`
 
 	| restore next task
 	| XP: next task agent address
 irq_tick_switch:
-	LD(XP, 0*4, R0)
+	LD(XP, 0*4, R0)			| Load R0~R28 & SP from agent
 	LD(XP, 1*4, R1)
 	LD(XP, 2*4, R2)
 	LD(XP, 3*4, R3)
@@ -298,7 +332,7 @@ irq_tick_switch:
 	LD(XP, 27*4, R27)
 	LD(XP, 28*4, R28)
 	LD(XP, TASK_SP, SP)
-	LD(XP, TASK_PC, XP)
+	LD(XP, TASK_PC, XP)		| XP: Load task resume address
 
 	| run new task
 	JMP(XP)
@@ -501,15 +535,30 @@ task_init:
 
 	| Copy new task agents to ram
 	GETARG(__TI_NTASK, R1)		| R1: new task count
-	MOV(R1, R4)					| R4: new task count, for later use
 	MOVC(task_agents, R2)		| R2: task agent address
 	GETARG(__TI_PTINIT, R3)		| R3: new task init address
 task_init_copy:
-	LDI(R3, 0, R0)				| R0: new task address
+	LDI(R3, TINIT_ADDR, R0)		| R0: new task address
 	ST(R0, R2, TASK_PC)
-	LDI(R3, 4, R0)				| R0: new task stack
-	ST(R0, R2, TASK_SP)
-	ADDC(R3, 8, R3)				| next new task init
+	LDI(R3, TINIT_STACK, R4)	| R4: new task stack
+	LDI(R3, TINIT_ARG3, R0)		| R0: new task arg 3
+	ST(R0, R4, 0)				| Store arg 3 to new task stack
+	ADDC(R4, 4, R4)				| Adjust new task stack address
+	LDI(R3, TINIT_ARG2, R0)		| R0: new task arg 2
+	ST(R0, R4, 0)				| Store arg 2 to new task stack
+	ADDC(R4, 4, R4)				| Adjust new task stack address
+	LDI(R3, TINIT_ARG1, R0)		| R0: new task arg 1
+	ST(R0, R4, 0)				| Store arg 1 to new task stack
+	ADDC(R4, 4, R4)				| Adjust new task stack address
+	LDI(R3, TINIT_ARG0, R0)		| R0: new task arg 0
+	ST(R0, R4, 0)				| Store arg 0 to new task stack
+	ADDC(R4, 4, R4)				| Adjust new task stack address
+	ST(R4, R2, TASK_SP)			| Save adjusted task stack address to agent
+	MOVC(TASK_S_READY, R0)		| Set task state in agent
+	ST(R0, R2, TASK_STATE)
+	MOVC(NSLICE, R0)			| Set task ticks in agent
+	ST(R0, R2, TASK_TICKS)
+	ADDC(R3, TINIT_SIZE, R3)	| next new task init
 	ADDC(R2, TASK_SIZE, R2)		| next task agent
 	SUBC(R1, 1, R1)
 	BNE(R1, task_init_copy)
@@ -522,7 +571,8 @@ task_init_copy:
 	ST(R0, task_running)
 
 	| Initialize task agent bidir link list
-	SUBC(R4, 1, R1)		
+	GETARG(__TI_NTASK, R1)		| R1: new task count
+	SUBC(R1, 1, R1)		
 	MOV(R2, R4)					| R4: first task
 	ADDC(R2, TASK_SIZE, R3)		| R2: current task, R3: next task
 task_init_agents:
@@ -568,7 +618,7 @@ start:
 	MOVC(stack_main, SP)
 
 	| Initialize tasks
-	MOVC(2, R0)
+	MOVC(TASK_COUNT, R0)
 	PUSH(R0)
 	MOVC(user_task_init, R0)
 	PUSH(R0)
@@ -620,14 +670,37 @@ irq_sub_tab:
 
 | System timer load value
 sys_tick_lv:
-	LONG(FCLKIO/FSLICE-1)
+	LONG(FCLKIO/FTICK-1)
 
 | New task init
 user_task_init:
-	LONG(disp_ssd)
-	LONG(stack_ssd)
-	LONG(blink_led)
+	LONG(disp_ssd)			| 1st task
+	LONG(stack_ssd_1)
+	LONG(0)					|   pos
+	LONG(0)					|   start
+	LONG(1)					|   step
+	LONG(10)				|   count
+
+	LONG(disp_ssd)			| 2nd task
+	LONG(stack_ssd_2)
+	LONG(1)					|   pos
+	LONG(9)					|   start
+	LONG(-1)				|   step
+	LONG(10)				|   count
+
+	LONG(disp_ssd)			| 3rd task
+	LONG(stack_ssd_3)
+	LONG(3)					|   pos
+	LONG(0x10)				|   start
+	LONG(1)					|   step
+	LONG(8)					|   count
+
+	LONG(blink_led)			| 4th task
 	LONG(stack_led)
+	LONG(0)
+	LONG(0)
+	LONG(0)
+	LONG(0)
 
 ||============================================================================||
 ||                              User Code Segment                             ||
@@ -637,67 +710,60 @@ LOCATE(0x0800)
 
 	|----------------------------------------------------------------------|
 	| Seven Segment Display                                                |
+	|                                                                      |
+	| void disp_ssd(pos, start, step, count)                               |
 	|----------------------------------------------------------------------|
-	
-disp_ssd:
-	MOVC(3, R8)		| R8: Group count of digits
-	MOVC(0, R10)	| R10: Index of first digit
 
-disp_group:
-	MOVC(101, R9)	| R9: Number count
-	MOVC(0, R11)	| R11: BCD code of less significant digit
-	MOVC(0, R12)	| R12: BCD code of more significant digit
+__DS_POS    = 0
+__DS_START  = 1
+__DS_STEP   = 2
+__DS_COUNT  = 3
+
+disp_ssd:
+    | Prologue to the subroutine (4 cycles)
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+
+	GETARG(__DS_POS, R1)	| R1: Index of digit	
+	GETARG(__DS_STEP, R7)	| R7: Hex code step
+
+disp_ssd_loop:
+	GETARG(__DS_COUNT, R9)	| R9: Digit count
+	GETARG(__DS_START, R8)	| R8: Hex code of digit
 
 disp_digit:
-	| Display lsd
-	MOV(R10, R1)
-	MOV(R11, R2)
-	MOVC(SVC_SSD, R0)
-	SVC()
+	| Display digit
+	PUSH(R8)
+	PUSH(R1)
+	CALL(disp_one, 2)
 
-	| Display msd
-	ADDC(R10, 1, R1)
-	MOV(R12, R2)
-	MOVC(SVC_SSD, R0)
-	SVC()
-
-	| Delay a half second
-	MOVC(500, R3)			| R3: delay ms
+	| Delay 1 second
+	MOVC(250, R3)			| R3: delay ms
 	PUSH(R3)
 	CALL(delay_ms, 1)
 
-	| Increse BCD code (R12, R11)
-	ADDC(R11, 1, R11)
-	CMPLTC(R11, 10, R21)
-	BT(R21, disp_inc_bcd_end)
-	MOVC(0, R11)
-	ADDC(R12, 1, R12)
-disp_inc_bcd_end:
-
-	| Display two dp at last
-	CMPEQC(R12, 10, R21)
-	BF(R21, disp_set_dp_end)
-	MOVC(0x1F, R11)
-	MOVC(0x1F, R12)
-disp_set_dp_end:
+	| Increse Hex code (R8)
+	ADD(R8, R7, R8)
 
 	ADDC(R9, -1, R9)
 	BNE(R9, disp_digit)
-	
-	| Increase digit index
-	ADDC(10, 2, R10)
-
-	ADDC(R8, -1, R8)
-	BNE(R8, disp_group)
 
 	| Loop forever
-	BR(disp_ssd)
+	BR(disp_ssd_loop)
 
 	|-------------------------------------------------------------------------------|
 	| Blink LED                                                                     |
 	|-------------------------------------------------------------------------------|
 
-blink_led:
+blink_led:    
+	| Prologue to the subroutine (4 cycles)
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+
 	MOVC(LED_PAT_COUNT, R8)		| R8: led count
 	MOVC(led_pat_tab, R9)		| R9: pattern table address
 
@@ -708,7 +774,7 @@ blink_one:
 	SVC()						| Do SVC
 
 	| Delay for 1 second
-	MOVC(1000, R0)				| R0: delay ms
+	MOVC(250, R0)				| R0: delay ms
 	PUSH(R0)
 	CALL(delay_ms, 1)
 
@@ -988,8 +1054,43 @@ disp_bcd_i_oor:
 	MOVC(1, R0)
 	BR(disp_bcd_end)
 
+	|----------------------------------------------------------------------|
+    | Dispaly one digit (including hex & bar).                             |
+    |                                                                      |
+    |   void disp_one(pos, dig)                                            |
     |----------------------------------------------------------------------|
-    | Dsipaly hex code with a decimal point.                               |
+
+__DO_POS  = 0
+__DO_DIG  = 1
+
+disp_one:
+ 	| Prologue to the subroutine
+	PUSH(LP)		| Save LP & BP
+	PUSH(BP)
+	MOV(SP, BP)		| Set frame pointer (BP)
+	ALLOCATE(0)		| Allocate space for locals
+	PUSH(R1)		| Save registers
+	PUSH(R2)
+
+	GETARG(__DO_POS, R1)	| R1: Digit index
+	GETARG(__DO_DIG, R2)	| R2: Digit value
+	ANDC(R2, 0x1F, R2)		| R2: Get least 5 bits
+	SHLC(R2, 2, R2)			| R2: Get seg code offset
+	LDI(R2, ssc_hex_tab, R2)| R2: Get seg code
+	MOVC(SVC_SSC, R0)
+	SVC()
+
+	| Epilogue to the subroutine
+disp_one_end:
+	POP(R2)
+	POP(R1)			| Store registers
+	MOV(BP, SP)		| Deallocate space for locals
+	POP(BP)			| Store LP & BP
+	POP(LP)
+	RTN()
+
+    |----------------------------------------------------------------------|
+    | Dispaly hex code with a decimal point.                               |
     |                                                                      |
     |   int disp_hex(i, hex)                                               |  
     |   Return:                                                            |
@@ -1076,6 +1177,15 @@ ssc_hex_tab:
 	LONG(0x5E)			| d's seg code
 	LONG(0x79)			| E's seg code
 	LONG(0x71)			| F's seg code
+ssc_bar_tab:
+	LONG(0x00)			| 0's bar code
+	LONG(0x08)			| 1's bar code
+	LONG(0x40)			| 2's bar code
+	LONG(0x48)			| 3's bar code
+	LONG(0x01)			| 4's bar code
+	LONG(0x09)			| 5's bar code
+	LONG(0x41)			| 6's bar code
+	LONG(0x49)			| 7's bar code
 
     | LED pattern table
 led_pat_tab:
