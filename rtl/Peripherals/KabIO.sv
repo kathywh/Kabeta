@@ -3,10 +3,10 @@
 /*  Created by: Kathy                                                         */
 /*  Created on: 05/24/2018                                                    */
 /*  Edited by:  Kathy                                                         */
-/*  Edited on:  06/01/2018                                                    */
+/*  Edited on:  06/09/2018                                                    */
 /*                                                                            */
 /*  Description:                                                              */
-/*                                                                            */
+/*      Kab I/O components.                                                   */
 /*                                                                            */
 /*  Revisions:                                                                */
 /*      05/24/2018  Kathy       Unit created.                                 */
@@ -14,7 +14,19 @@
 /*      05/31/2018  Kathy       Change BKD interrupt number.                  */
 /*                              Add system timer.                             */
 /*      06/01/2018  Kathy       Add UART.                                     */
+/*      06/09/2018  Kathy       Add I/O polarity settings.                    */
 /******************************************************************************/
+
+// I/O Polarity Settings
+// Seven Segment Display
+`define SSD_CA        /* Common Anode */
+`undef  SSD_CK        /* Common Cathode */
+// LED
+`define LED_AH        /* Active High */
+`undef  LED_AL        /* Active Low */
+// Key
+`undef  KEY_AH        /* Active High */
+`define KEY_AL        /* Active Low */
 
 module KabIO
 (
@@ -43,6 +55,39 @@ module KabIO
 );
 
   import IO_AddressTable::*;
+
+  // I/O pins
+  logic [3:0] BKD_LED;
+  logic [7:0] BKD_Segment;
+  logic [5:0] BKD_Digital;
+  logic [3:0] BKD_Keys;
+
+`ifdef SSD_CA
+  assign Segment = BKD_Segment;
+  assign Digital = BKD_Digital;
+`endif
+
+`ifdef SSD_CK
+  assign Segment = ~BKD_Segment;
+  assign Digital = ~BKD_Digital;
+`endif
+
+`ifdef LED_AH
+  assign LED = BKD_LED;
+`endif
+
+`ifdef LED_AL
+  assign LED = ~BKD_LED;
+`endif
+
+`ifdef KEY_AH
+  assign BKD_Keys = ~Keys;
+`endif
+
+`ifdef KEY_AL
+  assign BKD_Keys = Keys;
+`endif
+
 
   // Interrupt signals
   logic BKD_KeyPressInt;
@@ -104,6 +149,10 @@ module KabIO
     .IO_Interface(IO_LogicInterface),
     .IO_BlockSelect(IO_BlockSelect[BKD_ADDR]),
     .KeyPressInt(BKD_KeyPressInt),
+    .LED(BKD_LED),
+    .Segment(BKD_Segment),
+    .Digital(BKD_Digital),
+    .Keys(BKD_Keys),
     .*
   );
 
