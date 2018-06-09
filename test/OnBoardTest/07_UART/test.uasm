@@ -62,12 +62,12 @@ LOCATE(0x0000)
 key_event_tab:
 	STORAGE(1)
 
-| UART tx data
-UATX_CNT = 256
-uatx_offset:
+| UART tx param
+uatx_address:
 	STORAGE(1)
-uatx_data:
-	STORAGE(UATX_CNT)
+uatx_count:
+	STORAGE(1)
+
 
 ||============================================================================||
 ||                             User Data Segment                              ||
@@ -82,6 +82,11 @@ uarx_disp_os:
 	STORAGE(1)
 uarx_data:
 	STORAGE(UARX_CNT)
+
+| UART tx data
+UATX_CNT = 256
+uatx_data:
+	STORAGE(UATX_CNT)
 
 | Stack
 stack:
@@ -193,12 +198,14 @@ irq_tick:
 
 irq_uatx:
 	| uart tx int, send a byte
-	LD(uatx_offset, R1)			| R1: data offset
-	CMPEQC(R1, UATX_CNT*4, R0)	| boundary check
-	BT(R0, irq_end)
-	LD(R1, uatx_data, R0)		| R0: data to send
-	ADDC(R1, 4, R1)				| store next data offset
-	ST(R1, uatx_offset)
+	LD(uatx_count, R1)			| R1: data count
+	LD(uatx_address, R2)		| R2: data address
+	BEQ(R1, irq_end)			| If no data, return
+	LD(R2, 0, R0)				| R0: data to send
+	SUBC(R1, 1, R1)				| store remaining data address & count
+	ADDC(R2, 4, R2)
+	ST(R1, uatx_count)
+	ST(R2, uatx_address)
 	IOW(R0, UART_DR)			| write DR to send data
 	BR(irq_end)
 
@@ -266,7 +273,9 @@ irq_end:
 	|   Display in SSD    1  IN  index  IN b4-b0  b4: dp, b3-b0: bcd code  |
 	|   Get key events    2  OUT b3-b0  -         1: pressed, 0: normal    |
 	|   Set 7-seg code    3  IN  index  IN b7-b0  b7~0  0: off, 1: on      |
-	|   Send from UART    4  IN  index  -         [index:CNT-1]            |
+	|   Send from UART    4  IN  addr   IN count  zero copy                |
+	|                                             Status=2: invalid param  |
+	|                                                    3: UART busy      |
 	|----------------------------------------------------------------------|
 
 svc_esr:
@@ -351,12 +360,28 @@ svc_ssc:
 	BR(svc_end)
 
 svc_uatx:
-	SHLC(R1, 2, R8)			| R8: first data offset
-	ADDC(R8, 4, R9)			| R9: second data offset
-	LD(R8, uatx_data, R8)	| R8: load first data
-	ST(R9, uatx_offset)		| Store second data offset
+	BEQ(R1, svc_uatx_inv)	| Parameters check
+	CMPLEC(R2, 0, R0)
+	BT(R0, svc_uatx_inv)
+	LD(uatx_count, R0)		| Check if last transmission finish
+	BNE(R0, svc_uatx_busy)
+	LD(R1, 0, R8)			| R8: first data
+	ADDC(R1, 4, R9)			| R9: remaining data address
+	SUBC(R2, 1, R10)		| R10: remaining data count
+	BEQ(R10, svc_uatx_send)	| If no remaining data, skip store
+	ST(R9, uatx_address)	| Store remaining data address & count
+	ST(R10, uatx_count)
+svc_uatx_send:
 	IOW(R8, UART_DR)		| Write DR to send first data
 	MOVC(0, R0)				| Set status code
+	BR(svc_end)
+
+svc_uatx_inv:				| R0=2: invalid parameters
+	MOVC(2, R0)
+	BR(svc_end)
+
+svc_uatx_busy:				| R0=3: UART busy
+	MOVC(3, R0)
 	BR(svc_end)
 
 svc_end:
@@ -376,18 +401,9 @@ start:
 	| Set SP
 	MOVC(stack, SP)
 
-	| Fill uart tx data
-	MOVC(4, R1)
-	ST(R1, uatx_offset)		| store offset
-	MOVC(0, R1)				| R1: tx data offset
-	MOVC(0x00, R0)			| R0: tx data
-	MOVC(UATX_CNT, R2)		| R2: tx data count
-fill_uatx_data:
-	ST(R0, R1, uatx_data)
-	ADDC(R1, 4, R1)
-	ADDC(R0, 1, R0)
-	SUBC(R2, 1, R2)
-	BNE(R2, fill_uatx_data)
+	| Initialize global variables
+	ST(R31, uatx_address)
+	ST(R31, uatx_count)
 
 	| Clear uart rx data
 	MOVC(0, R1)				| R1: rx data offset
@@ -488,6 +504,16 @@ user_start:
 	|   (K1H, K1L): data index        Key3: unused                         |
 	|----------------------------------------------------------------------|
 
+	| Fill uart tx data
+	MOVC(0, R1)				| R1: tx data offset
+	MOVC(0x00, R0)			| R0: tx data
+	MOVC(UATX_CNT, R2)		| R2: tx data count
+fill_uatx_data:
+	ST(R0, R1, uatx_data)
+	ADDC(R1, 4, R1)
+	ADDC(R0, 1, R0)
+	SUBC(R2, 1, R2)
+	BNE(R2, fill_uatx_data)
 
 key_process:
 
@@ -507,9 +533,12 @@ key_process:
 	| Key3: send from index to end
 	ANDC(R1, 0x08, R11)
 	BEQ(R11, key3_end)
-	LD(uarx_disp_os, R11)		| R11: display offset
+	LD(uarx_disp_os, R11)		| R11: display offset, also send offset
 	PUSH(R1)					| Save R1
-	SHRC(R11, 2, R1)			| R1: display index, as send index
+	ADDC(R11, uatx_data, R1)	| R1: data address
+	MOVC(UATX_CNT, R2)
+	SHRC(R11, 2, R0)
+	SUB(R2, R0, R2)				| R2: data count
 	MOVC(SVC_UATX, R0)
 	SVC()						| Do SVC
 	POP(R1)						| Store R1
