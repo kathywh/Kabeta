@@ -1,0 +1,2 @@
+Press Key0, UART task will be killed due to invalid instruction address fault, other tasks still run.
+After finishing all patterns, LED task will be killed due to invalid instruction fault (modify blink_led code to test other faults), seven-segment display tasks still run.
