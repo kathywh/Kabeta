@@ -903,6 +903,7 @@ blink_led:
 	MOV(SP, BP)		| Set frame pointer (BP)
 	ALLOCATE(0)		| Allocate space for locals
 
+blink_led_loop:
 	MOVC(LED_PAT_COUNT, R8)		| R8: led count
 	MOVC(led_pat_tab, R9)		| R9: pattern table address
 
@@ -924,7 +925,7 @@ blink_one:
 	BNE(R8, blink_one)
 
 	| Loop forever
-	BR(blink_led)
+	BR(blink_led_loop)
 
     |----------------------------------------------------------------------|
     | Delay for a while (26 cycles).                                       |
