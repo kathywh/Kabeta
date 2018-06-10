@@ -1,0 +1,1 @@
+Press Key0, UART task will be killed, other tasks still run.
