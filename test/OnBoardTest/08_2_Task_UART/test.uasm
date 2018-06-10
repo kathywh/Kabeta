@@ -242,8 +242,6 @@ irq_key:
 	| read key status
 	IOR(BKD_KEYS, R2)		| Read key status reg
 	ANDC(R2, 0x01, R0)
-	BEQ(R0, irq_key_st)		| Key0
-	LONG(0)					|   invalid instruction, cause double fault
 irq_key_st:
 	ST(R2, key_event_tab)	| Write key event table
 	BR(irq_end)
